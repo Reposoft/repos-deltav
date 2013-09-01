@@ -1,0 +1,18 @@
+
+Delta-V
+
+The purpose of this module is to calculate the age of individual elements in structured data. A separate client-side module will visualize these annotations much lick in track changes, or VCS annotate/blame.
+
+
+Services
+
+DeltaVStore
+ // CmsItemId
+ get(CmsItemId
+ store(CmsItemId, stram)
+DeltaVStoreMemory - for testing 
+DeltaVStoreBaseX
+
+
+
+DeltaVCalculator
