@@ -1,18 +1,54 @@
 
-Delta-V
+= Delta-V
 
-The purpose of this module is to calculate the age of individual elements in structured data. A separate client-side module will visualize these annotations much lick in track changes, or VCS annotate/blame.
+The purpose of this module is to calculate the age of individual elements in structured data.
+A separate client-side module will visualize these annotations much lick in track changes, or VCS annotate/blame.
+
+The scenario is that a user visits a structured resource such as XML or HTML5 (Repos validates that all stored HTML file are parseable as XML).
+User then clicks "show annotations" and the view is colorized according to element age.
+Detailed element information can be displayed, where a datetime, username and commit comment is available.
+Two different annotation modes are possible: with attribute changes and ignore attribute changes.
+An accompanying timeline from oldest to newest element could show the color scale.
 
 
-Services
+
+== Scope
+ * Should support namespaces
+
+
+== Architecture
+
+Commit author, timestamp and comment is not needed in the Delta-V; looked up through separate service based on numerical revision.
+
+No manual testing should be done during development, everything should be repeatable with jUnit.
+Code coverage is not a goal in itself and edge cases can normally be ignored.
+
+Logging should be done using slf4j. Production servers normally see the info level and above. Tests and dev servers see debug.
+
+The implementation should be backend neutral, i.e. based on the cms-item package.
+The only backend currently available in Repos is cms-backend-svnkit.
+This means that revision identifies could be strings, as in Git.
+The current RepoRevision class only supports the long type now though.
+
+Two different ways to invoke this in Repos webapp:
+ * On request, i.e. given a resource and a revision for which to calculate DeltaV.
+   - Should find latest already calculate revision of this resource and start there
+ * As post-commit hook, i.e. calculate DeltaV for all xml and html files.
+   - Consumes lots of storage, but could drop historical revisions if that causes problems
+   
+Likely hook mode is the only one that can be used in practice, because
+
+
+== Error handling
+
+
+
+== Services:
 
 DeltaVStore
- // CmsItemId
- get(CmsItemId
- store(CmsItemId, stram)
 DeltaVStoreMemory - for testing 
 DeltaVStoreBaseX
 
-
+XmlDiff - implementations should be interchangeable
 
 DeltaVCalculator
