@@ -2,19 +2,40 @@ package se.repos.deltav;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import se.repos.deltav.store.DeltaVStore;
+import se.repos.deltav.store.DeltaVStoreMemory;
 import se.simonsoft.cms.backend.svnkit.commit.CmsCommitSvnkitEditor;
+import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
+import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.RepoRevision;
 import se.simonsoft.cms.item.commit.CmsCommit;
 import se.simonsoft.cms.item.commit.CmsCommitChangeset;
 import se.simonsoft.cms.item.commit.FileAdd;
 import se.simonsoft.cms.item.commit.FileModification;
+import se.simonsoft.cms.item.impl.CmsItemIdUrl;
+import se.simonsoft.cms.item.inspection.CmsChangesetReader;
+import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 import se.simonsoft.cms.testing.svn.CmsTestRepository;
 import se.simonsoft.cms.testing.svn.SvnTestSetup;
 
@@ -24,41 +45,99 @@ import se.simonsoft.cms.testing.svn.SvnTestSetup;
  */
 public class DeltaVSvnTest {
 
-	private CmsTestRepository repository;
-	private CmsCommit commit;
+	private boolean doCleanup = true; // set to false to examine repository after test
+	
+	private File testDir = null;
+	private File repoDir = null;
+	private SVNURL repoUrl;
+	private File wc = null;
+	
+	private SVNClientManager clientManager = null;
+	
+	CmsChangesetReader changesetReader = new CmsChangesetReaderSvnkitLook()
+		.setSVNLookClientProvider(new SvnlookClientProviderStateless());
+	
+	static {
+		FSRepositoryFactory.setup();
+	}
 	
 	@Before
-	public void setUp() {
-		repository = SvnTestSetup.getInstance().getRepository();
-		commit = new CmsCommitSvnkitEditor(repository, repository.getSvnkitProvider());
+	public void setUp() throws IOException, SVNException {
+		testDir = File.createTempFile("test-" + this.getClass().getName(), "");
+		testDir.delete();
+		repoDir = new File(testDir, "repo");
+		repoUrl = SVNRepositoryFactory.createLocalRepository(repoDir, true, false);
+		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl); // for low level operations
+		wc = new File(testDir, "wc");
+		System.out.println("Running local fs repository " + repoUrl);
+		clientManager = SVNClientManager.newInstance();
 	}
 	
 	@After
-	public void tearDown() {
-		SvnTestSetup.getInstance().tearDown();
+	public void tearDown() throws IOException {
+		if (doCleanup) {
+			FileUtils.deleteDirectory(testDir);
+		} else {
+			System.out.println("Test data kept at: " + testDir.getAbsolutePath());
+		}
+	}
+	
+	private void svncheckout() throws SVNException {
+		clientManager.getUpdateClient().doCheckout(repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+	}
+	
+	private void svnupdate() throws SVNException {
+		clientManager.getUpdateClient().doUpdate(wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
+	}
+	
+	private long svncommit(String comment) throws SVNException {
+		return clientManager.getCommitClient().doCommit(
+				new File[]{wc}, false, comment, null, null, false, false, SVNDepth.INFINITY).getNewRevision();
+	}
+	
+	private long svncommit() throws SVNException {
+		return svncommit("");
+	}
+	
+	private void svnpropset(File path, String propname, String propval) throws SVNException {
+		clientManager.getWCClient().doSetProperty(path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
+	}
+
+	private void svnadd(File... paths) throws SVNException {
+		clientManager.getWCClient().doAdd(
+				paths, true, false, false, SVNDepth.INFINITY, true, true, true);
 	}
 	
 	@Test
-	public void testBasic_SvnHttp() {
+	public void testBasic() throws Exception {
 		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
-		assertNotNull("Should find test resouces is src/test/resources classpath entry", b1);
-		CmsCommitChangeset c1 = new CmsCommitChangeset();
-		c1.add(new FileAdd(new CmsItemPath("/basic.xml"), new RepoRevision(0, null), b1));
-		RepoRevision r1 = commit.run(c1);
-		
 		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
-		CmsCommitChangeset c2 = new CmsCommitChangeset();
-		c2.add(new FileModification(new CmsItemPath("/basic.xml"), r1, b1, b2));
-		RepoRevision r2 = commit.run(c2);
+		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
+
+		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
 		
-		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
-		CmsCommitChangeset c3 = new CmsCommitChangeset();
-		c3.add(new FileModification(new CmsItemPath("/basic.xml"), r2, b2, b3));
-		RepoRevision r3 = commit.run(c3);		
+		svncheckout();
 		
-		repository.keep();
+		File f1 = new File(wc, "basic.xml");
+		IOUtils.copy(b1, new FileOutputStream(f1));
+		svnadd(f1);
+		svncommit("first");
+		IOUtils.copy(b2, new FileOutputStream(f1));
+		svncommit("second");
+		IOUtils.copy(b3, new FileOutputStream(f1));
+		svncommit("third");
 		
-		// Now we have a repository, build the changeset
+		DeltaVStore store = new DeltaVStoreMemory();
+		
+		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
+		// trigger calculation for revision 1, should produce a delta-v file in storage
+		
+		Object v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L));
+		assertNotNull(v1);
+		// assert structure. Use XmlUnit, jsoup or jdom?
+		
+		// trigger calculation for reviison 3, should automatically invoke calculation for revision 2
+		
 	}
 
 }
