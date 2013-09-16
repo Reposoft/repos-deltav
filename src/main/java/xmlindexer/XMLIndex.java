@@ -19,8 +19,7 @@ public class XMLIndex {
      * @throws IOException If the index file or index folder could not be read/written.
      * @throws SAXException If an XML document could not be parsed.
      */
-    public static void main(String[] args)
-            throws SVNException, IOException, SAXException {
+    public static void main(String[] args) {
         if (args.length < 3) {
             throw new IllegalArgumentException("Must have at least 3 arguments.");
         }
