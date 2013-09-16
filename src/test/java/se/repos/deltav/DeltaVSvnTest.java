@@ -25,6 +25,7 @@ import se.repos.deltav.store.DeltaVStore;
 import se.repos.deltav.store.DeltaVStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
+import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 import se.simonsoft.cms.item.inspection.CmsChangesetReader;
@@ -120,11 +121,9 @@ public class DeltaVSvnTest {
 		svncommit();
 		
 		DeltaVStore store = new DeltaVStoreMemory();
-		
-		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
-		// trigger calculation for revision 1, should produce a delta-v file in storage
-		
-		Object v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L), indexLocation);
+		CmsItemId testItem = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
+		store.put(testItem, indexLocation);
+		Object v1 = store.get(testItem, indexLocation);
 		assertNotNull(v1);
 		// assert structure. Use XmlUnit, jsoup or jdom?
 		

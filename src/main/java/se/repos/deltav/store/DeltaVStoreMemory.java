@@ -1,7 +1,10 @@
 package se.repos.deltav.store;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.w3c.dom.Document;
 import se.simonsoft.cms.item.CmsItemId;
 import xmlindexer.XMLIndexBackend;
@@ -28,9 +31,13 @@ public class DeltaVStoreMemory implements DeltaVStore {
 
 	@Override
 	public void get(CmsItemId resource, String indexLocation, OutputStream indexStream) {
-		XMLIndexBackend back = new XMLIndexBackend(indexLocation);
-		File indexFile = back.getIndexFile(indexLocation);
-		// TODO Skriv indexFile till indexStream.
+		try {
+			XMLIndexBackend back = new XMLIndexBackend(indexLocation);
+			Path indexFilePath = back.getIndexFile(indexLocation).toPath();
+			Files.copy(indexFilePath, indexStream);
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	@Override

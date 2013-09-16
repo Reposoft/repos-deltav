@@ -16,7 +16,6 @@ public class ElementUtils {
      * @return Whether elem contains attr.
      */
     public static boolean hasEqualAttribute(Element elem, Attr attr) {
-        // TODO Verifiera att förändringen här inte bröt någonting.
         return elem.hasAttribute(attr.getName())
                 && elem.getAttribute(attr.getName()).equals(attr.getValue());
     }
