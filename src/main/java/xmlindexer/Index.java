@@ -1,6 +1,5 @@
 package xmlindexer;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.parsers.*;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.*;
 import org.custommonkey.xmlunit.*;
 import org.w3c.dom.*;
@@ -99,30 +95,9 @@ public final class Index {
         IndexElement attr = new IndexElement(this, e);
         return attr;
     }
-
-    /**
-     * Writes the indexDocument to the given file.
-     * @throws IOException If the file could not be writted to.
-     */
-    public void writeToFile(File file) throws IOException {
-        File parentFolder = file.getParentFile();
-        if (!parentFolder.exists() && !parentFolder.mkdirs()) {
-            throw new RuntimeException(
-                    "Failed to create index file location:" + parentFolder);
-        } else if (!file.exists() && !file.createNewFile()) {
-            throw new RuntimeException(
-                    "Failed to create index file:" + file);
-        }
-
-        Source source = new DOMSource(index);
-        Result result = new StreamResult(file);
-        try {
-            Transformer xformer =
-                    TransformerFactory.newInstance().newTransformer();
-            xformer.transform(source, result);
-        } catch (TransformerException | TransformerFactoryConfigurationError ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+    
+    public Document toDocument() {
+    	return index;
     }
 
     /**
@@ -366,7 +341,6 @@ public final class Index {
     private void assertEquals() throws IOException {
         if (!this.getRootElement().isEqualElement(
                 currentVersion.getDocumentElement())) {
-            this.writeToFile(new File("./err.xml"));
             throw new RuntimeException(
                     "Index does not match lastest version of file."
                     + "\nFaulty index dumped to err.xml.");

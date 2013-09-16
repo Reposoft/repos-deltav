@@ -24,7 +24,8 @@ public class XMLIndex {
         if (args.length < 3) {
             throw new IllegalArgumentException("Must have at least 3 arguments.");
         }
-        XMLIndexBackend idx = new XMLIndexBackend(args[0], args[1]);
+        XMLIndexBackend idx = new XMLIndexBackend(args[1]);
+        idx.setRepo(args[0]);
         for (int i = 2; i < args.length; i++) {
             idx.indexFile(args[i]);
         }

@@ -7,8 +7,16 @@ import java.io.StringReader;
 import java.nio.file.*;
 import java.util.*;
 import javax.xml.parsers.*;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.io.*;
 import org.custommonkey.xmlunit.*;
 import org.w3c.dom.*;
@@ -22,7 +30,7 @@ import org.xml.sax.SAXException;
  */
 public class XMLIndexBackend {
 
-    private SVNRepository repo;
+    private SVNRepository repo = null;
     private String indexLocation;
     private DocumentBuilder db;
 
@@ -34,9 +42,7 @@ public class XMLIndexBackend {
      * index files will be put.
      * @throws SVNException If the connection to SVN repository can't be initialized.
      */
-    public XMLIndexBackend(String repoURL, String indexLocation)
-            throws SVNException {
-        repo = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repoURL));
+    public XMLIndexBackend(String indexLocation) {
         this.indexLocation = indexLocation;
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -58,25 +64,26 @@ public class XMLIndexBackend {
         XMLUnit.setIgnoreWhitespace(true);
         XMLUnit.setNormalize(true);
         XMLUnit.setNormalizeWhitespace(false);
-
     }
-
-    /**
-     * Sets authenticator for SVN repository.
-     * Defaults to no authentication.
-     * @param auth The authenticator to use.
-     */
-    public void setAuth(ISVNAuthenticationManager auth) {
-        repo.setAuthenticationManager(auth);
+    
+    public SVNRepository getRepo() {
+    	return this.repo;
     }
-
-    /**
-     * Gets authenticator for SVN repository.
-     * Defaults to no authentication.
-     * @return The authenticator currently being used.
-     */
-    public ISVNAuthenticationManager getAuth() {
-        return repo.getAuthenticationManager();
+    
+    public void setRepo(SVNRepository repo) {
+    	this.repo = repo;
+    }
+    
+    public void setRepo(String repoURL) throws SVNException {
+        repo = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repoURL));
+    }
+    
+    public File getIndexFile(String path) {
+		return	FileSystems.getDefault().getPath(indexLocation, path).toFile();
+	}
+    
+    public boolean hasIndexFile(String path) {
+    	return getIndexFile(path).exists();
     }
 
     /**
@@ -96,8 +103,7 @@ public class XMLIndexBackend {
         System.out.println("Indexing " + path);
         ArrayList<SVNFileRevision> fileRevisions = new ArrayList<>();
 
-        File indexFile =
-                FileSystems.getDefault().getPath(indexLocation, path).toFile();
+        File indexFile = getIndexFile(path);
         Index index;
         if (!indexFile.exists()) {
             // Create new index file from first version.
@@ -109,11 +115,11 @@ public class XMLIndexBackend {
             System.out.print("Normalizing first version of " + path + "...");
             index = Index.normalizeDocument(doc, firstRev);
             fileRevisions.remove(0);
-            index.writeToFile(indexFile);
+            writeToFile(indexFile, index);
             System.out.println("done.");
         } else {
             System.out.println("Parsing index at " + path + "...");
-            index = parseIndex(path, indexFile);
+            index = parseIndex(path);
             long lastRevision = index.getDocumentVersion();
             System.out.println("Parsed version " + lastRevision + " of index.");
             System.out.print("Fetching repository history...");
@@ -131,11 +137,11 @@ public class XMLIndexBackend {
                     + " of " + path + "...");
             Document newDocument = fetchDocumentVersion(path, newRevision);
             index.update(newDocument, newRevision);
-            index.writeToFile(indexFile);
+            writeToFile(indexFile, index);
             System.out.println("done.");
         }
 
-        index.writeToFile(indexFile);
+        writeToFile(indexFile, index);
         System.out.println("Finished indexing " + path + "!");
     }
 
@@ -162,7 +168,7 @@ public class XMLIndexBackend {
     }
 
     /**
-     * Reads the file provided as a v-file, fetches the docVesrion of the
+     * Reads the file provided as a v-file, fetches the docVersion of the
      * file indexed, and returns the index parsed.
      * @throws SVNException If the corresponding document could not be fetched.
      * @throws IOException If the file could not be read.
@@ -171,10 +177,10 @@ public class XMLIndexBackend {
      * attributes it should have.
      * @return The index that was parsed.
      */
-    private Index parseIndex(String path, File file)
+    public Index parseIndex(String path)
             throws SAXException, IOException, SVNException {
         String message = "Malformed index at: " + path;
-        Document doc = db.parse(file);
+        Document doc = db.parse(getIndexFile(path));
         doc.normalizeDocument();
         Element root = doc.getDocumentElement();
         if (root == null) {
@@ -186,6 +192,31 @@ public class XMLIndexBackend {
             }
             long version = Long.parseLong(versionString);
             return new Index(doc, fetchDocumentVersion(path, version));
+        }
+    }
+    
+    /**
+     * Writes the indexDocument to the given file.
+     * @throws IOException If the file could not be writted to.
+     */
+    public void writeToFile(File file, Index index) throws IOException {
+        File parentFolder = file.getParentFile();
+        if (!parentFolder.exists() && !parentFolder.mkdirs()) {
+            throw new RuntimeException(
+                    "Failed to create index file location:" + parentFolder);
+        } else if (!file.exists() && !file.createNewFile()) {
+            throw new RuntimeException(
+                    "Failed to create index file:" + file);
+        }
+
+        Source source = new DOMSource(index.toDocument());
+        Result result = new StreamResult(file);
+        try {
+            Transformer xformer =
+                    TransformerFactory.newInstance().newTransformer();
+            xformer.transform(source, result);
+        } catch (TransformerException | TransformerFactoryConfigurationError ex) {
+            throw new RuntimeException(ex.getMessage());
         }
     }
 }
