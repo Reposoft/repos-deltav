@@ -24,7 +24,6 @@ public class XMLIndexBackend {
 
     private SVNRepository repo;
     private String indexLocation;
-    private Index index;
     private DocumentBuilder db;
 
     /**
@@ -99,6 +98,7 @@ public class XMLIndexBackend {
 
         File indexFile =
                 FileSystems.getDefault().getPath(indexLocation, path).toFile();
+        Index index;
         if (!indexFile.exists()) {
             // Create new index file from first version.
             System.out.print("Fetching repository history...");

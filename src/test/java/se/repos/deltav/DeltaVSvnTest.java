@@ -19,25 +19,16 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import se.repos.deltav.store.DeltaVStore;
 import se.repos.deltav.store.DeltaVStoreMemory;
-import se.simonsoft.cms.backend.svnkit.commit.CmsCommitSvnkitEditor;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
 import se.simonsoft.cms.item.CmsItemPath;
-import se.simonsoft.cms.item.RepoRevision;
-import se.simonsoft.cms.item.commit.CmsCommit;
-import se.simonsoft.cms.item.commit.CmsCommitChangeset;
-import se.simonsoft.cms.item.commit.FileAdd;
-import se.simonsoft.cms.item.commit.FileModification;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 import se.simonsoft.cms.item.inspection.CmsChangesetReader;
 import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
-import se.simonsoft.cms.testing.svn.CmsTestRepository;
-import se.simonsoft.cms.testing.svn.SvnTestSetup;
 
 /**
  * Try to mimic the runtime scenario in webapp.
@@ -110,6 +101,7 @@ public class DeltaVSvnTest {
 	
 	@Test
 	public void testBasic() throws Exception {
+		String indexLocation = "./indexes";
 		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
 		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
 		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
@@ -121,18 +113,18 @@ public class DeltaVSvnTest {
 		File f1 = new File(wc, "basic.xml");
 		IOUtils.copy(b1, new FileOutputStream(f1));
 		svnadd(f1);
-		svncommit("first");
+		svncommit();
 		IOUtils.copy(b2, new FileOutputStream(f1));
-		svncommit("second");
+		svncommit();
 		IOUtils.copy(b3, new FileOutputStream(f1));
-		svncommit("third");
+		svncommit();
 		
 		DeltaVStore store = new DeltaVStoreMemory();
 		
 		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
 		// trigger calculation for revision 1, should produce a delta-v file in storage
 		
-		Object v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L));
+		Object v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L), indexLocation);
 		assertNotNull(v1);
 		// assert structure. Use XmlUnit, jsoup or jdom?
 		
