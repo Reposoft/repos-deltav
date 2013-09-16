@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.w3c.dom.Document;
 import se.simonsoft.cms.item.CmsItemId;
 import xmlindexer.XMLIndexBackend;

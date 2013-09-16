@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -102,11 +103,15 @@ public class DeltaVSvnTest {
 	
 	@Test
 	public void testBasic() throws Exception {
-		String indexLocation = "./indexes";
+		String indexLocation = 
+				FileSystems.getDefault().
+				getPath(testDir.getPath().toString(),"indexes").
+				toString();
 		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
 		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
 		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
 
+		// TODO Sätt den här till mera rimliga defaults.
 		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
 		
 		svncheckout();
