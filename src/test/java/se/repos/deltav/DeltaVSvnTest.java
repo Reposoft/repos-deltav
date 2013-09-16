@@ -34,7 +34,8 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 
 /**
  * Try to mimic the runtime scenario in webapp.
- * Volume testing of the actual algorithm might be better placed in a more isolated test using test files directly.
+ * Volume testing of the actual algorithm might be better placed in a more
+ * isolated test using test files directly.
  */
 public class DeltaVSvnTest {
 
@@ -76,11 +77,13 @@ public class DeltaVSvnTest {
 	}
 	
 	private void svncheckout() throws SVNException {
-		clientManager.getUpdateClient().doCheckout(repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+		clientManager.getUpdateClient().doCheckout(
+				repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
 	}
 	
 	private void svnupdate() throws SVNException {
-		clientManager.getUpdateClient().doUpdate(wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
+		clientManager.getUpdateClient().doUpdate(
+				wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
 	}
 	
 	private long svncommit(String comment) throws SVNException {
@@ -93,7 +96,8 @@ public class DeltaVSvnTest {
 	}
 	
 	private void svnpropset(File path, String propname, String propval) throws SVNException {
-		clientManager.getWCClient().doSetProperty(path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
+		clientManager.getWCClient().doSetProperty(
+				path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
 	}
 
 	private void svnadd(File... paths) throws SVNException {
@@ -107,12 +111,16 @@ public class DeltaVSvnTest {
 				FileSystems.getDefault().
 				getPath(testDir.getPath().toString(),"indexes").
 				toString();
-		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
-		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
-		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
+		InputStream b1 = this.getClass().getClassLoader().
+				getResourceAsStream("se/repos/deltav/basic_1.xml");
+		InputStream b2 = this.getClass().getClassLoader().
+				getResourceAsStream("se/repos/deltav/basic_2.xml");
+		InputStream b3 = this.getClass().getClassLoader().
+				getResourceAsStream("se/repos/deltav/basic_3.xml");
 
 		// TODO Sätt den här till mera rimliga defaults.
-		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
+		CmsRepositoryInspection repository = 
+				new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
 		
 		svncheckout();
 		
