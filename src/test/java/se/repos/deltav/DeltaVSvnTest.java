@@ -115,6 +115,10 @@ public class DeltaVSvnTest {
 		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
 
 		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
+		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
+		contentsReader.setSVNLookClientProvider(svnlookProvider);
+		CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
+		changesetReader.setSVNLookClientProvider(svnlookProvider);
 		
 		svncheckout();
 		
@@ -122,39 +126,32 @@ public class DeltaVSvnTest {
 		IOUtils.copy(b1, new FileOutputStream(f1));
 		svnadd(f1);
 		RepoRevision r1 = svncommit("first");
+		assertNotNull("should commit", r1);
 		IOUtils.copy(b2, new FileOutputStream(f1));
 		RepoRevision r2 = svncommit("second");
 		IOUtils.copy(b3, new FileOutputStream(f1));
 		RepoRevision r3 = svncommit("third");
 		
 		DeltaVStore store = new DeltaVStoreMemory();
-		
-		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
-		// trigger calculation for revision 1, should produce a delta-v file in storage
 		VfileCalculatorImpl calculator = new VfileCalculatorImpl(store);
 		
 		// supporting infrastructure
-		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
-		contentsReader.setSVNLookClientProvider(svnlookProvider);
 		VfileCommitItemHandler itemHandler = new VfileCommitItemHandler(calculator, contentsReader);
+		VfileCommitHandler commitHandler = new VfileCommitHandler(repository, itemHandler).setCmsChangesetReader(changesetReader);
 		
-		CmsChangesetReader reader = new CmsChangesetReaderSvnkitLook().setSVNLookClientProvider(svnlookProvider);
-		CmsChangeset c1 = reader.read(repository, r1);
-		for (CmsChangesetItem changesetItem : c1.getItems()) {
-			itemHandler.onCommit(repository, changesetItem);
-		}
-		
+		commitHandler.onCommit(r1);
+
 		// now expect r1 to have been caclulated and stored
 		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
 		assertNotNull("V-file calculation should have stored a something", v1);
-		// TODO assert structure. Use XmlUnit, jsoup or jdom?
+		// TODO assert structure. Using XmlUnit or jsoup probably to make it maintainable.
 		
-		for (CmsChangesetItem changesetItem : reader.read(repository, r2).getItems()) itemHandler.onCommit(repository, changesetItem);
+		commitHandler.onCommit(r2);
 		
 		Document v2 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
 		assertNotNull("V-file should still exist", v2);
 		
-		for (CmsChangesetItem changesetItem : reader.read(repository, r3).getItems()) itemHandler.onCommit(repository, changesetItem);
+		commitHandler.onCommit(r3);
 		
 		Document v3 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
 		assertNotNull(v3);
