@@ -2,7 +2,6 @@ package xmlindexer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Objects;
 import org.w3c.dom.*;
 
 /**
@@ -316,8 +315,8 @@ public class IndexElement {
 
     public int hashCode() {
         int hash = 5;
-        hash = 79 * hash + Objects.hashCode(this.parentIndex);
-        hash = 79 * hash + Objects.hashCode(this.element);
+        hash = 79 * hash + this.parentIndex.hashCode();
+        hash = 79 * hash + this.element.hashCode();
         return hash;
     }
 
