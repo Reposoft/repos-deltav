@@ -5,12 +5,12 @@ import org.w3c.dom.Document;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 
-public class DeltaVStoreMemory implements DeltaVStore {
+public class DeltaVStoreBaseX implements DeltaVStore {
 
 	@Override
 	public void put(CmsItemId resource, Document deltav) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -30,5 +30,5 @@ public class DeltaVStoreMemory implements DeltaVStore {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 }

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystems;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -21,12 +20,12 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.w3c.dom.Document;
 
 import se.repos.deltav.store.DeltaVStore;
 import se.repos.deltav.store.DeltaVStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
-import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 import se.simonsoft.cms.item.inspection.CmsChangesetReader;
@@ -34,8 +33,7 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 
 /**
  * Try to mimic the runtime scenario in webapp.
- * Volume testing of the actual algorithm might be better placed in a more
- * isolated test using test files directly.
+ * Volume testing of the actual algorithm might be better placed in a more isolated test using test files directly.
  */
 public class DeltaVSvnTest {
 
@@ -77,13 +75,11 @@ public class DeltaVSvnTest {
 	}
 	
 	private void svncheckout() throws SVNException {
-		clientManager.getUpdateClient().doCheckout(
-				repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+		clientManager.getUpdateClient().doCheckout(repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
 	}
 	
 	private void svnupdate() throws SVNException {
-		clientManager.getUpdateClient().doUpdate(
-				wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
+		clientManager.getUpdateClient().doUpdate(wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
 	}
 	
 	private long svncommit(String comment) throws SVNException {
@@ -96,8 +92,7 @@ public class DeltaVSvnTest {
 	}
 	
 	private void svnpropset(File path, String propname, String propval) throws SVNException {
-		clientManager.getWCClient().doSetProperty(
-				path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
+		clientManager.getWCClient().doSetProperty(path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
 	}
 
 	private void svnadd(File... paths) throws SVNException {
@@ -107,37 +102,32 @@ public class DeltaVSvnTest {
 	
 	@Test
 	public void testBasic() throws Exception {
-		String indexLocation = 
-				FileSystems.getDefault().
-				getPath(testDir.getPath().toString(),"indexes").
-				toString();
-		InputStream b1 = this.getClass().getClassLoader().
-				getResourceAsStream("se/repos/deltav/basic_1.xml");
-		InputStream b2 = this.getClass().getClassLoader().
-				getResourceAsStream("se/repos/deltav/basic_2.xml");
-		InputStream b3 = this.getClass().getClassLoader().
-				getResourceAsStream("se/repos/deltav/basic_3.xml");
+		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
+		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
+		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
 
-		// TODO Sätt den här till mera rimliga defaults.
-		CmsRepositoryInspection repository = 
-				new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
+		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
 		
 		svncheckout();
 		
 		File f1 = new File(wc, "basic.xml");
 		IOUtils.copy(b1, new FileOutputStream(f1));
 		svnadd(f1);
-		svncommit();
+		svncommit("first");
 		IOUtils.copy(b2, new FileOutputStream(f1));
-		svncommit();
+		svncommit("second");
 		IOUtils.copy(b3, new FileOutputStream(f1));
-		svncommit();
+		svncommit("third");
 		
 		DeltaVStore store = new DeltaVStoreMemory();
-		CmsItemId testItem = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
-		store.put(testItem, indexLocation);
-		Object v1 = store.get(testItem, indexLocation);
-		assertNotNull(v1);
+		
+		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
+		// trigger calculation for revision 1, should produce a delta-v file in storage
+		
+		
+		
+		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L));
+		assertNotNull("V-file calculation should have stored a something", v1);
 		// assert structure. Use XmlUnit, jsoup or jdom?
 		
 		// trigger calculation for reviison 3, should automatically invoke calculation for revision 2
