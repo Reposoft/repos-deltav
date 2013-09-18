@@ -2,6 +2,8 @@ package se.repos.deltav;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -11,6 +13,8 @@ import se.simonsoft.cms.item.RepoRevision;
 
 public class VfileCalculatorImpl {
 
+	private static final Logger logger = LoggerFactory.getLogger(VfileCalculatorImpl.class);
+	
 	private DeltaVStore storage;
 	
 	@Inject
@@ -29,7 +33,8 @@ public class VfileCalculatorImpl {
 	 * @throws SAXException if parsing of previous or current fails
 	 */
 	public void increment(CmsItemId itemId, RepoRevision previous, InputSource previousContent, RepoRevision current, InputSource currentContent) {
-		throw new UnsupportedOperationException("Not implemented");
+		logger.debug("Increment requested for {} {}->{}", itemId, previous, current);
+		//throw new UnsupportedOperationException("Not implemented");
 	}
 	
 }

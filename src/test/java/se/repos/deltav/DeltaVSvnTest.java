@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
+
+import javax.inject.Provider;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -20,13 +23,18 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
 
 import se.repos.deltav.store.DeltaVStore;
 import se.repos.deltav.store.DeltaVStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
+import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
 import se.simonsoft.cms.item.CmsItemPath;
+import se.simonsoft.cms.item.RepoRevision;
+import se.simonsoft.cms.item.events.change.CmsChangeset;
+import se.simonsoft.cms.item.events.change.CmsChangesetItem;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 import se.simonsoft.cms.item.inspection.CmsChangesetReader;
 import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
@@ -45,9 +53,7 @@ public class DeltaVSvnTest {
 	private File wc = null;
 	
 	private SVNClientManager clientManager = null;
-	
-	CmsChangesetReader changesetReader = new CmsChangesetReaderSvnkitLook()
-		.setSVNLookClientProvider(new SvnlookClientProviderStateless());
+	private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
 	
 	static {
 		FSRepositoryFactory.setup();
@@ -82,12 +88,14 @@ public class DeltaVSvnTest {
 		clientManager.getUpdateClient().doUpdate(wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
 	}
 	
-	private long svncommit(String comment) throws SVNException {
-		return clientManager.getCommitClient().doCommit(
+	private RepoRevision svncommit(String comment) throws SVNException {
+		long rev = clientManager.getCommitClient().doCommit(
 				new File[]{wc}, false, comment, null, null, false, false, SVNDepth.INFINITY).getNewRevision();
+		Date d = svnlookProvider.get().doGetDate(repoDir, SVNRevision.create(rev));
+		return new RepoRevision(rev, d);
 	}
 	
-	private long svncommit() throws SVNException {
+	private RepoRevision svncommit() throws SVNException {
 		return svncommit("");
 	}
 	
@@ -113,25 +121,43 @@ public class DeltaVSvnTest {
 		File f1 = new File(wc, "basic.xml");
 		IOUtils.copy(b1, new FileOutputStream(f1));
 		svnadd(f1);
-		svncommit("first");
+		RepoRevision r1 = svncommit("first");
 		IOUtils.copy(b2, new FileOutputStream(f1));
-		svncommit("second");
+		RepoRevision r2 = svncommit("second");
 		IOUtils.copy(b3, new FileOutputStream(f1));
-		svncommit("third");
+		RepoRevision r3 = svncommit("third");
 		
 		DeltaVStore store = new DeltaVStoreMemory();
 		
 		// TODO instantiate Delta-V calculator, inject CmsChangesetReader
 		// trigger calculation for revision 1, should produce a delta-v file in storage
+		VfileCalculatorImpl calculator = new VfileCalculatorImpl(store);
 		
+		// supporting infrastructure
+		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
+		contentsReader.setSVNLookClientProvider(svnlookProvider);
+		VfileCommitItemHandler itemHandler = new VfileCommitItemHandler(calculator, contentsReader);
 		
+		CmsChangesetReader reader = new CmsChangesetReaderSvnkitLook().setSVNLookClientProvider(svnlookProvider);
+		CmsChangeset c1 = reader.read(repository, r1);
+		for (CmsChangesetItem changesetItem : c1.getItems()) {
+			itemHandler.onCommit(repository, changesetItem);
+		}
 		
-		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L));
+		// now expect r1 to have been caclulated and stored
+		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
 		assertNotNull("V-file calculation should have stored a something", v1);
 		// TODO assert structure. Use XmlUnit, jsoup or jdom?
 		
-		// TODO trigger calculation for reviison 3, should automatically invoke calculation for revision 2
+		for (CmsChangesetItem changesetItem : reader.read(repository, r2).getItems()) itemHandler.onCommit(repository, changesetItem);
 		
+		Document v2 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
+		assertNotNull("V-file should still exist", v2);
+		
+		for (CmsChangesetItem changesetItem : reader.read(repository, r3).getItems()) itemHandler.onCommit(repository, changesetItem);
+		
+		Document v3 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
+		assertNotNull(v3);
 	}
 
 }
