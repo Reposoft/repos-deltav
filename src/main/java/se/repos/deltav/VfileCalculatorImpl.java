@@ -1,9 +1,8 @@
 package se.repos.deltav;
 
-import java.io.InputStream;
-
 import javax.inject.Inject;
 
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import se.repos.deltav.store.DeltaVStore;
@@ -29,7 +28,7 @@ public class VfileCalculatorImpl {
 	 * @throws IllegalStateException if previous is non-null and but the revision does not exist in V-file storage
 	 * @throws SAXException if parsing of previous or current fails
 	 */
-	public void increment(CmsItemId itemId, RepoRevision previous, InputStream previousContent, RepoRevision current, InputStream currentContent) {
+	public void increment(CmsItemId itemId, RepoRevision previous, InputSource previousContent, RepoRevision current, InputSource currentContent) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 	
