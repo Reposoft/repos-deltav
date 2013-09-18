@@ -9,26 +9,22 @@ public class DeltaVStoreBaseX implements DeltaVStore {
 
 	@Override
 	public void put(CmsItemId resource, Document deltav) {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 
 	@Override
 	public boolean has(CmsItemId resouce) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 
 	@Override
 	public RepoRevision getHighestCalculated(CmsItemId resource) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 
 	@Override
 	public Document get(CmsItemId resource) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 
 }
