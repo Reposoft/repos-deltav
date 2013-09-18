@@ -35,6 +35,7 @@ public class VfileCalculatorImpl {
 	public void increment(CmsItemId itemId, RepoRevision previous, InputSource previousContent, RepoRevision current, InputSource currentContent) {
 		logger.debug("Increment requested for {} {}->{}", itemId, previous, current);
 		//throw new UnsupportedOperationException("Not implemented");
+		// TODO Implement VFileCalculator.increment.
 	}
 	
 }
