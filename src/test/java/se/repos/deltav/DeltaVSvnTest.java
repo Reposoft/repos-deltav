@@ -128,9 +128,9 @@ public class DeltaVSvnTest {
 		
 		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"), 1L));
 		assertNotNull("V-file calculation should have stored a something", v1);
-		// assert structure. Use XmlUnit, jsoup or jdom?
+		// TODO assert structure. Use XmlUnit, jsoup or jdom?
 		
-		// trigger calculation for reviison 3, should automatically invoke calculation for revision 2
+		// TODO trigger calculation for reviison 3, should automatically invoke calculation for revision 2
 		
 	}
 
