@@ -49,17 +49,15 @@ public final class Index {
     /**
      * Sets the docVersion.
      */
-    public void setDocumentVersion(long version) {
-        index.getDocumentElement().setAttribute(StringConstants.DOCVERSION,
-                Long.toString(version));
+    public void setDocumentVersion(String version) {
+        index.getDocumentElement().setAttribute(StringConstants.DOCVERSION, version);
     }
 
     /**
      * Gets the docVersion.
      */
-    public long getDocumentVersion() {
-        return Long.parseLong(index.getDocumentElement().getAttribute(
-                StringConstants.DOCVERSION));
+    public String getDocumentVersion() {
+        return index.getDocumentElement().getAttribute(StringConstants.DOCVERSION);
     }
 
     public IndexElement getRootElement() {
@@ -73,8 +71,7 @@ public final class Index {
      */
     public IndexElement createIndexElement(String tagName) {
         Element elem = index.createElement(tagName);
-        elem.setAttribute(StringConstants.VSTART,
-                Long.toString(getDocumentVersion()));
+        elem.setAttribute(StringConstants.VSTART, getDocumentVersion());
         elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
         IndexElement indexElem = new IndexElement(this, elem);
         return indexElem;
@@ -87,8 +84,7 @@ public final class Index {
      */
     public IndexElement createIndexAttribute(String name, String value) {
         Element e = index.createElement(name);
-        e.setAttribute(StringConstants.VSTART,
-                Long.toString(getDocumentVersion()));
+        e.setAttribute(StringConstants.VSTART, getDocumentVersion());
         e.setAttribute(StringConstants.VEND, StringConstants.NOW);
         e.setAttribute(StringConstants.ISATTR, StringConstants.YES);
         ElementUtils.setValue(e, value);
@@ -106,7 +102,7 @@ public final class Index {
      * @param version The SVN version of the firstVersion.
      * @return The new Index.
      */
-    public static Index normalizeDocument(Document firstVersion, long version) {
+    public static Index normalizeDocument(Document firstVersion, String version) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         dbf.setIgnoringComments(true);
@@ -124,9 +120,9 @@ public final class Index {
 
         Element root = firstVersion.getDocumentElement();
         Element newRoot = indexXML.createElement(root.getTagName());
-        newRoot.setAttribute(StringConstants.VSTART, Long.toString(version));
+        newRoot.setAttribute(StringConstants.VSTART, version);
         newRoot.setAttribute(StringConstants.VEND, StringConstants.NOW);
-        newRoot.setAttribute(StringConstants.DOCVERSION, Long.toString(version));
+        newRoot.setAttribute(StringConstants.DOCVERSION, version);
         indexXML.appendChild(newRoot);
         Index idx = new Index(indexXML, firstVersion);
 
@@ -191,7 +187,7 @@ public final class Index {
      * @param newVersion The new version of the document.
      * @param newVersionNumber The version number of said document in SVN.
      */
-    public void update(Document newVersion, long newVersionNumber)
+    public void update(Document newVersion, String newVersionNumber)
             throws IOException {
         DetailedDiff diff = new DetailedDiff(
                 new Diff(currentVersion, newVersion));
@@ -325,7 +321,7 @@ public final class Index {
     /* Removes nodes with the same VSTART/VEND time,
      * and sort deleted nodes to the bottom of the file*/
     private void cleanNode(IndexElement parent, IndexElement child) {
-        if (child.created() == child.deleted()) {
+        if (child.created().equals(child.deleted())) {
             parent.eraseChild(child);
         } else {
             if (!child.isLive()) {

@@ -92,19 +92,18 @@ public class IndexElement {
         for (IndexElement elem : this.getChildElements()) {
             elem.delete();
         }
-        element.setAttribute(StringConstants.VEND,
-                Long.toString(parentIndex.getDocumentVersion()));
+        element.setAttribute(StringConstants.VEND, parentIndex.getDocumentVersion());
     }
 
-    public long created() {
-        return Long.parseLong(element.getAttribute(StringConstants.VSTART));
+    public String created() {
+        return element.getAttribute(StringConstants.VSTART);
     }
 
-    public long deleted() {
+    public String deleted() {
         if (isLive()) {
-            return -1;
+            return null;
         } else {
-            return Long.parseLong(element.getAttribute(StringConstants.VEND));
+            return element.getAttribute(StringConstants.VEND);
         }
     }
 
