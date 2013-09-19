@@ -44,6 +44,15 @@ public final class Index {
         }
         this.index = indexDocument;
         this.currentVersion = currentVersion;
+
+        // Set global parameters for XMLUnit.
+		XMLUnit.setCompareUnmatched(false);
+		XMLUnit.setIgnoreAttributeOrder(true);
+		XMLUnit.setIgnoreComments(true);
+		XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
+		XMLUnit.setIgnoreWhitespace(true);
+		XMLUnit.setNormalize(true);
+		XMLUnit.setNormalizeWhitespace(false);
     }
 
     /**
