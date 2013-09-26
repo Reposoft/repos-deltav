@@ -1,4 +1,4 @@
-package se.repos.vfiletest;
+package se.repos.vfile.test;
 
 import java.io.File;
 import java.io.FileOutputStream;
