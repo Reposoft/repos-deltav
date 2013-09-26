@@ -39,7 +39,7 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
  * algorithm might be better placed in a more isolated test using test files
  * directly.
  */
-public class DeltaVSvnTest {
+public class VFileSvnTest {
 
 	// set to false to examine repository after test
 	private boolean doCleanup = true;
@@ -64,7 +64,7 @@ public class DeltaVSvnTest {
 		repoUrl = SVNRepositoryFactory.createLocalRepository(repoDir, true,
 				false);
 		// for low level operations
-		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl); 
+		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
 		wc = new File(testDir, "wc");
 		System.out.println("Running local fs repository " + repoUrl);
 		clientManager = SVNClientManager.newInstance();
@@ -75,7 +75,8 @@ public class DeltaVSvnTest {
 		if (doCleanup) {
 			FileUtils.deleteDirectory(testDir);
 		} else {
-			System.out.println("Test data kept at: " + testDir.getAbsolutePath());
+			System.out.println("Test data kept at: "
+					+ testDir.getAbsolutePath());
 		}
 	}
 
