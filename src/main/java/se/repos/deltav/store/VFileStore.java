@@ -16,7 +16,7 @@ public interface VFileStore {
 	 * 
 	 * @param resource
 	 *            the resource+revision that this v-file is calculated for
-	 * @param deltav
+	 * @param vfile
 	 *            the complete v-file for all revisions up to this one
 	 * @throws IllegalArgumentException
 	 *             if the resource lacks peg revision.
@@ -24,7 +24,7 @@ public interface VFileStore {
 	 *             if the resource has a revision that is older than highest
 	 *             calculated
 	 */
-	public void put(CmsItemId resource, Document deltav);
+	public void put(CmsItemId resource, Document vfile);
 
 	/**
 	 * @param resource

@@ -45,14 +45,14 @@ public class VFileStoreDisk implements VFileStore {
 	}
 
 	@Override
-	public void put(CmsItemId resource, Document deltav) {
+	public void put(CmsItemId resource, Document vfile) {
 		try {
 			String filePath = resource.getRelPath().toString();
 			File indexFile = new File(vFileFolder, filePath);
 			if(!indexFile.exists()) {
 				indexFile.createNewFile();
 			}
-			Source source = new DOMSource(deltav);
+			Source source = new DOMSource(vfile);
 			Result result = new StreamResult(indexFile);
 			trans.transform(source, result);
 		} catch(IOException | TransformerException e) {

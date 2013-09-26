@@ -152,5 +152,4 @@ public class VFileSvnTest {
 		Document v3 = store.get(testID);
 		assertNotNull(v3);
 	}
-
 }

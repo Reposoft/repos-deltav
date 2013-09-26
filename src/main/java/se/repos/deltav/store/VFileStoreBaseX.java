@@ -8,7 +8,7 @@ import se.simonsoft.cms.item.RepoRevision;
 public class VFileStoreBaseX implements VFileStore {
 
 	@Override
-	public void put(CmsItemId resource, Document deltav) {
+	public void put(CmsItemId resource, Document vfile) {
 		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 

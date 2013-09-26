@@ -15,8 +15,8 @@ public class VFileStoreMemory implements VFileStore {
 	}
 
 	@Override
-	public void put(CmsItemId resource, Document deltav) {
-		vFileTable.put(resource, deltav);
+	public void put(CmsItemId resource, Document vfile) {
+		vFileTable.put(resource, vfile);
 	}
 
 	@Override
