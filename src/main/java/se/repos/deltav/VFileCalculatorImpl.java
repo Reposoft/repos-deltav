@@ -14,16 +14,16 @@ import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 import xmlindexer.Index;
 
-public class VfileCalculatorImpl {
+public class VFileCalculatorImpl {
 
 	private static final Logger logger = LoggerFactory
-			.getLogger(VfileCalculatorImpl.class);
+			.getLogger(VFileCalculatorImpl.class);
 
 	private DeltaVStore storage;
 	private DocumentBuilder db;
 
 	@Inject
-	public VfileCalculatorImpl(DeltaVStore storage) {
+	public VFileCalculatorImpl(DeltaVStore storage) {
 		this.storage = storage;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setIgnoringComments(true);

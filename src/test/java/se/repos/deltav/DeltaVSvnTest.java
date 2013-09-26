@@ -118,11 +118,11 @@ public class DeltaVSvnTest {
 		RepoRevision r3 = svncommit("third");
 		
 		DeltaVStore store = new DeltaVStoreMemory();
-		VfileCalculatorImpl calculator = new VfileCalculatorImpl(store);
+		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 		
 		// supporting infrastructure
-		VfileCommitItemHandler itemHandler = new VfileCommitItemHandler(calculator, contentsReader);
-		VfileCommitHandler commitHandler = new VfileCommitHandler(repository, itemHandler).setCmsChangesetReader(changesetReader);
+		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator, contentsReader);
+		VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler).setCmsChangesetReader(changesetReader);
 		
 		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
 		commitHandler.onCommit(r1);

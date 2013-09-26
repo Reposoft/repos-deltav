@@ -15,13 +15,13 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
  * Draft.
  * One other way of invoking the calculator.
  */
-public class VfileCommitItemHandler {
+public class VFileCommitItemHandler {
 
-	private VfileCalculatorImpl calculator; 
+	private VFileCalculatorImpl calculator; 
 	private CmsContentsReader contentsReader;
 	
 	@Inject
-	public VfileCommitItemHandler(VfileCalculatorImpl calculator, CmsContentsReader contentsReader) {
+	public VFileCommitItemHandler(VFileCalculatorImpl calculator, CmsContentsReader contentsReader) {
 		this.calculator = calculator;
 		this.contentsReader = contentsReader;
 	}

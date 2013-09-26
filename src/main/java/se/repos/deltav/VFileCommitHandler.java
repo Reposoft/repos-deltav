@@ -13,14 +13,14 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
  * Draft.
  * One way of invoking the calculator.
  */
-public class VfileCommitHandler implements ChangesetEventListener {
+public class VFileCommitHandler implements ChangesetEventListener {
 
 	private CmsRepositoryInspection repository;
-	private VfileCommitItemHandler itemHandler;
+	private VFileCommitItemHandler itemHandler;
 	private CmsChangesetReader changesetReader = null;
 	
 	@Inject
-	public VfileCommitHandler(CmsRepositoryInspection repository, VfileCommitItemHandler itemHandler) {
+	public VFileCommitHandler(CmsRepositoryInspection repository, VFileCommitItemHandler itemHandler) {
 		this.repository = repository;
 		this.itemHandler = itemHandler;
 	}
@@ -30,7 +30,7 @@ public class VfileCommitHandler implements ChangesetEventListener {
 	 * @return 
 	 */
 	@Inject
-	public VfileCommitHandler setCmsChangesetReader(CmsChangesetReader changesetReader) {
+	public VFileCommitHandler setCmsChangesetReader(CmsChangesetReader changesetReader) {
 		this.changesetReader  = changesetReader;
 		return this;
 	}
