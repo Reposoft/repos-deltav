@@ -1,4 +1,4 @@
-package se.repos.deltav;
+package se.repos.vfiletest;
 
 import java.io.File;
 import java.io.FileOutputStream;
