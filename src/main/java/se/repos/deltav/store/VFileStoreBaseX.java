@@ -5,7 +5,7 @@ import org.w3c.dom.Document;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 
-public class DeltaVStoreBaseX implements DeltaVStore {
+public class VFileStoreBaseX implements VFileStore {
 
 	@Override
 	public void put(CmsItemId resource, Document deltav) {

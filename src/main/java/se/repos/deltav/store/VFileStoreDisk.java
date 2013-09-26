@@ -19,13 +19,13 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-public class DeltaVStoreDisk implements DeltaVStore {
+public class VFileStoreDisk implements VFileStore {
 
 	private File vFileFolder;
 	private DocumentBuilder db;
 	private Transformer trans;
 
-	public DeltaVStoreDisk(String localFilePath) {
+	public VFileStoreDisk(String localFilePath) {
 		vFileFolder = new File(localFilePath);
 		if (!vFileFolder.exists()) {
 			vFileFolder.mkdirs();

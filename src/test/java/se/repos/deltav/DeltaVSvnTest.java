@@ -25,8 +25,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
 
-import se.repos.deltav.store.DeltaVStore;
-import se.repos.deltav.store.DeltaVStoreMemory;
+import se.repos.deltav.store.VFileStore;
+import se.repos.deltav.store.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
@@ -117,7 +117,7 @@ public class DeltaVSvnTest {
 		IOUtils.copy(b3, new FileOutputStream(f1));
 		RepoRevision r3 = svncommit("third");
 		
-		DeltaVStore store = new DeltaVStoreMemory();
+		VFileStore store = new VFileStoreMemory();
 		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 		
 		// supporting infrastructure

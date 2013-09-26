@@ -7,10 +7,10 @@ import xmlindexer.Index;
 
 import java.util.HashMap;
 
-public class DeltaVStoreMemory implements DeltaVStore {
+public class VFileStoreMemory implements VFileStore {
 	private HashMap<CmsItemId, Document> vFileTable;
 	
-	public DeltaVStoreMemory() {
+	public VFileStoreMemory() {
 		vFileTable = new HashMap<>();
 	}
 

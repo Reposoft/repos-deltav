@@ -26,7 +26,7 @@ public class VFileCommitHandler implements ChangesetEventListener {
 	}
 	
 	/**
-	 * @param changesetReader because getting a CmsChangeset only is insufficient for VfileCalculator
+	 * @param changesetReader because getting a CmsChangeset only is insufficient for VFileCalculator
 	 * @return 
 	 */
 	@Inject

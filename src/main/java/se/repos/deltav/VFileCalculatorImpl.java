@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import se.repos.deltav.store.DeltaVStore;
+import se.repos.deltav.store.VFileStore;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 import xmlindexer.Index;
@@ -19,11 +19,11 @@ public class VFileCalculatorImpl {
 	private static final Logger logger = LoggerFactory
 			.getLogger(VFileCalculatorImpl.class);
 
-	private DeltaVStore storage;
+	private VFileStore storage;
 	private DocumentBuilder db;
 
 	@Inject
-	public VFileCalculatorImpl(DeltaVStore storage) {
+	public VFileCalculatorImpl(VFileStore storage) {
 		this.storage = storage;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setIgnoringComments(true);
