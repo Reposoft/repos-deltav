@@ -1,4 +1,4 @@
-package se.repos.vfilestore;
+package se.repos.vfile.store;
 
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;

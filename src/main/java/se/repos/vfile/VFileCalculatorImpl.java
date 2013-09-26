@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import se.repos.vfilestore.VFileStore;
+import se.repos.vfile.store.VFileStore;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 import xmlindexer.Index;

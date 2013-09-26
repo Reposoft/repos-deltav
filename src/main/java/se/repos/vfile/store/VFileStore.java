@@ -1,4 +1,4 @@
-package se.repos.vfilestore;
+package se.repos.vfile.store;
 
 import org.w3c.dom.Document;
 
