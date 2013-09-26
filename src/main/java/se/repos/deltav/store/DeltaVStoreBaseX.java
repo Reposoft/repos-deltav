@@ -13,7 +13,7 @@ public class DeltaVStoreBaseX implements DeltaVStore {
 	}
 
 	@Override
-	public boolean has(CmsItemId resouce) {
+	public boolean has(CmsItemId resource) {
 		throw new UnsupportedOperationException("BaseX storage implementation deferred");
 	}
 

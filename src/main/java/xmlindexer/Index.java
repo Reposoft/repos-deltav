@@ -1,6 +1,5 @@
 package xmlindexer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -20,7 +19,6 @@ import org.w3c.dom.*;
 public final class Index {
 
     private Document index;
-    private Document currentVersion;
 
     /**
      * Constructor for Index.
@@ -31,8 +29,8 @@ public final class Index {
      * @throws IllegalArgumentException If the indexDocument lacks the
      * required tag attributes.
      */
-    public Index(Document indexDocument, Document currentVersion) {
-        if (indexDocument == null || currentVersion == null) {
+    public Index(Document indexDocument) {
+        if (indexDocument == null) {
             throw new NullPointerException();
         }
         Element root = indexDocument.getDocumentElement();
@@ -43,7 +41,6 @@ public final class Index {
             throw new IllegalArgumentException();
         }
         this.index = indexDocument;
-        this.currentVersion = currentVersion;
 
         // Set global parameters for XMLUnit.
 		XMLUnit.setCompareUnmatched(false);
@@ -133,7 +130,7 @@ public final class Index {
         newRoot.setAttribute(StringConstants.VEND, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.DOCVERSION, version);
         indexXML.appendChild(newRoot);
-        Index idx = new Index(indexXML, firstVersion);
+        Index idx = new Index(indexXML);
 
         for (Attr a : ElementUtils.getAttributes(root)) {
             idx.getRootElement().setAttribute(a.getName(), a.getValue());
@@ -172,15 +169,12 @@ public final class Index {
 
         public final Node controlNode;
         public final Node testNode;
-        public final String controlLocation;
         public final String testLocation;
         public final Set<CHANGE> changes;
 
-        public DeferredChanges(Node controlNode, Node testNode,
-                String controlLocation, String testLocation) {
+        public DeferredChanges(Node controlNode, Node testNode, String testLocation) {
             this.controlNode = controlNode;
             this.testNode = testNode;
-            this.controlLocation = controlLocation;
             this.testLocation = testLocation;
             changes = new LinkedHashSet<>();
         }
@@ -196,8 +190,7 @@ public final class Index {
      * @param newVersion The new version of the document.
      * @param newVersionNumber The version number of said document in SVN.
      */
-    public void update(Document newVersion, String newVersionNumber)
-            throws IOException {
+    public void update(Document currentVersion, Document newVersion, String newVersionNumber) {
         DetailedDiff diff = new DetailedDiff(
                 new Diff(currentVersion, newVersion));
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
@@ -210,15 +203,12 @@ public final class Index {
         for (Difference d : differences) {
             scheduleChange(changeMap, reorderMap, newNodeMap, d);
         }
-
-        currentVersion = newVersion;
+        
         this.setDocumentVersion(newVersionNumber);
-
         updateIndexElement(changeMap, newNodeMap, this.getRootElement());
         addOrphanNodes(newNodeMap);
         reorderNodes(reorderMap);
         cleanDocument();
-        assertEquals();
     }
 
     private void scheduleChange(
@@ -248,8 +238,7 @@ public final class Index {
                 map = changeMap;
             }
             if (!map.containsKey(element)) {
-                map.put(element, new DeferredChanges(controlNode,
-                        testNode, controlLocation, testLocation));
+                map.put(element, new DeferredChanges(controlNode, testNode, testLocation));
                 map.get(element).addChange(change);
             } else {
                 map.get(element).addChange(change);
@@ -343,13 +332,13 @@ public final class Index {
         }
     }
 
-    private void assertEquals() throws IOException {
-        if (!this.getRootElement().isEqualElement(
-                currentVersion.getDocumentElement())) {
-            throw new RuntimeException(
-                    "Index does not match lastest version of file."
-                    + "\nFaulty index dumped to err.xml.");
-        }
+    /**
+     * Returns whether the given document is the latest version of this index.
+     * @param currentVersion The document to compare to this index.
+     * @return Whether currentVersion is saved in this index.
+     */
+    public boolean documentEquals(Document currentVersion) {
+        return this.getRootElement().isEqualElement(currentVersion.getDocumentElement());
     }
 
     /**

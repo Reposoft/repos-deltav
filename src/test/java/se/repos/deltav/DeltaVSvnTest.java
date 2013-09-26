@@ -17,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -31,12 +30,10 @@ import se.repos.deltav.store.DeltaVStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
+import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.RepoRevision;
-import se.simonsoft.cms.item.events.change.CmsChangeset;
-import se.simonsoft.cms.item.events.change.CmsChangesetItem;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
-import se.simonsoft.cms.item.inspection.CmsChangesetReader;
 import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 
 /**
@@ -84,23 +81,11 @@ public class DeltaVSvnTest {
 		clientManager.getUpdateClient().doCheckout(repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
 	}
 	
-	private void svnupdate() throws SVNException {
-		clientManager.getUpdateClient().doUpdate(wc, SVNRevision.HEAD, SVNDepth.INFINITY, false, true);
-	}
-	
 	private RepoRevision svncommit(String comment) throws SVNException {
 		long rev = clientManager.getCommitClient().doCommit(
 				new File[]{wc}, false, comment, null, null, false, false, SVNDepth.INFINITY).getNewRevision();
 		Date d = svnlookProvider.get().doGetDate(repoDir, SVNRevision.create(rev));
 		return new RepoRevision(rev, d);
-	}
-	
-	private RepoRevision svncommit() throws SVNException {
-		return svncommit("");
-	}
-	
-	private void svnpropset(File path, String propname, String propval) throws SVNException {
-		clientManager.getWCClient().doSetProperty(path, propname, SVNPropertyValue.create(propval), false, SVNDepth.EMPTY, null, null);
 	}
 
 	private void svnadd(File... paths) throws SVNException {
@@ -139,21 +124,18 @@ public class DeltaVSvnTest {
 		VfileCommitItemHandler itemHandler = new VfileCommitItemHandler(calculator, contentsReader);
 		VfileCommitHandler commitHandler = new VfileCommitHandler(repository, itemHandler).setCmsChangesetReader(changesetReader);
 		
+		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
 		commitHandler.onCommit(r1);
-
-		// now expect r1 to have been caclulated and stored
-		Document v1 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
+		Document v1 = store.get(testID);
 		assertNotNull("V-file calculation should have stored a something", v1);
-		// TODO assert structure. Using XmlUnit or jsoup probably to make it maintainable.
+		// TODO Assert that structure of index is correct.
 		
 		commitHandler.onCommit(r2);
-		
-		Document v2 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
+		Document v2 = store.get(testID);
 		assertNotNull("V-file should still exist", v2);
 		
 		commitHandler.onCommit(r3);
-		
-		Document v3 = store.get(new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml")));
+		Document v3 = store.get(testID);
 		assertNotNull(v3);
 	}
 

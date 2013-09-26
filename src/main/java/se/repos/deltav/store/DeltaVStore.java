@@ -23,22 +23,19 @@ public interface DeltaVStore {
 	 * @param resouce identfier, with revision
 	 * @return true if this resource at this revision has a V-file
 	 */
-	public boolean has(CmsItemId resouce);
+	public boolean has(CmsItemId resource);
 	
 	/**
 	 * @param resource identifier, without revision
 	 * @return highest revision for which there is a V-file of this resource, null if no earlier revision of the resource
 	 */
 	public RepoRevision getHighestCalculated(CmsItemId resource);
-	
-	//public void get(CmsItemId resouces, OutputStream deltav);
 
 	/**
-	 * Reads latest V-file fromfrom storage.
+	 * Reads latest V-file from storage.
 	 * @param resource identifier, without revision
 	 * @return V-file for the resource, null if no V-file for this resource
 	 * @throws IllegalArgumentException if the resource id has revision specified, because we currently keep the current V-file
 	 */
 	public Document get(CmsItemId resource);
-	
 }

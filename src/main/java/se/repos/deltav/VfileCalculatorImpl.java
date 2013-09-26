@@ -13,7 +13,8 @@ import se.simonsoft.cms.item.RepoRevision;
 
 public class VfileCalculatorImpl {
 
-	private static final Logger logger = LoggerFactory.getLogger(VfileCalculatorImpl.class);
+	private static final Logger logger = 
+			LoggerFactory.getLogger(VfileCalculatorImpl.class);
 	
 	private DeltaVStore storage;
 	
@@ -32,7 +33,9 @@ public class VfileCalculatorImpl {
 	 * @throws IllegalStateException if previous is non-null and but the revision does not exist in V-file storage
 	 * @throws SAXException if parsing of previous or current fails
 	 */
-	public void increment(CmsItemId itemId, RepoRevision previous, InputSource previousContent, RepoRevision current, InputSource currentContent) {
+	public void increment(
+			CmsItemId itemId, RepoRevision previous, InputSource previousContent,
+			RepoRevision current, InputSource currentContent) {
 		logger.debug("Increment requested for {} {}->{}", itemId, previous, current);
 		//throw new UnsupportedOperationException("Not implemented");
 		// TODO Implement VFileCalculator.increment.

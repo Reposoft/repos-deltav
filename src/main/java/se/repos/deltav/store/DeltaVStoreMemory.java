@@ -1,34 +1,42 @@
 package se.repos.deltav.store;
 
 import org.w3c.dom.Document;
-
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
+import xmlindexer.Index;
+
+import java.util.HashMap;
 
 public class DeltaVStoreMemory implements DeltaVStore {
-
-	@Override
-	public void put(CmsItemId resource, Document deltav) {
-		// TODO Auto-generated method stub
-		
+	private HashMap<CmsItemId, Document> vFileTable;
+	
+	public DeltaVStoreMemory() {
+		vFileTable = new HashMap<>();
 	}
 
 	@Override
-	public boolean has(CmsItemId resouce) {
-		// TODO Auto-generated method stub
-		return false;
+	public void put(CmsItemId resource, Document deltav) {
+		vFileTable.put(resource, deltav);
+	}
+
+	@Override
+	public boolean has(CmsItemId resource) {
+		return vFileTable.containsKey(resource);
 	}
 
 	@Override
 	public RepoRevision getHighestCalculated(CmsItemId resource) {
-		// TODO Auto-generated method stub
+		if(!this.has(resource)) {
+			return null;
+		}
+		String docVersion = new Index(vFileTable.get(resource)).getDocumentVersion();
+		// TODO Convert docVersion to a RepoRevision?
 		return null;
 	}
 
 	@Override
 	public Document get(CmsItemId resource) {
-		// TODO Auto-generated method stub
-		return null;
+		return vFileTable.get(resource);
 	}
 	
 }
