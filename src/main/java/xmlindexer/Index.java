@@ -187,24 +187,24 @@ public final class Index {
     /**
      * Diffs the given document with the last version of it, and applies
      * the changes to the index.
-     * @param newVersion The new version of the document.
-     * @param newVersionNumber The version number of said document in SVN.
+     * @param newDocument The new version of the document.
+     * @param newVersion The version number of said document in SVN.
      */
-    public void update(Document currentVersion, Document newVersion, String newVersionNumber) {
-        DetailedDiff diff = new DetailedDiff(
-                new Diff(currentVersion, newVersion));
+    public void update(Document oldDocument, Document newDocument, String newVersion) {
+        DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
+        
         Map<IndexElement, DeferredChanges> changeMap = new LinkedHashMap<>();
         Map<IndexElement, DeferredChanges> reorderMap = new LinkedHashMap<>();
         MultiMap<String, Element> newNodeMap = new MultiMap<>();
-        @SuppressWarnings("unchecked")
+        
+		@SuppressWarnings("unchecked")
 		List<Difference> differences = (List<Difference>) diff.getAllDifferences();
-
         for (Difference d : differences) {
             scheduleChange(changeMap, reorderMap, newNodeMap, d);
         }
         
-        this.setDocumentVersion(newVersionNumber);
+        this.setDocumentVersion(newVersion);
         updateIndexElement(changeMap, newNodeMap, this.getRootElement());
         addOrphanNodes(newNodeMap);
         reorderNodes(reorderMap);
