@@ -1,15 +1,13 @@
 package se.repos.deltav;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
-
 import javax.inject.Provider;
 
+import static org.junit.Assert.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -37,37 +35,41 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 
 /**
- * Try to mimic the runtime scenario in webapp.
- * Volume testing of the actual algorithm might be better placed in a more isolated test using test files directly.
+ * Try to mimic the runtime scenario in webapp. Volume testing of the actual
+ * algorithm might be better placed in a more isolated test using test files
+ * directly.
  */
 public class DeltaVSvnTest {
 
-	private boolean doCleanup = true; // set to false to examine repository after test
-	
+	// set to false to examine repository after test
+	private boolean doCleanup = true;
+
 	private File testDir = null;
 	private File repoDir = null;
 	private SVNURL repoUrl;
 	private File wc = null;
-	
+
 	private SVNClientManager clientManager = null;
 	private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
-	
+
 	static {
 		FSRepositoryFactory.setup();
 	}
-	
+
 	@Before
 	public void setUp() throws IOException, SVNException {
 		testDir = File.createTempFile("test-" + this.getClass().getName(), "");
 		testDir.delete();
 		repoDir = new File(testDir, "repo");
-		repoUrl = SVNRepositoryFactory.createLocalRepository(repoDir, true, false);
-		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl); // for low level operations
+		repoUrl = SVNRepositoryFactory.createLocalRepository(repoDir, true,
+				false);
+		// for low level operations
+		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl); 
 		wc = new File(testDir, "wc");
 		System.out.println("Running local fs repository " + repoUrl);
 		clientManager = SVNClientManager.newInstance();
 	}
-	
+
 	@After
 	public void tearDown() throws IOException {
 		if (doCleanup) {
@@ -76,37 +78,45 @@ public class DeltaVSvnTest {
 			System.out.println("Test data kept at: " + testDir.getAbsolutePath());
 		}
 	}
-	
+
 	private void svncheckout() throws SVNException {
-		clientManager.getUpdateClient().doCheckout(repoUrl, wc, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+		clientManager.getUpdateClient().doCheckout(repoUrl, wc,
+				SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
 	}
-	
+
 	private RepoRevision svncommit(String comment) throws SVNException {
-		long rev = clientManager.getCommitClient().doCommit(
-				new File[]{wc}, false, comment, null, null, false, false, SVNDepth.INFINITY).getNewRevision();
-		Date d = svnlookProvider.get().doGetDate(repoDir, SVNRevision.create(rev));
+		long rev = clientManager
+				.getCommitClient()
+				.doCommit(new File[] { wc }, false, comment, null, null, false,
+						false, SVNDepth.INFINITY).getNewRevision();
+		Date d = svnlookProvider.get().doGetDate(repoDir,
+				SVNRevision.create(rev));
 		return new RepoRevision(rev, d);
 	}
 
 	private void svnadd(File... paths) throws SVNException {
-		clientManager.getWCClient().doAdd(
-				paths, true, false, false, SVNDepth.INFINITY, true, true, true);
+		clientManager.getWCClient().doAdd(paths, true, false, false,
+				SVNDepth.INFINITY, true, true, true);
 	}
-	
+
 	@Test
 	public void testBasic() throws Exception {
-		InputStream b1 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_1.xml");
-		InputStream b2 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_2.xml");
-		InputStream b3 = this.getClass().getClassLoader().getResourceAsStream("se/repos/deltav/basic_3.xml");
+		InputStream b1 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/deltav/basic_1.xml");
+		InputStream b2 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/deltav/basic_2.xml");
+		InputStream b3 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/deltav/basic_3.xml");
 
-		CmsRepositoryInspection repository = new CmsRepositoryInspection("/anyparent", "anyname", repoDir);
+		CmsRepositoryInspection repository = new CmsRepositoryInspection(
+				"/anyparent", "anyname", repoDir);
 		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
 		contentsReader.setSVNLookClientProvider(svnlookProvider);
 		CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
 		changesetReader.setSVNLookClientProvider(svnlookProvider);
-		
+
 		svncheckout();
-		
+
 		File f1 = new File(wc, "basic.xml");
 		IOUtils.copy(b1, new FileOutputStream(f1));
 		svnadd(f1);
@@ -116,24 +126,27 @@ public class DeltaVSvnTest {
 		RepoRevision r2 = svncommit("second");
 		IOUtils.copy(b3, new FileOutputStream(f1));
 		RepoRevision r3 = svncommit("third");
-		
+
 		VFileStore store = new VFileStoreMemory();
 		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
-		
+
 		// supporting infrastructure
-		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator, contentsReader);
-		VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler).setCmsChangesetReader(changesetReader);
-		
-		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
+		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(
+				calculator, contentsReader);
+		VFileCommitHandler commitHandler = new VFileCommitHandler(repository,
+				itemHandler).setCmsChangesetReader(changesetReader);
+
+		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+				"/basic.xml"));
 		commitHandler.onCommit(r1);
 		Document v1 = store.get(testID);
 		assertNotNull("V-file calculation should have stored a something", v1);
 		// TODO Assert that structure of index is correct.
-		
+
 		commitHandler.onCommit(r2);
 		Document v2 = store.get(testID);
 		assertNotNull("V-file should still exist", v2);
-		
+
 		commitHandler.onCommit(r3);
 		Document v3 = store.get(testID);
 		assertNotNull(v3);
