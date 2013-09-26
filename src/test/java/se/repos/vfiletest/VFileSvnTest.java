@@ -106,11 +106,11 @@ public class VFileSvnTest {
 	@Test
 	public void testBasic() throws Exception {
 		InputStream b1 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/deltav/basic_1.xml");
+				.getResourceAsStream("se/repos/vfile/basic_1.xml");
 		InputStream b2 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/deltav/basic_2.xml");
+				.getResourceAsStream("se/repos/vfile/basic_2.xml");
 		InputStream b3 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/deltav/basic_3.xml");
+				.getResourceAsStream("se/repos/vfile/basic_3.xml");
 
 		CmsRepositoryInspection repository = new CmsRepositoryInspection(
 				"/anyparent", "anyname", repoDir);
