@@ -1,4 +1,4 @@
-package se.repos.deltav.store;
+package se.repos.vfilestore;
 
 import org.w3c.dom.Document;
 

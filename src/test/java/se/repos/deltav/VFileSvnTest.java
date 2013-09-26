@@ -23,8 +23,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
 
-import se.repos.deltav.store.VFileStore;
-import se.repos.deltav.store.VFileStoreMemory;
+import se.repos.vfilestore.VFileStore;
+import se.repos.vfilestore.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
