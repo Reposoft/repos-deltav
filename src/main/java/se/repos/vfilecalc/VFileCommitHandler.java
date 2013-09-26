@@ -1,4 +1,4 @@
-package se.repos.deltav;
+package se.repos.vfilecalc;
 
 import javax.inject.Inject;
 
