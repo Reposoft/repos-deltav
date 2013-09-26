@@ -23,9 +23,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
 
-import se.repos.vfilecalc.VFileCalculatorImpl;
-import se.repos.vfilecalc.VFileCommitHandler;
-import se.repos.vfilecalc.VFileCommitItemHandler;
+import se.repos.vfile.VFileCalculatorImpl;
+import se.repos.vfile.VFileCommitHandler;
+import se.repos.vfile.VFileCommitItemHandler;
 import se.repos.vfilestore.VFileStore;
 import se.repos.vfilestore.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;

@@ -1,4 +1,4 @@
-package se.repos.vfilecalc;
+package se.repos.vfile;
 
 import javax.inject.Inject;
 
