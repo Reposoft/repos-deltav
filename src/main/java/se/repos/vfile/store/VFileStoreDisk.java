@@ -49,13 +49,13 @@ public class VFileStoreDisk implements VFileStore {
 		try {
 			String filePath = resource.getRelPath().toString();
 			File indexFile = new File(vFileFolder, filePath);
-			if(!indexFile.exists()) {
+			if (!indexFile.exists()) {
 				indexFile.createNewFile();
 			}
 			Source source = new DOMSource(vfile);
 			Result result = new StreamResult(indexFile);
 			trans.transform(source, result);
-		} catch(IOException | TransformerException e) {
+		} catch (IOException | TransformerException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -65,6 +65,12 @@ public class VFileStoreDisk implements VFileStore {
 		String filePath = resource.getRelPath().toString();
 		File indexFile = new File(vFileFolder, filePath);
 		return indexFile.exists();
+	}
+
+	@Override
+	public boolean has(CmsItemId resource, RepoRevision version) {
+		RepoRevision highest = this.getHighestCalculated(resource);
+		return highest != null && highest.isNewerOrEqual(version);
 	}
 
 	@Override
