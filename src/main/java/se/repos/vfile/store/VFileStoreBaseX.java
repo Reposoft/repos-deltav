@@ -9,12 +9,20 @@ public class VFileStoreBaseX implements VFileStore {
 
 	@Override
 	public void put(CmsItemId resource, Document vfile) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		throw new UnsupportedOperationException(
 				"BaseX storage implementation deferred");
 	}
 
 	@Override
 	public boolean has(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		throw new UnsupportedOperationException(
 				"BaseX storage implementation deferred");
 	}
@@ -27,12 +35,20 @@ public class VFileStoreBaseX implements VFileStore {
 
 	@Override
 	public RepoRevision getHighestCalculated(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		throw new UnsupportedOperationException(
 				"BaseX storage implementation deferred");
 	}
 
 	@Override
 	public Document get(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		throw new UnsupportedOperationException(
 				"BaseX storage implementation deferred");
 	}

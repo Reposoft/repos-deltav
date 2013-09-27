@@ -46,6 +46,10 @@ public class VFileStoreDisk implements VFileStore {
 
 	@Override
 	public void put(CmsItemId resource, Document vfile) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		try {
 			String filePath = resource.getRelPath().toString();
 			File indexFile = new File(vFileFolder, filePath);
@@ -62,6 +66,10 @@ public class VFileStoreDisk implements VFileStore {
 
 	@Override
 	public boolean has(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		String filePath = resource.getRelPath().toString();
 		File indexFile = new File(vFileFolder, filePath);
 		return indexFile.exists();
@@ -75,6 +83,10 @@ public class VFileStoreDisk implements VFileStore {
 
 	@Override
 	public RepoRevision getHighestCalculated(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		if (!this.has(resource)) {
 			return null;
 		}
@@ -85,6 +97,10 @@ public class VFileStoreDisk implements VFileStore {
 
 	@Override
 	public Document get(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
 		if (!this.has(resource)) {
 			return null;
 		}
