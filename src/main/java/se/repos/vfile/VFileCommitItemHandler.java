@@ -27,7 +27,7 @@ public class VFileCommitItemHandler {
 	}
 	
 	public void onCommit(CmsRepositoryInspection repository, CmsChangesetItem changesetItem) {
-		RepoRevision revision = changesetItem.getRevision();
+		RepoRevision revision = changesetItem.getRevisionChanged();
 		CmsItemId itemId = new CmsItemIdUrl(repository, changesetItem.getPath()).withPegRev(revision.getNumber());
 		
 		// buffers 

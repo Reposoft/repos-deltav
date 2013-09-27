@@ -5,9 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+
 import javax.inject.Provider;
 
 import static org.junit.Assert.*;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -28,6 +30,7 @@ import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
 import se.repos.vfile.store.VFileStore;
 import se.repos.vfile.store.VFileStoreMemory;
+import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
@@ -112,7 +115,7 @@ public class VFileSvnTest {
 		InputStream b3 = this.getClass().getClassLoader()
 				.getResourceAsStream("se/repos/vfile/basic_3.xml");
 
-		CmsRepositoryInspection repository = new CmsRepositoryInspection(
+		CmsRepositorySvn repository = new CmsRepositorySvn(
 				"/anyparent", "anyname", repoDir);
 		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
 		contentsReader.setSVNLookClientProvider(svnlookProvider);
