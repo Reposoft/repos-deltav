@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import org.w3c.dom.Document;
 
-import se.repos.vfile.gen.Index;
+import se.repos.vfile.gen.VFile;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 
@@ -48,7 +48,7 @@ public class VFileStoreMemory implements VFileStore {
 		if (!vFileTable.containsKey(resource)) {
 			return null;
 		}
-		String docVersion = new Index(vFileTable.get(resource))
+		String docVersion = new VFile(vFileTable.get(resource))
 				.getDocumentVersion();
 		// TODO Convert docVersion to a RepoRevision?
 		return null;

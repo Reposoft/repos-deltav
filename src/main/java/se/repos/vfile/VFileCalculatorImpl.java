@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import se.repos.vfile.gen.Index;
+import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
@@ -64,13 +64,13 @@ public class VFileCalculatorImpl {
 			InputSource oldContent, RepoRevision current, InputSource newContent) {
 		logger.debug("Increment requested for {} {}->{}", itemId, previous,
 				current);
-		Index index;
+		VFile index;
 		try {
 			if (!storage.has(itemId)) {
-				index = Index.normalizeDocument(db.parse(newContent),
+				index = VFile.normalizeDocument(db.parse(newContent),
 						current.toString());
 			} else {
-				index = new Index(storage.get(itemId));
+				index = new VFile(storage.get(itemId));
 				index.update(db.parse(oldContent), db.parse(newContent),
 						current.toString());
 			}

@@ -8,24 +8,24 @@ import org.w3c.dom.Element;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com>
- * A single element of an Index.
+ * A single element of a VFile.
  * Corresponds to a single tagged node.
- * @see Index
+ * @see VFile
  */
-public class IndexElement {
+public class TaggedNode {
 
-    private Index parentIndex;
+    private VFile parentIndex;
     private Element element;
 
     /**
-     * Constructs a new IndexElement.
+     * Constructs a new TaggedNode.
      * @param element The tagged node.
      * @param parentIndex The index the node belongs to.
      * @throws NullPointerException If either of the parameters are null.
      * @throws IllegalArgumentException If the tagged node is not tagged with
      * lifetime attributes.
      */
-    public IndexElement(Index parentIndex, Element element) {
+    public TaggedNode(VFile parentIndex, Element element) {
         if (parentIndex == null || element == null) {
             throw new NullPointerException();
         }
@@ -38,12 +38,12 @@ public class IndexElement {
         this.element = element;
     }
 
-    public IndexElement getParent() {
-        return new IndexElement(parentIndex,
+    public TaggedNode getParent() {
+        return new TaggedNode(parentIndex,
                 (Element) element.getParentNode());
     }
 
-    public Index getParentIndex() {
+    public VFile getParentIndex() {
         return this.parentIndex;
     }
 
@@ -60,18 +60,18 @@ public class IndexElement {
     }
 
     public void setNameValue(String name, String value) {
-        IndexElement parent = this.getParent();
-        IndexElement newElem;
+        TaggedNode parent = this.getParent();
+        TaggedNode newElem;
         if (this.isAttribute()) {
-            newElem = parentIndex.createIndexAttribute(name, value);
+            newElem = parentIndex.createAttribute(name, value);
         } else {
-            newElem = parentIndex.createIndexElement(name);
+            newElem = parentIndex.createTaggedNode(name);
             ElementUtils.setValue(newElem.element, value);
         }
-        for (IndexElement attr : this.getAttributes()) {
+        for (TaggedNode attr : this.getAttributes()) {
             newElem.setAttribute(attr.getName(), attr.getValue());
         }
-        for (IndexElement child : this.getChildElements()) {
+        for (TaggedNode child : this.getChildElements()) {
             newElem.appendChild(child);
         }
 
@@ -82,16 +82,16 @@ public class IndexElement {
 
     /**
      * "Deletes" a tagged node, i.e sets it's VEND attrbiute to the current docVersion.
-     * Also deletes all this IndexElement's children and attributes.
+     * Also deletes all this TaggedNodes children and attributes.
      */
     public void delete() {
         if (!this.isLive()) {
             return;
         }
-        for (IndexElement attr : this.getAttributes()) {
+        for (TaggedNode attr : this.getAttributes()) {
             attr.delete();
         }
-        for (IndexElement elem : this.getChildElements()) {
+        for (TaggedNode elem : this.getChildElements()) {
             elem.delete();
         }
         element.setAttribute(StringConstants.VEND, parentIndex.getDocumentVersion());
@@ -123,8 +123,8 @@ public class IndexElement {
         return this.getAttribute(name) != null;
     }
 
-    public IndexElement getAttribute(String name) {
-        for (IndexElement a : this.getAttributes()) {
+    public TaggedNode getAttribute(String name) {
+        for (TaggedNode a : this.getAttributes()) {
             if (a.getName().equals(name)) {
                 return a;
             }
@@ -132,9 +132,9 @@ public class IndexElement {
         return null;
     }
 
-    public ArrayList<IndexElement> getAttributes() {
-        ArrayList<IndexElement> results = new ArrayList<>();
-        for (IndexElement child : this.elements(true)) {
+    public ArrayList<TaggedNode> getAttributes() {
+        ArrayList<TaggedNode> results = new ArrayList<>();
+        for (TaggedNode child : this.elements(true)) {
             if (child.isAttribute()) {
                 results.add(child);
             }
@@ -143,10 +143,10 @@ public class IndexElement {
     }
 
     // Sets/creates an attribute on a index element.
-    public IndexElement setAttribute(String name, String value) {
-        IndexElement attr = this.getAttribute(name);
+    public TaggedNode setAttribute(String name, String value) {
+        TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
-            attr = parentIndex.createIndexAttribute(name, value);
+            attr = parentIndex.createAttribute(name, value);
             element.appendChild(attr.element);
         } else {
             attr.setValue(value);
@@ -155,24 +155,24 @@ public class IndexElement {
     }
 
     public void deleteAttribute(String name) {
-        IndexElement attr = this.getAttribute(name);
+        TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
             throw new RuntimeException("Tried to delete non-present attribute.");
         }
         attr.delete();
     }
 
-    public void appendChild(IndexElement child) {
+    public void appendChild(TaggedNode child) {
         element.appendChild(child.element);
     }
 
-    public void insertBefore(IndexElement element, IndexElement ref) {
+    public void insertBefore(TaggedNode element, TaggedNode ref) {
         this.element.insertBefore(element.element, ref.element);
     }
 
-    public void insertElementAt(IndexElement e, int index) {
-        ArrayList<IndexElement> children = this.getChildElements();
-        IndexElement ref = children.get(index);
+    public void insertElementAt(TaggedNode e, int index) {
+        ArrayList<TaggedNode> children = this.getChildElements();
+        TaggedNode ref = children.get(index);
         element.insertBefore(e.element, ref.element);
     }
 
@@ -181,8 +181,8 @@ public class IndexElement {
      * to be tagged, and is normalized to the current docVersion.
      */
     public void normalizeElement(Element child) {
-        IndexElement newChild =
-                parentIndex.createIndexElement(child.getTagName());
+        TaggedNode newChild =
+                parentIndex.createTaggedNode(child.getTagName());
         for (Attr a : ElementUtils.getAttributes(child)) {
             newChild.setAttribute(a.getName(), a.getValue());
         }
@@ -202,7 +202,7 @@ public class IndexElement {
     }
 
     public void deleteChildElement(Element e) {
-        IndexElement elem = this.getEqualElement(e);
+        TaggedNode elem = this.getEqualElement(e);
         if (elem == null) {
             throw new RuntimeException("Tried to delete non-present element.");
         }
@@ -213,13 +213,13 @@ public class IndexElement {
         return this.getChildElements().size();
     }
 
-    public ArrayList<IndexElement> getChildElements() {
+    public ArrayList<TaggedNode> getChildElements() {
         return this.getChildElements(true);
     }
 
-    public ArrayList<IndexElement> getChildElements(boolean mustBeLive) {
-        ArrayList<IndexElement> results = new ArrayList<>();
-        for (IndexElement child : this.elements(mustBeLive)) {
+    public ArrayList<TaggedNode> getChildElements(boolean mustBeLive) {
+        ArrayList<TaggedNode> results = new ArrayList<>();
+        for (TaggedNode child : this.elements(mustBeLive)) {
             if (!child.isAttribute()) {
                 results.add(child);
             }
@@ -227,10 +227,10 @@ public class IndexElement {
         return results;
     }
 
-    public ArrayList<IndexElement> elements(boolean mustBeLive) {
-        ArrayList<IndexElement> results = new ArrayList<>();
+    public ArrayList<TaggedNode> elements(boolean mustBeLive) {
+        ArrayList<TaggedNode> results = new ArrayList<>();
         for (Element c : ElementUtils.getChildElements(element)) {
-            IndexElement child = new IndexElement(parentIndex, c);
+            TaggedNode child = new TaggedNode(parentIndex, c);
             if (!mustBeLive || child.isLive()) {
                 results.add(child);
             }
@@ -240,7 +240,7 @@ public class IndexElement {
 
     /**
      * Test of equality between a normal element and the tagged node
-     * of this IndexElement. The comparsion only takes into account
+     * of this TaggedNode. The comparsion only takes into account
      * live children/attributes of the tagged node.
      * @return True if the elements are equal.
      */
@@ -260,7 +260,7 @@ public class IndexElement {
     }
 
     private boolean hasSameChildren(Element docElem) {
-        ArrayList<IndexElement> theseChildren =
+        ArrayList<TaggedNode> theseChildren =
                 this.getChildElements();
         ArrayList<Element> thoseChildren =
                 ElementUtils.getChildElements(docElem);
@@ -276,7 +276,7 @@ public class IndexElement {
     }
 
     private boolean hasSameAttributes(Element docElem) {
-        for (IndexElement attr : this.getAttributes()) {
+        for (TaggedNode attr : this.getAttributes()) {
             String iVal = attr.getValue();
             String dVal = docElem.getAttribute(attr.getName());
             if (dVal == null || !iVal.equals(dVal)) {
@@ -284,7 +284,7 @@ public class IndexElement {
             }
         }
         for (Attr a1 : ElementUtils.getAttributes(docElem)) {
-            IndexElement a2 = this.getAttribute(a1.getName());
+            TaggedNode a2 = this.getAttribute(a1.getName());
             if (a2 == null || !a1.getValue().equals(a2.getValue())) {
                 return false;
             }
@@ -296,8 +296,8 @@ public class IndexElement {
         return this.getEqualElement(target) != null;
     }
 
-    public IndexElement getEqualElement(Element target) {
-        for (IndexElement e : this.getChildElements()) {
+    public TaggedNode getEqualElement(Element target) {
+        for (TaggedNode e : this.getChildElements()) {
             if (e.isEqualElement(target)) {
                 return e;
             }
@@ -306,10 +306,10 @@ public class IndexElement {
     }
 
     public boolean equals(Object o) {
-        if (!(o instanceof IndexElement)) {
+        if (!(o instanceof TaggedNode)) {
             return false;
         }
-        IndexElement that = (IndexElement) o;
+        TaggedNode that = (TaggedNode) o;
         return this.parentIndex.equals(that.parentIndex)
                 && this.element.equals(that.element);
     }
@@ -323,27 +323,27 @@ public class IndexElement {
 
     public String toString() {
         String val = this.getName();
-        Iterator<IndexElement> iter = this.getAttributes().iterator();
+        Iterator<TaggedNode> iter = this.getAttributes().iterator();
         if (iter.hasNext()) {
-            IndexElement attr = iter.next();
+            TaggedNode attr = iter.next();
             val += ": " + attr.getName() + "=" + attr.getValue();
         }
         while (iter.hasNext()) {
-            IndexElement attr = iter.next();
+            TaggedNode attr = iter.next();
             val += ", " + attr.getName() + "=" + attr.getValue();
         }
         return val;
     }
 
     /**
-     * Reorders the position of this IndexElement in the parent's
+     * Reorders the position of this TaggedNode in the parent's
      * child list, so that this index element is at the position
      * given, or at the end if the index is larger than the child
      * list length.
      * @param index The position to move this element to.
      */
     public void reorder(int index) {
-        IndexElement parent = this.getParent();
+        TaggedNode parent = this.getParent();
         parent.eraseChild(this);
         if (parent.childCount() == index) {
             parent.appendChild(this);
@@ -353,9 +353,9 @@ public class IndexElement {
     }
 
     /**
-     * Permanently deletes e from this IndexElement's child list.
+     * Permanently deletes e from this TaggedNode's child list.
      */
-    public void eraseChild(IndexElement e) {
+    public void eraseChild(TaggedNode e) {
         element.removeChild(e.element);
     }
 }

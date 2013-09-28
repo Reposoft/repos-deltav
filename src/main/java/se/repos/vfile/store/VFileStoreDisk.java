@@ -18,7 +18,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import se.repos.vfile.gen.Index;
+import se.repos.vfile.gen.VFile;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 
@@ -93,7 +93,7 @@ public class VFileStoreDisk implements VFileStore {
 		if (!this.has(resource)) {
 			return null;
 		}
-		String docVersion = new Index(this.get(resource)).getDocumentVersion();
+		String docVersion = new VFile(this.get(resource)).getDocumentVersion();
 		// TODO Convert docVersion to a RepoRevision?
 		return null;
 	}

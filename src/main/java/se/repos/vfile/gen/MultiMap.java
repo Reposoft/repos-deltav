@@ -8,7 +8,7 @@ import java.util.Set;
  * @author Hugo Svallfors <keiter@lavabit.com>
  * A MultiMap, i.e a map that maps each key to a set.
  * Used in Index.
- * @see Index
+ * @see VFile
  */
 public class MultiMap<K, V> {
 
