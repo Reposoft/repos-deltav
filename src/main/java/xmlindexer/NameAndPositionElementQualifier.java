@@ -31,13 +31,13 @@ class NameAndPositionElementQualifier implements ElementQualifier {
      * and would consider baz[1] unmatched.
      */
     @Override
-    public boolean qualifyForComparison(Element elmnt, Element elmnt1) {
-        if (!elmnt.getTagName().equals(elmnt1.getTagName())) {
+    public boolean qualifyForComparison(Element elmnt1, Element elmnt2) {
+        if (!elmnt1.getTagName().equals(elmnt2.getTagName())) {
             return false;
         }
-        int elmntPos = this.getPosition(elmnt);
         int elmnt1Pos = this.getPosition(elmnt1);
-        return elmntPos != -1 && elmnt1Pos != -1 && elmntPos == elmnt1Pos;
+        int elmnt2Pos = this.getPosition(elmnt2);
+        return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;
     }
 
     private int getPosition(Element elmnt) {

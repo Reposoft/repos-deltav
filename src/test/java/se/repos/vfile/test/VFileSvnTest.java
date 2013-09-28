@@ -1,5 +1,7 @@
 package se.repos.vfile.test;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,8 +9,6 @@ import java.io.InputStream;
 import java.util.Date;
 
 import javax.inject.Provider;
-
-import static org.junit.Assert.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,7 +38,6 @@ import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.RepoRevision;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
-import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 
 /**
  * Try to mimic the runtime scenario in webapp. Volume testing of the actual

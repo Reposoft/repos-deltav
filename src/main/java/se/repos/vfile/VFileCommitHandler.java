@@ -13,8 +13,8 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
  * Draft.
  * One way of invoking the calculator.
  */
+@SuppressWarnings("deprecation")
 public class VFileCommitHandler implements ChangesetEventListener {
-
 	private CmsRepositoryInspection repository;
 	private VFileCommitItemHandler itemHandler;
 	private CmsChangesetReader changesetReader = null;

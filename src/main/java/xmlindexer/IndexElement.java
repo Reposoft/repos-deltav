@@ -2,7 +2,9 @@ package xmlindexer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.w3c.dom.*;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com>

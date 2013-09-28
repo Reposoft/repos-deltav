@@ -1,11 +1,12 @@
 package se.repos.vfile.store;
 
+import java.util.HashMap;
+
 import org.w3c.dom.Document;
+
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 import xmlindexer.Index;
-
-import java.util.HashMap;
 
 public class VFileStoreMemory implements VFileStore {
 	private HashMap<CmsItemId, Document> vFileTable;
