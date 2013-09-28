@@ -57,8 +57,6 @@ public class VFileCalculatorImpl {
 	 * @throws IllegalStateException
 	 *             if previous is non-null and but the revision does not exist
 	 *             in V-file storage
-	 * @throws SAXException
-	 *             if parsing of previous or current fails
 	 */
 	public void increment(CmsItemId itemId, RepoRevision previous,
 			InputSource oldContent, RepoRevision current, InputSource newContent) {
