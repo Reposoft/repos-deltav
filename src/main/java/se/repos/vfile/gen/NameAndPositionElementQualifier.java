@@ -1,4 +1,4 @@
-package xmlindexer;
+package se.repos.vfile.gen;
 
 import org.custommonkey.xmlunit.ElementQualifier;
 import org.w3c.dom.Element;

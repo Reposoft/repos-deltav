@@ -1,4 +1,4 @@
-package xmlindexer;
+package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 import java.util.Iterator;

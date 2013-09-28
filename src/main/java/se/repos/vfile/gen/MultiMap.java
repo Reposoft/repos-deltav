@@ -1,4 +1,4 @@
-package xmlindexer;
+package se.repos.vfile.gen;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

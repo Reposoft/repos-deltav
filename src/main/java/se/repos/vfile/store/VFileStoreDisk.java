@@ -18,9 +18,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import se.repos.vfile.gen.Index;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
-import xmlindexer.Index;
 
 public class VFileStoreDisk implements VFileStore {
 

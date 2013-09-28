@@ -4,9 +4,9 @@ import java.util.HashMap;
 
 import org.w3c.dom.Document;
 
+import se.repos.vfile.gen.Index;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
-import xmlindexer.Index;
 
 public class VFileStoreMemory implements VFileStore {
 	private HashMap<CmsItemId, Document> vFileTable;

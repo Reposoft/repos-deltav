@@ -1,4 +1,4 @@
-package xmlindexer;
+package se.repos.vfile.gen;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com>
