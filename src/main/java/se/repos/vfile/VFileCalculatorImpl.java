@@ -62,11 +62,13 @@ public class VFileCalculatorImpl {
 	 */
 	public void increment(CmsItemId itemId, RepoRevision previous,
 			InputSource oldContent, RepoRevision current, InputSource newContent) {
-		logger.debug("Increment requested for {} {}->{}", itemId, previous, current);
+		logger.debug("Increment requested for {} {}->{}", itemId, previous,
+				current);
 		Index index;
 		try {
 			if (!storage.has(itemId)) {
-				index = Index.normalizeDocument(db.parse(newContent), current.toString());
+				index = Index.normalizeDocument(db.parse(newContent),
+						current.toString());
 			} else {
 				index = new Index(storage.get(itemId));
 				index.update(db.parse(oldContent), db.parse(newContent),
@@ -77,5 +79,4 @@ public class VFileCalculatorImpl {
 		}
 		storage.put(itemId, index.toDocument());
 	}
-
 }
