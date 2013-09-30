@@ -1,14 +1,17 @@
 package se.repos.vfile.store;
 
+import java.util.Date;
+
 import org.w3c.dom.Document;
 
+import se.repos.vfile.gen.VFile;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.RepoRevision;
 
 /**
  * Stores v-files per resource.
  */
-public interface VFileStore {
+public abstract class VFileStore {
 
 	/**
 	 * Stores a newer V-file than the one reported by
@@ -21,7 +24,7 @@ public interface VFileStore {
 	 * @throws IllegalArgumentException
 	 *             If resource has a peg revision.
 	 */
-	public void put(CmsItemId resource, Document vfile);
+	public abstract void put(CmsItemId resource, Document vfile);
 
 	/**
 	 * @param resource
@@ -30,7 +33,7 @@ public interface VFileStore {
 	 * @throws IllegalArgumentException
 	 *             If resource has a peg revision.
 	 */
-	public boolean has(CmsItemId resource);
+	public abstract boolean has(CmsItemId resource);
 
 	/**
 	 * @param resource
@@ -41,7 +44,10 @@ public interface VFileStore {
 	 * @throws IllegalArgumentException
 	 *             If resource has a peg revision.
 	 */
-	public boolean has(CmsItemId resource, RepoRevision version);
+	public final boolean has(CmsItemId resource, RepoRevision version) {
+		RepoRevision highest = this.getHighestCalculated(resource);
+		return highest != null && highest.isNewerOrEqual(version);
+	}
 
 	/**
 	 * @param resource
@@ -51,7 +57,18 @@ public interface VFileStore {
 	 * @throws IllegalArgumentException
 	 *             If resource has a peg revision.
 	 */
-	public RepoRevision getHighestCalculated(CmsItemId resource);
+	public final RepoRevision getHighestCalculated(CmsItemId resource) {
+		if (resource.getPegRev() != null) {
+			throw new IllegalArgumentException(
+					"Resource should not have a peg revision.");
+		}
+		if (!this.has(resource)) {
+			return null;
+		}
+		VFile vfile = new VFile(this.get(resource));
+		return new RepoRevision(Long.parseLong(vfile.getDocumentVersion()),
+				new Date(vfile.getDocumentTime()));
+	}
 
 	/**
 	 * Reads latest V-file from storage.
@@ -62,5 +79,5 @@ public interface VFileStore {
 	 * @throws IllegalArgumentException
 	 *             If resource has a peg revision.
 	 */
-	public Document get(CmsItemId resource);
+	public abstract Document get(CmsItemId resource);
 }

@@ -65,12 +65,14 @@ public class VFileCalculatorImpl {
 		VFile index;
 		try {
 			if (!storage.has(itemId)) {
-				index = VFile.normalizeDocument(db.parse(newContent),
-						current.toString());
+				index = VFile.normalizeDocument(db.parse(newContent), current
+						.getDate().getTime(),
+						Long.toString(current.getNumber()));
 			} else {
 				index = new VFile(storage.get(itemId));
 				index.update(db.parse(oldContent), db.parse(newContent),
-						current.toString());
+						current.getDate().getTime(),
+						Long.toString(current.getNumber()));
 			}
 		} catch (IOException | SAXException e) {
 			throw new RuntimeException(e.getMessage());

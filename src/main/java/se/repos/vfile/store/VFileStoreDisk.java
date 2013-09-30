@@ -18,11 +18,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import se.repos.vfile.gen.VFile;
 import se.simonsoft.cms.item.CmsItemId;
-import se.simonsoft.cms.item.RepoRevision;
 
-public class VFileStoreDisk implements VFileStore {
+public class VFileStoreDisk extends VFileStore {
 
 	private File vFileFolder;
 	private DocumentBuilder db;
@@ -76,26 +74,6 @@ public class VFileStoreDisk implements VFileStore {
 		String filePath = resource.getRelPath().toString();
 		File indexFile = new File(vFileFolder, filePath);
 		return indexFile.exists();
-	}
-
-	@Override
-	public boolean has(CmsItemId resource, RepoRevision version) {
-		RepoRevision highest = this.getHighestCalculated(resource);
-		return highest != null && highest.isNewerOrEqual(version);
-	}
-
-	@Override
-	public RepoRevision getHighestCalculated(CmsItemId resource) {
-		if (resource.getPegRev() != null) {
-			throw new IllegalArgumentException(
-					"Resource should not have a peg revision.");
-		}
-		if (!this.has(resource)) {
-			return null;
-		}
-		String docVersion = new VFile(this.get(resource)).getDocumentVersion();
-		// TODO Convert docVersion to a RepoRevision?
-		return null;
 	}
 
 	@Override
