@@ -157,4 +157,57 @@ public class VFileSvnTest {
 		Document v3 = store.get(testID);
 		assertNotNull(v3);
 	}
+	
+	@Test
+	public void testTechdocDemo1() throws Exception {
+		InputStream b1 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_A.xml");
+		InputStream b2 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_B.xml");
+		InputStream b3 = this.getClass().getClassLoader()
+				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_C.xml");
+
+		CmsRepositorySvn repository = new CmsRepositorySvn(
+				"/anyparent", "anyname", repoDir);
+		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
+		contentsReader.setSVNLookClientProvider(svnlookProvider);
+		CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
+		changesetReader.setSVNLookClientProvider(svnlookProvider);
+
+		svncheckout();
+
+		File f1 = new File(wc, "900108.xml");
+		IOUtils.copy(b1, new FileOutputStream(f1));
+		svnadd(f1);
+		RepoRevision r1 = svncommit("first");
+		assertNotNull("should commit", r1);
+		IOUtils.copy(b2, new FileOutputStream(f1));
+		RepoRevision r2 = svncommit("second");
+		IOUtils.copy(b3, new FileOutputStream(f1));
+		RepoRevision r3 = svncommit("third");
+
+		VFileStore store = new VFileStoreMemory();
+		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
+
+		// supporting infrastructure
+		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(
+				calculator, contentsReader);
+		VFileCommitHandler commitHandler = new VFileCommitHandler(repository,
+				itemHandler).setCmsChangesetReader(changesetReader);
+
+		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+				"/900108.xml"));
+		commitHandler.onCommit(r1);
+		Document v1 = store.get(testID);
+		assertNotNull("V-file calculation should have stored a something", v1);
+		// TODO Assert that structure of index is correct.
+
+		commitHandler.onCommit(r2);
+		Document v2 = store.get(testID);
+		assertNotNull("V-file should still exist", v2);
+
+		commitHandler.onCommit(r3);
+		Document v3 = store.get(testID);
+		assertNotNull(v3);
+	}	
 }
