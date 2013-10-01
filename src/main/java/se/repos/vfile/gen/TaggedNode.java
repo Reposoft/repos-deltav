@@ -13,7 +13,7 @@ import org.w3c.dom.Element;
  */
 public class TaggedNode {
 
-	private VFile parentIndex;
+	private VFile parentVFile;
 	private Element element;
 
 	/**
@@ -39,16 +39,16 @@ public class TaggedNode {
 			throw new IllegalArgumentException(
 					"Missing lifetime information on element.");
 		}
-		this.parentIndex = parentIndex;
+		this.parentVFile = parentIndex;
 		this.element = element;
 	}
 
 	public TaggedNode getParent() {
-		return new TaggedNode(parentIndex, (Element) element.getParentNode());
+		return new TaggedNode(parentVFile, (Element) element.getParentNode());
 	}
 
 	public VFile getParentIndex() {
-		return this.parentIndex;
+		return this.parentVFile;
 	}
 
 	public String getName() {
@@ -67,9 +67,9 @@ public class TaggedNode {
 		TaggedNode parent = this.getParent();
 		TaggedNode newElem;
 		if (this.isAttribute()) {
-			newElem = parentIndex.createAttribute(name, value);
+			newElem = parentVFile.createAttribute(name, value);
 		} else {
-			newElem = parentIndex.createTaggedNode(name);
+			newElem = parentVFile.createTaggedNode(name);
 			ElementUtils.setValue(newElem.element, value);
 		}
 		for (TaggedNode attr : this.getAttributes()) {
@@ -99,9 +99,9 @@ public class TaggedNode {
 			elem.delete();
 		}
 		element.setAttribute(StringConstants.VEND,
-				parentIndex.getDocumentVersion());
-		element.setAttribute(StringConstants.VEND,
-				Long.toString(parentIndex.getDocumentTime()));
+				parentVFile.getDocumentVersion());
+		element.setAttribute(StringConstants.TEND,
+				parentVFile.getDocumentTime());
 	}
 
 	public String getVStart() {
@@ -109,27 +109,19 @@ public class TaggedNode {
 	}
 
 	public String getVEnd() {
-		if (isLive()) {
-			return null;
-		} else {
-			return element.getAttribute(StringConstants.VEND);
-		}
+		return element.getAttribute(StringConstants.VEND);
 	}
 
-	public long getTStart() {
-		return Long.parseLong(element.getAttribute(StringConstants.TSTART));
+	public String getTStart() {
+		return element.getAttribute(StringConstants.TSTART);
 	}
 
-	public long getTEnd() {
-		if (this.isLive()) {
-			return -1L;
-		} else {
-			return Long.parseLong(element.getAttribute(StringConstants.TEND));
-		}
+	public String getTEnd() {
+		return element.getAttribute(StringConstants.TEND);
 	}
 
 	public boolean isLive() {
-		return this.getTEnd() == -1
+		return this.getTEnd().equals(StringConstants.NOW)
 				&& this.getVEnd().equals(StringConstants.NOW);
 	}
 
@@ -165,7 +157,7 @@ public class TaggedNode {
 	public TaggedNode setAttribute(String name, String value) {
 		TaggedNode attr = this.getAttribute(name);
 		if (attr == null) {
-			attr = parentIndex.createAttribute(name, value);
+			attr = parentVFile.createAttribute(name, value);
 			element.appendChild(attr.element);
 		} else {
 			attr.setValue(value);
@@ -200,7 +192,7 @@ public class TaggedNode {
 	 * tagged, and is normalized to the current docVersion.
 	 */
 	public void normalizeElement(Element child) {
-		TaggedNode newChild = parentIndex.createTaggedNode(child.getTagName());
+		TaggedNode newChild = parentVFile.createTaggedNode(child.getTagName());
 		for (Attr a : ElementUtils.getAttributes(child)) {
 			newChild.setAttribute(a.getName(), a.getValue());
 		}
@@ -248,7 +240,7 @@ public class TaggedNode {
 	public ArrayList<TaggedNode> elements(boolean mustBeLive) {
 		ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
 		for (Element c : ElementUtils.getChildElements(element)) {
-			TaggedNode child = new TaggedNode(parentIndex, c);
+			TaggedNode child = new TaggedNode(parentVFile, c);
 			if (!mustBeLive || child.isLive()) {
 				results.add(child);
 			}
@@ -326,13 +318,13 @@ public class TaggedNode {
 			return false;
 		}
 		TaggedNode that = (TaggedNode) o;
-		return this.parentIndex.equals(that.parentIndex)
+		return this.parentVFile.equals(that.parentVFile)
 				&& this.element.equals(that.element);
 	}
 
 	public int hashCode() {
 		int hash = 5;
-		hash = 79 * hash + this.parentIndex.hashCode();
+		hash = 79 * hash + this.parentVFile.hashCode();
 		hash = 79 * hash + this.element.hashCode();
 		return hash;
 	}

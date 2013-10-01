@@ -67,7 +67,7 @@ public abstract class VFileStore {
 		}
 		VFile vfile = new VFile(this.get(resource));
 		return new RepoRevision(Long.parseLong(vfile.getDocumentVersion()),
-				new Date(vfile.getDocumentTime()));
+				new Date(Long.parseLong(vfile.getDocumentTime())));
 	}
 
 	/**

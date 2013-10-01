@@ -65,13 +65,13 @@ public class VFileCalculatorImpl {
 		VFile index;
 		try {
 			if (!storage.has(itemId)) {
-				index = VFile.normalizeDocument(db.parse(newContent), current
-						.getDate().getTime(),
+				index = VFile.normalizeDocument(db.parse(newContent),
+						Long.toString(current.getDate().getTime()),
 						Long.toString(current.getNumber()));
 			} else {
 				index = new VFile(storage.get(itemId));
 				index.update(db.parse(oldContent), db.parse(newContent),
-						current.getDate().getTime(),
+						Long.toString(current.getDate().getTime()),
 						Long.toString(current.getNumber()));
 			}
 		} catch (IOException e) {

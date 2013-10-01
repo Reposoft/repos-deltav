@@ -53,7 +53,7 @@ public class VFileCommitItemHandler {
 					previous.toByteArray()));
 		}
 
-		calculator.increment(itemId, revisionPrevious, sourcePrevious,
-				revision, sourceCurrent);
+		calculator.increment(itemId.withPegRev(null), revisionPrevious,
+				sourcePrevious, revision, sourceCurrent);
 	}
 }

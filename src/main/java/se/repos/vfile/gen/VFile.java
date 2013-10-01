@@ -82,14 +82,12 @@ public final class VFile {
 				StringConstants.DOCVERSION);
 	}
 
-	public long getDocumentTime() {
-		return Long.parseLong(index.getDocumentElement().getAttribute(
-				StringConstants.DOCTIME));
+	public String getDocumentTime() {
+		return index.getDocumentElement().getAttribute(StringConstants.DOCTIME);
 	}
 
-	public void setDocumentTime(long time) {
-		index.getDocumentElement().setAttribute(StringConstants.DOCTIME,
-				Long.toString(time));
+	public void setDocumentTime(String time) {
+		index.getDocumentElement().setAttribute(StringConstants.DOCTIME, time);
 	}
 
 	public TaggedNode getRootElement() {
@@ -106,8 +104,7 @@ public final class VFile {
 		Element elem = index.createElement(tagName);
 		elem.setAttribute(StringConstants.VSTART, getDocumentVersion());
 		elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
-		elem.setAttribute(StringConstants.TSTART,
-				Long.toString(getDocumentTime()));
+		elem.setAttribute(StringConstants.TSTART, getDocumentTime());
 		elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
 		TaggedNode indexElem = new TaggedNode(this, elem);
 		return indexElem;
@@ -123,8 +120,7 @@ public final class VFile {
 		Element elem = index.createElement(name);
 		elem.setAttribute(StringConstants.VSTART, getDocumentVersion());
 		elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
-		elem.setAttribute(StringConstants.TSTART,
-				Long.toString(getDocumentTime()));
+		elem.setAttribute(StringConstants.TSTART, getDocumentTime());
 		elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
 		elem.setAttribute(StringConstants.ISATTR, StringConstants.YES);
 		ElementUtils.setValue(elem, value);
@@ -145,7 +141,7 @@ public final class VFile {
 	 *            The SVN version of the firstVersion.
 	 * @return The new Index.
 	 */
-	public static VFile normalizeDocument(Document firstVersion, Long time,
+	public static VFile normalizeDocument(Document firstVersion, String time,
 			String version) {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setNamespaceAware(true);
@@ -166,10 +162,10 @@ public final class VFile {
 		Element newRoot = indexXML.createElement(root.getTagName());
 		newRoot.setAttribute(StringConstants.VSTART, version);
 		newRoot.setAttribute(StringConstants.VEND, StringConstants.NOW);
-		newRoot.setAttribute(StringConstants.TSTART, Long.toString(time));
+		newRoot.setAttribute(StringConstants.TSTART, time);
 		newRoot.setAttribute(StringConstants.TEND, StringConstants.NOW);
 		newRoot.setAttribute(StringConstants.DOCVERSION, version);
-		newRoot.setAttribute(StringConstants.DOCTIME, Long.toString(time));
+		newRoot.setAttribute(StringConstants.DOCTIME, time);
 		indexXML.appendChild(newRoot);
 		VFile idx = new VFile(indexXML);
 
@@ -229,7 +225,7 @@ public final class VFile {
 	 *            The version number of said document in SVN.
 	 */
 	public void update(Document oldDocument, Document newDocument,
-			long newTime, String newVersion) {
+			String newTime, String newVersion) {
 		DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
 		diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
