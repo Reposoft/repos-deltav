@@ -10,7 +10,7 @@ public class VFileStoreMemory extends VFileStore {
 	private HashMap<CmsItemId, Document> vFileTable;
 
 	public VFileStoreMemory() {
-		vFileTable = new HashMap<>();
+		vFileTable = new HashMap<CmsItemId, Document>();
 	}
 
 	@Override

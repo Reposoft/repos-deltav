@@ -211,7 +211,7 @@ public final class VFile {
 			this.controlNode = controlNode;
 			this.testNode = testNode;
 			this.testLocation = testLocation;
-			changes = new LinkedHashSet<>();
+			changes = new LinkedHashSet<CHANGE>();
 		}
 
 		public void addChange(CHANGE change) {
@@ -233,9 +233,9 @@ public final class VFile {
 		DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
 		diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
-		Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<>();
-		Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<>();
-		MultiMap<String, Element> newNodeMap = new MultiMap<>();
+		Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
+		Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
+		MultiMap<String, Element> newNodeMap = new MultiMap<String, Element>();
 
 		@SuppressWarnings("unchecked")
 		List<Difference> differences = (List<Difference>) diff

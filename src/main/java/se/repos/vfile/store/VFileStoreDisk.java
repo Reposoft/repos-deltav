@@ -39,8 +39,9 @@ public class VFileStoreDisk extends VFileStore {
 			db = dbf.newDocumentBuilder();
 			TransformerFactory tranFac = TransformerFactory.newInstance();
 			trans = tranFac.newTransformer();
-		} catch (TransformerConfigurationException
-				| ParserConfigurationException e) {
+		} catch (TransformerConfigurationException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (ParserConfigurationException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -60,7 +61,9 @@ public class VFileStoreDisk extends VFileStore {
 			Source source = new DOMSource(vfile);
 			Result result = new StreamResult(indexFile);
 			trans.transform(source, result);
-		} catch (IOException | TransformerException e) {
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (TransformerException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -89,7 +92,9 @@ public class VFileStoreDisk extends VFileStore {
 		File indexFile = new File(vFileFolder, filePath);
 		try {
 			return db.parse(indexFile);
-		} catch (SAXException | IOException e) {
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (SAXException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}

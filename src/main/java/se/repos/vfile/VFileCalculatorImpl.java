@@ -74,7 +74,9 @@ public class VFileCalculatorImpl {
 						current.getDate().getTime(),
 						Long.toString(current.getNumber()));
 			}
-		} catch (IOException | SAXException e) {
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		} catch (SAXException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 		storage.put(itemId, index.toDocument());

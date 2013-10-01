@@ -152,7 +152,7 @@ public class TaggedNode {
 	}
 
 	public ArrayList<TaggedNode> getAttributes() {
-		ArrayList<TaggedNode> results = new ArrayList<>();
+		ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
 		for (TaggedNode child : this.elements(true)) {
 			if (child.isAttribute()) {
 				results.add(child);
@@ -236,7 +236,7 @@ public class TaggedNode {
 	}
 
 	public ArrayList<TaggedNode> getChildElements(boolean mustBeLive) {
-		ArrayList<TaggedNode> results = new ArrayList<>();
+		ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
 		for (TaggedNode child : this.elements(mustBeLive)) {
 			if (!child.isAttribute()) {
 				results.add(child);
@@ -246,7 +246,7 @@ public class TaggedNode {
 	}
 
 	public ArrayList<TaggedNode> elements(boolean mustBeLive) {
-		ArrayList<TaggedNode> results = new ArrayList<>();
+		ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
 		for (Element c : ElementUtils.getChildElements(element)) {
 			TaggedNode child = new TaggedNode(parentIndex, c);
 			if (!mustBeLive || child.isLive()) {
