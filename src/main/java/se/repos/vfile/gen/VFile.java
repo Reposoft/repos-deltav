@@ -143,6 +143,7 @@ public final class VFile {
 	 */
 	public static VFile normalizeDocument(Document firstVersion, String time,
 			String version) {
+		firstVersion.normalizeDocument();
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setNamespaceAware(true);
 		dbf.setIgnoringComments(true);
@@ -226,6 +227,8 @@ public final class VFile {
 	 */
 	public void update(Document oldDocument, Document newDocument,
 			String newTime, String newVersion) {
+		oldDocument.normalizeDocument();
+		newDocument.normalizeDocument();
 		DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
 		diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
@@ -262,6 +265,7 @@ public final class VFile {
 		String testLocation = d.getTestNodeDetail().getXpathLocation();
 
 		if (controlNode == null) {
+			// TODO Add better support for mixed-text nodes.
 			String testParentLocation = getXPathParent(testLocation);
 			newNodeMap.put(testParentLocation, (Element) testNode);
 		} else {
