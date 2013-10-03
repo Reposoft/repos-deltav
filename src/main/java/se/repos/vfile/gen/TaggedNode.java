@@ -88,7 +88,7 @@ public class TaggedNode {
     }
 
     /**
-     * "Deletes" a tagged node, i.e sets it's VEND attrbiute to the current
+     * "Deletes" a tagged node, i.e sets it's VEND/TEND attributes to the current
      * docVersion. Also deletes all this TaggedNodes children and attributes.
      */
     public void delete() {
@@ -254,7 +254,7 @@ public class TaggedNode {
 
     /**
      * Test of equality between a normal element and the tagged node of this
-     * TaggedNode. The comparsion only takes into account live
+     * TaggedNode. The comparison only takes into account live
      * children/attributes of the tagged node.
      * 
      * @return True if the elements are equal.

@@ -191,7 +191,7 @@ public final class VFile {
 
     /**
      * A class that saves changes to be performed on a single node. Includes
-     * links to the old and new versions of the node, anda set of changes to
+     * links to the old and new versions of the node, and a set of changes to
      * perform.
      * 
      * @see CHANGE
@@ -314,7 +314,7 @@ public final class VFile {
      * Classifies each change constant of XMLUnit into a function to be called.
      * 
      * @param id
-     *            The chnaged to be classified.
+     *            The change to be classified.
      * @return The corresponding CHANGE.
      * @see CHANGE
      * @throws UnsupportedOperationException
@@ -437,7 +437,7 @@ public final class VFile {
      * @param changeMap
      *            A map of TaggedNodes to changes to be performed on that node.
      * @param newNodeMap
-     *            A map from xpath location of an element to the new nodes that
+     *            A map from XPath location of an element to the new nodes that
      *            are to be added there.
      * @param element
      *            The element being updated.

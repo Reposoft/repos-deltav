@@ -74,7 +74,7 @@ public class ElementUtils {
      * Gets the text value of an element.
      * 
      * @param elem
-     *            The lement whose value to retrieve.
+     *            The element whose value to retrieve.
      * @return The value of the node, or the empty string if none exists.
      */
     public static String getValue(Element elem) {

@@ -6,7 +6,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> The element qulifier for the XML
+ * @author Hugo Svallfors <keiter@lavabit.com> The element qualifier for the XML
  *         indexer. Considers nodes with the same name and relative position
  *         comparable.
  * @see ElementQualifier
