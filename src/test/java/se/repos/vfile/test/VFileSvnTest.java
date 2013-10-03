@@ -33,6 +33,7 @@ import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
 import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
+import se.repos.vfile.store.VFileStoreDisk;
 import se.repos.vfile.store.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
@@ -154,7 +155,7 @@ public class VFileSvnTest {
         IOUtils.copy(b3, new FileOutputStream(f1));
         RepoRevision r3 = this.svncommit("third");
 
-        VFileStore store = new VFileStoreMemory();
+        VFileStore store = new VFileStoreDisk("./vfilestore");
         VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 
         // supporting infrastructure
