@@ -6,9 +6,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com>
- * The element qulifier for the XML indexer. Considers nodes with
- * the same name and relative position comparable.
+ * @author Hugo Svallfors <keiter@lavabit.com> The element qulifier for the XML
+ *         indexer. Considers nodes with the same name and relative position
+ *         comparable.
  * @see ElementQualifier
  */
 class NameAndPositionElementQualifier implements ElementQualifier {
@@ -17,17 +17,12 @@ class NameAndPositionElementQualifier implements ElementQualifier {
     }
 
     /**
-     * Method that return whether two elements of the new and old
-     * document in the diff are considered comparable.
-     * Considers two elements comparable if they have the same name and the
-     * same relative position to other elements of the same name.
-     * I.e if we have two documents that look like this:
-     * <foo>                <foo>                  
-     *      <bar .../>          <baz ... />
-     *      <bar .../>          <bar ... />
-     * </foo>                   <bar ... />
-     *                      </foo>
-     * It would consider comparable bar[1] to bar[1], bar[2] to bar[2]
+     * Method that return whether two elements of the new and old document in
+     * the diff are considered comparable. Considers two elements comparable if
+     * they have the same name and the same relative position to other elements
+     * of the same name. I.e if we have two documents that look like this: <foo>
+     * <foo> <bar .../> <baz ... /> <bar .../> <bar ... /> </foo> <bar ... />
+     * </foo> It would consider comparable bar[1] to bar[1], bar[2] to bar[2]
      * and would consider baz[1] unmatched.
      */
     @Override
@@ -46,8 +41,7 @@ class NameAndPositionElementQualifier implements ElementQualifier {
             return 1;
         } else if (parent.getNodeType() == Node.ELEMENT_NODE) {
             Element parentElement = (Element) parent;
-            NodeList sameName =
-                    parentElement.getElementsByTagName(elmnt.getTagName());
+            NodeList sameName = parentElement.getElementsByTagName(elmnt.getTagName());
             for (int i = 0; i < sameName.getLength(); i++) {
                 if (sameName.item(i).equals(elmnt)) {
                     return i;

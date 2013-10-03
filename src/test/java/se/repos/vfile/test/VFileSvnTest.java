@@ -46,168 +46,165 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
  */
 public class VFileSvnTest {
 
-	// set to false to examine repository after test
-	private boolean doCleanup = true;
+    // set to false to examine repository after test
+    private boolean doCleanup = true;
 
-	private File testDir = null;
-	private File repoDir = null;
-	private SVNURL repoUrl;
-	private File wc = null;
+    private File testDir = null;
+    private File repoDir = null;
+    private SVNURL repoUrl;
+    private File wc = null;
 
-	private SVNClientManager clientManager = null;
-	private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
+    private SVNClientManager clientManager = null;
+    private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
 
-	static {
-		FSRepositoryFactory.setup();
-	}
+    static {
+        FSRepositoryFactory.setup();
+    }
 
-	@Before
-	public void setUp() throws IOException, SVNException {
-		testDir = File.createTempFile("test-" + this.getClass().getName(), "");
-		testDir.delete();
-		repoDir = new File(testDir, "repo");
-		repoUrl = SVNRepositoryFactory.createLocalRepository(repoDir, true,
-				false);
-		// for low level operations
-		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
-		wc = new File(testDir, "wc");
-		System.out.println("Running local fs repository " + repoUrl);
-		clientManager = SVNClientManager.newInstance();
-	}
+    @Before
+    public void setUp() throws IOException, SVNException {
+        this.testDir = File.createTempFile("test-" + this.getClass().getName(), "");
+        this.testDir.delete();
+        this.repoDir = new File(this.testDir, "repo");
+        this.repoUrl = SVNRepositoryFactory.createLocalRepository(this.repoDir, true,
+                false);
+        // for low level operations
+        // SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
+        this.wc = new File(this.testDir, "wc");
+        System.out.println("Running local fs repository " + this.repoUrl);
+        this.clientManager = SVNClientManager.newInstance();
+    }
 
-	@After
-	public void tearDown() throws IOException {
-		if (doCleanup) {
-			FileUtils.deleteDirectory(testDir);
-		} else {
-			System.out.println("Test data kept at: "
-					+ testDir.getAbsolutePath());
-		}
-	}
+    @After
+    public void tearDown() throws IOException {
+        if (this.doCleanup) {
+            FileUtils.deleteDirectory(this.testDir);
+        } else {
+            System.out.println("Test data kept at: " + this.testDir.getAbsolutePath());
+        }
+    }
 
-	private void svncheckout() throws SVNException {
-		clientManager.getUpdateClient().doCheckout(repoUrl, wc,
-				SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
-	}
+    private void svncheckout() throws SVNException {
+        this.clientManager.getUpdateClient().doCheckout(this.repoUrl, this.wc,
+                SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+    }
 
-	private RepoRevision svncommit(String comment) throws SVNException {
-		long rev = clientManager
-				.getCommitClient()
-				.doCommit(new File[] { wc }, false, comment, null, null, false,
-						false, SVNDepth.INFINITY).getNewRevision();
-		Date d = svnlookProvider.get().doGetDate(repoDir,
-				SVNRevision.create(rev));
-		return new RepoRevision(rev, d);
-	}
+    private RepoRevision svncommit(String comment) throws SVNException {
+        long rev = this.clientManager
+                .getCommitClient()
+                .doCommit(new File[] { this.wc }, false, comment, null, null, false,
+                        false, SVNDepth.INFINITY).getNewRevision();
+        Date d = this.svnlookProvider.get().doGetDate(this.repoDir,
+                SVNRevision.create(rev));
+        return new RepoRevision(rev, d);
+    }
 
-	private void svnadd(File... paths) throws SVNException {
-		clientManager.getWCClient().doAdd(paths, true, false, false,
-				SVNDepth.INFINITY, true, true, true);
-	}
+    private void svnadd(File... paths) throws SVNException {
+        this.clientManager.getWCClient().doAdd(paths, true, false, false,
+                SVNDepth.INFINITY, true, true, true);
+    }
 
-	@Test
-	public void testBasic() throws Exception {
-		InputStream b1 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/basic_1.xml");
-		InputStream b2 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/basic_2.xml");
-		InputStream b3 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/basic_3.xml");
+    @Test
+    public void testBasic() throws Exception {
+        InputStream b1 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_1.xml");
+        InputStream b2 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_2.xml");
+        InputStream b3 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_3.xml");
 
-		CmsRepositorySvn repository = new CmsRepositorySvn(
-				"/anyparent", "anyname", repoDir);
-		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
-		contentsReader.setSVNLookClientProvider(svnlookProvider);
-		CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
-		changesetReader.setSVNLookClientProvider(svnlookProvider);
+        CmsRepositorySvn repository = new CmsRepositorySvn("/anyparent", "anyname",
+                this.repoDir);
+        CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
+        contentsReader.setSVNLookClientProvider(this.svnlookProvider);
+        CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
+        changesetReader.setSVNLookClientProvider(this.svnlookProvider);
 
-		svncheckout();
+        this.svncheckout();
 
-		File f1 = new File(wc, "basic.xml");
-		IOUtils.copy(b1, new FileOutputStream(f1));
-		svnadd(f1);
-		RepoRevision r1 = svncommit("first");
-		assertNotNull("should commit", r1);
-		IOUtils.copy(b2, new FileOutputStream(f1));
-		RepoRevision r2 = svncommit("second");
-		IOUtils.copy(b3, new FileOutputStream(f1));
-		RepoRevision r3 = svncommit("third");
+        File f1 = new File(this.wc, "basic.xml");
+        IOUtils.copy(b1, new FileOutputStream(f1));
+        this.svnadd(f1);
+        RepoRevision r1 = this.svncommit("first");
+        assertNotNull("should commit", r1);
+        IOUtils.copy(b2, new FileOutputStream(f1));
+        RepoRevision r2 = this.svncommit("second");
+        IOUtils.copy(b3, new FileOutputStream(f1));
+        RepoRevision r3 = this.svncommit("third");
 
-		VFileStore store = new VFileStoreMemory();
-		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
+        VFileStore store = new VFileStoreMemory();
+        VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 
-		// supporting infrastructure
-		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(
-				calculator, contentsReader);
-		VFileCommitHandler commitHandler = new VFileCommitHandler(repository,
-				itemHandler).setCmsChangesetReader(changesetReader);
+        // supporting infrastructure
+        VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator,
+                contentsReader);
+        VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
+                .setCmsChangesetReader(changesetReader);
 
-		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
-				"/basic.xml"));
-		commitHandler.onCommit(r1);
-		Document v1 = store.get(testID);
-		assertNotNull("V-file calculation should have stored a something", v1);
-		// TODO Assert that structure of index is correct.
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
+        commitHandler.onCommit(r1);
+        Document v1 = store.get(testID);
+        assertNotNull("V-file calculation should have stored a something", v1);
+        // TODO Assert that structure of index is correct.
 
-		commitHandler.onCommit(r2);
-		Document v2 = store.get(testID);
-		assertNotNull("V-file should still exist", v2);
+        commitHandler.onCommit(r2);
+        Document v2 = store.get(testID);
+        assertNotNull("V-file should still exist", v2);
 
-		commitHandler.onCommit(r3);
-		Document v3 = store.get(testID);
-		assertNotNull(v3);
-	}
-	
-	@Test
-	public void testTechdocDemo1() throws Exception {
-		InputStream b1 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_A.xml");
-		InputStream b2 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_B.xml");
-		InputStream b3 = this.getClass().getClassLoader()
-				.getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_C.xml");
+        commitHandler.onCommit(r3);
+        Document v3 = store.get(testID);
+        assertNotNull(v3);
+    }
 
-		CmsRepositorySvn repository = new CmsRepositorySvn(
-				"/anyparent", "anyname", repoDir);
-		CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
-		contentsReader.setSVNLookClientProvider(svnlookProvider);
-		CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
-		changesetReader.setSVNLookClientProvider(svnlookProvider);
+    @Test
+    public void testTechdocDemo1() throws Exception {
+        InputStream b1 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_A.xml");
+        InputStream b2 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_B.xml");
+        InputStream b3 = this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_C.xml");
 
-		svncheckout();
+        CmsRepositorySvn repository = new CmsRepositorySvn("/anyparent", "anyname",
+                this.repoDir);
+        CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
+        contentsReader.setSVNLookClientProvider(this.svnlookProvider);
+        CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
+        changesetReader.setSVNLookClientProvider(this.svnlookProvider);
 
-		File f1 = new File(wc, "900108.xml");
-		IOUtils.copy(b1, new FileOutputStream(f1));
-		svnadd(f1);
-		RepoRevision r1 = svncommit("first");
-		assertNotNull("should commit", r1);
-		IOUtils.copy(b2, new FileOutputStream(f1));
-		RepoRevision r2 = svncommit("second");
-		IOUtils.copy(b3, new FileOutputStream(f1));
-		RepoRevision r3 = svncommit("third");
+        this.svncheckout();
 
-		VFileStore store = new VFileStoreMemory();
-		VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
+        File f1 = new File(this.wc, "900108.xml");
+        IOUtils.copy(b1, new FileOutputStream(f1));
+        this.svnadd(f1);
+        RepoRevision r1 = this.svncommit("first");
+        assertNotNull("should commit", r1);
+        IOUtils.copy(b2, new FileOutputStream(f1));
+        RepoRevision r2 = this.svncommit("second");
+        IOUtils.copy(b3, new FileOutputStream(f1));
+        RepoRevision r3 = this.svncommit("third");
 
-		// supporting infrastructure
-		VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(
-				calculator, contentsReader);
-		VFileCommitHandler commitHandler = new VFileCommitHandler(repository,
-				itemHandler).setCmsChangesetReader(changesetReader);
+        VFileStore store = new VFileStoreMemory();
+        VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 
-		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
-				"/900108.xml"));
-		commitHandler.onCommit(r1);
-		Document v1 = store.get(testID);
-		assertNotNull("V-file calculation should have stored a something", v1);
-		// TODO Assert that structure of index is correct.
+        // supporting infrastructure
+        VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator,
+                contentsReader);
+        VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
+                .setCmsChangesetReader(changesetReader);
 
-		commitHandler.onCommit(r2);
-		Document v2 = store.get(testID);
-		assertNotNull("V-file should still exist", v2);
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
+        commitHandler.onCommit(r1);
+        Document v1 = store.get(testID);
+        assertNotNull("V-file calculation should have stored a something", v1);
+        // TODO Assert that structure of index is correct.
 
-		commitHandler.onCommit(r3);
-		Document v3 = store.get(testID);
-		assertNotNull(v3);
-	}	
+        commitHandler.onCommit(r2);
+        Document v2 = store.get(testID);
+        assertNotNull("V-file should still exist", v2);
+
+        commitHandler.onCommit(r3);
+        Document v3 = store.get(testID);
+        assertNotNull(v3);
+    }
 }

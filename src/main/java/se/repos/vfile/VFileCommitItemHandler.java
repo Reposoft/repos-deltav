@@ -20,40 +20,40 @@ import se.simonsoft.cms.item.inspection.CmsRepositoryInspection;
 @SuppressWarnings("deprecation")
 public class VFileCommitItemHandler {
 
-	private VFileCalculatorImpl calculator;
-	private CmsContentsReader contentsReader;
+    private VFileCalculatorImpl calculator;
+    private CmsContentsReader contentsReader;
 
-	@Inject
-	public VFileCommitItemHandler(VFileCalculatorImpl calculator,
-			CmsContentsReader contentsReader) {
-		this.calculator = calculator;
-		this.contentsReader = contentsReader;
-	}
+    @Inject
+    public VFileCommitItemHandler(VFileCalculatorImpl calculator,
+            CmsContentsReader contentsReader) {
+        this.calculator = calculator;
+        this.contentsReader = contentsReader;
+    }
 
-	public void onCommit(CmsRepositoryInspection repository,
-			CmsChangesetItem changesetItem) {
-		RepoRevision revision = changesetItem.getRevisionChanged();
-		CmsItemId itemId = new CmsItemIdUrl(repository, changesetItem.getPath())
-				.withPegRev(revision.getNumber());
+    public void onCommit(CmsRepositoryInspection repository,
+            CmsChangesetItem changesetItem) {
+        RepoRevision revision = changesetItem.getRevisionChanged();
+        CmsItemId itemId = new CmsItemIdUrl(repository, changesetItem.getPath())
+                .withPegRev(revision.getNumber());
 
-		// buffers
-		ByteArrayOutputStream current = new ByteArrayOutputStream();
-		contentsReader.getContents(repository, revision, itemId.getRelPath(),
-				current);
-		InputSource sourceCurrent = new InputSource(new ByteArrayInputStream(
-				current.toByteArray()));
+        // buffers
+        ByteArrayOutputStream current = new ByteArrayOutputStream();
+        this.contentsReader.getContents(repository, revision, itemId.getRelPath(),
+                current);
+        InputSource sourceCurrent = new InputSource(new ByteArrayInputStream(
+                current.toByteArray()));
 
-		RepoRevision revisionPrevious = changesetItem.getRevisionObsoleted();
-		InputSource sourcePrevious = null;
-		if (revisionPrevious != null) {
-			ByteArrayOutputStream previous = new ByteArrayOutputStream();
-			contentsReader.getContents(repository, revisionPrevious,
-					itemId.getRelPath(), previous);
-			sourcePrevious = new InputSource(new ByteArrayInputStream(
-					previous.toByteArray()));
-		}
+        RepoRevision revisionPrevious = changesetItem.getRevisionObsoleted();
+        InputSource sourcePrevious = null;
+        if (revisionPrevious != null) {
+            ByteArrayOutputStream previous = new ByteArrayOutputStream();
+            this.contentsReader.getContents(repository, revisionPrevious,
+                    itemId.getRelPath(), previous);
+            sourcePrevious = new InputSource(new ByteArrayInputStream(
+                    previous.toByteArray()));
+        }
 
-		calculator.increment(itemId.withPegRev(null), revisionPrevious,
-				sourcePrevious, revision, sourceCurrent);
-	}
+        this.calculator.increment(itemId.withPegRev(null), revisionPrevious,
+                sourcePrevious, revision, sourceCurrent);
+    }
 }
