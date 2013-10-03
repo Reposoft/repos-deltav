@@ -88,8 +88,9 @@ public class TaggedNode {
     }
 
     /**
-     * "Deletes" a tagged node, i.e sets it's VEND/TEND attributes to the current
-     * docVersion. Also deletes all this TaggedNodes children and attributes.
+     * "Deletes" a tagged node, i.e sets it's VEND/TEND attributes to the
+     * current docVersion. Also deletes all this TaggedNodes children and
+     * attributes.
      */
     public void delete() {
         if (!this.isLive()) {
@@ -139,7 +140,8 @@ public class TaggedNode {
 
     public TaggedNode getAttribute(String nameSpaceURI, String name) {
         for (TaggedNode a : this.getAttributes()) {
-            if (a.getName().equals(name) && a.getNameSpaceURI().equals(nameSpaceURI)) {
+            if (a.getName().equals(name)
+                    && (nameSpaceURI == null || nameSpaceURI.equals(a.getNameSpaceURI()))) {
                 return a;
             }
         }

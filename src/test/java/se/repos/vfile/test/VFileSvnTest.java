@@ -9,6 +9,9 @@ import java.io.InputStream;
 import java.util.Date;
 
 import javax.inject.Provider;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -28,6 +31,7 @@ import org.w3c.dom.Document;
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
+import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.repos.vfile.store.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
@@ -106,6 +110,24 @@ public class VFileSvnTest {
 
     @Test
     public void testBasic() throws Exception {
+     // Parse the files as Documents for data integrity checking.
+        DocumentBuilder db = null;
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setIgnoringComments(true);
+        dbf.setIgnoringElementContentWhitespace(true);
+        dbf.setNamespaceAware(true);
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        Document d1 = db.parse(this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_1.xml"));
+        Document d2 = db.parse(this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_2.xml"));
+        Document d3 = db.parse(this.getClass().getClassLoader()
+                .getResourceAsStream("se/repos/vfile/basic_3.xml"));
+        
         InputStream b1 = this.getClass().getClassLoader()
                 .getResourceAsStream("se/repos/vfile/basic_1.xml");
         InputStream b2 = this.getClass().getClassLoader()
@@ -143,17 +165,19 @@ public class VFileSvnTest {
 
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
         commitHandler.onCommit(r1);
-        Document v1 = store.get(testID);
+        VFile v1 = new VFile(store.get(testID));
         assertNotNull("V-file calculation should have stored a something", v1);
-        // TODO Assert that structure of index is correct.
+        assert(v1.documentEquals(d1));
 
         commitHandler.onCommit(r2);
-        Document v2 = store.get(testID);
+        VFile v2 = new VFile(store.get(testID));
         assertNotNull("V-file should still exist", v2);
+        assert(v2.documentEquals(d2));
 
         commitHandler.onCommit(r3);
-        Document v3 = store.get(testID);
+        VFile v3 = new VFile(store.get(testID));
         assertNotNull(v3);
+        assert(v3.documentEquals(d3));
     }
 
     @Test
