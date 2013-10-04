@@ -352,7 +352,7 @@ public final class VFile {
 
     private void cleanDocument() {
         for (TaggedNode child : this.getRootElement().elements(false)) {
-            this.cleanNode(this.getRootElement(), child);
+            VFile.cleanNode(this.getRootElement(), child);
         }
     }
 
@@ -360,7 +360,7 @@ public final class VFile {
      * Removes nodes with the same VSTART/VEND time, and sort deleted nodes to
      * the bottom of the file
      */
-    private void cleanNode(TaggedNode parent, TaggedNode child) {
+    private static void cleanNode(TaggedNode parent, TaggedNode child) {
         if (child.getVStart().equals(child.getVEnd())) {
             parent.eraseChild(child);
         } else {
@@ -369,7 +369,7 @@ public final class VFile {
                 parent.appendChild(child);
             }
             for (TaggedNode childOfChild : child.elements(false)) {
-                this.cleanNode(child, childOfChild);
+                VFile.cleanNode(child, childOfChild);
             }
         }
     }

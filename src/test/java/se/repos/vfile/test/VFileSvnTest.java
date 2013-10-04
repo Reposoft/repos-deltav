@@ -3,18 +3,21 @@ package se.repos.vfile.test;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 
 import javax.inject.Provider;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +37,6 @@ import se.repos.vfile.VFileCommitItemHandler;
 import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.repos.vfile.store.VFileStoreDisk;
-import se.repos.vfile.store.VFileStoreMemory;
 import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
@@ -109,32 +111,25 @@ public class VFileSvnTest {
                 SVNDepth.INFINITY, true, true, true);
     }
 
-    @Test
-    public void testBasic() throws Exception {
-     // Parse the files as Documents for data integrity checking.
+    /*
+     * Takes a series of file paths, runs unit test that asserts they can be
+     * v-filed. Puts generated v-file at testFilePath.
+     */
+    private void testVFiling(String testFilePath, String... filePaths) throws Exception {
+
+        // Parse the files as Documents for data integrity checking.
         DocumentBuilder db = null;
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setIgnoringComments(true);
         dbf.setIgnoringElementContentWhitespace(true);
         dbf.setNamespaceAware(true);
-        try {
-            db = dbf.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e.getMessage());
+        db = dbf.newDocumentBuilder();
+
+        ArrayList<Document> documents = new ArrayList<Document>();
+        for (String filePath : filePaths) {
+            documents.add(db.parse(this.getClass().getClassLoader()
+                    .getResourceAsStream(filePath)));
         }
-        Document d1 = db.parse(this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_1.xml"));
-        Document d2 = db.parse(this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_2.xml"));
-        Document d3 = db.parse(this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_3.xml"));
-        
-        InputStream b1 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_1.xml");
-        InputStream b2 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_2.xml");
-        InputStream b3 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/basic_3.xml");
 
         CmsRepositorySvn repository = new CmsRepositorySvn("/anyparent", "anyname",
                 this.repoDir);
@@ -145,15 +140,22 @@ public class VFileSvnTest {
 
         this.svncheckout();
 
-        File f1 = new File(this.wc, "basic.xml");
-        IOUtils.copy(b1, new FileOutputStream(f1));
-        this.svnadd(f1);
-        RepoRevision r1 = this.svncommit("first");
-        assertNotNull("should commit", r1);
-        IOUtils.copy(b2, new FileOutputStream(f1));
-        RepoRevision r2 = this.svncommit("second");
-        IOUtils.copy(b3, new FileOutputStream(f1));
-        RepoRevision r3 = this.svncommit("third");
+        ArrayList<RepoRevision> revisions = new ArrayList<RepoRevision>();
+
+        File testFile = new File(this.wc, testFilePath);
+        boolean addedToSVN = false;
+
+        Transformer trans = TransformerFactory.newInstance().newTransformer();
+        for (Document d : documents) {
+            Source source = new DOMSource(d);
+            Result result = new StreamResult(testFile);
+            trans.transform(source, result);
+            if (!addedToSVN) {
+                this.svnadd(testFile);
+                addedToSVN = true;
+            }
+            revisions.add(this.svncommit(""));
+        }
 
         VFileStore store = new VFileStoreDisk("./vfilestore");
         VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
@@ -164,72 +166,27 @@ public class VFileSvnTest {
         VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
                 .setCmsChangesetReader(changesetReader);
 
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
-        commitHandler.onCommit(r1);
-        VFile v1 = new VFile(store.get(testID));
-        assertNotNull("V-file calculation should have stored a something", v1);
-        assert(v1.documentEquals(d1));
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/"
+                + testFilePath));
+        for (int i = 0; i < documents.size(); i++) {
+            commitHandler.onCommit(revisions.get(i));
+            VFile v = new VFile(store.get(testID));
+            assertNotNull("V-file calculation should have stored something", v);
+            Document d = documents.get(i);
+            assert (v.documentEquals(d));
+        }
+    }
 
-        commitHandler.onCommit(r2);
-        VFile v2 = new VFile(store.get(testID));
-        assertNotNull("V-file should still exist", v2);
-        assert(v2.documentEquals(d2));
-
-        commitHandler.onCommit(r3);
-        VFile v3 = new VFile(store.get(testID));
-        assertNotNull(v3);
-        assert(v3.documentEquals(d3));
+    @Test
+    public void testBasic() throws Exception {
+        this.testVFiling("basic.xml", "se/repos/vfile/basic_1.xml",
+                "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3.xml");
     }
 
     @Test
     public void testTechdocDemo1() throws Exception {
-        InputStream b1 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_A.xml");
-        InputStream b2 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_B.xml");
-        InputStream b3 = this.getClass().getClassLoader()
-                .getResourceAsStream("se/repos/vfile/techdoc-demo1/900108_C.xml");
-
-        CmsRepositorySvn repository = new CmsRepositorySvn("/anyparent", "anyname",
-                this.repoDir);
-        CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
-        contentsReader.setSVNLookClientProvider(this.svnlookProvider);
-        CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
-        changesetReader.setSVNLookClientProvider(this.svnlookProvider);
-
-        this.svncheckout();
-
-        File f1 = new File(this.wc, "900108.xml");
-        IOUtils.copy(b1, new FileOutputStream(f1));
-        this.svnadd(f1);
-        RepoRevision r1 = this.svncommit("first");
-        assertNotNull("should commit", r1);
-        IOUtils.copy(b2, new FileOutputStream(f1));
-        RepoRevision r2 = this.svncommit("second");
-        IOUtils.copy(b3, new FileOutputStream(f1));
-        RepoRevision r3 = this.svncommit("third");
-
-        VFileStore store = new VFileStoreMemory();
-        VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
-
-        // supporting infrastructure
-        VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator,
-                contentsReader);
-        VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
-                .setCmsChangesetReader(changesetReader);
-
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
-        commitHandler.onCommit(r1);
-        Document v1 = store.get(testID);
-        assertNotNull("V-file calculation should have stored a something", v1);
-        // TODO Assert that structure of index is correct.
-
-        commitHandler.onCommit(r2);
-        Document v2 = store.get(testID);
-        assertNotNull("V-file should still exist", v2);
-
-        commitHandler.onCommit(r3);
-        Document v3 = store.get(testID);
-        assertNotNull(v3);
+        this.testVFiling("techdemo.xml", "se/repos/vfile/techdoc-demo1/900108_A.xml",
+                "se/repos/vfile/techdoc-demo1/900108_B.xml",
+                "se/repos/vfile/techdoc-demo1/900108_C.xml");
     }
 }
