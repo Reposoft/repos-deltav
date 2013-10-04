@@ -1,6 +1,5 @@
 package se.repos.vfile.gen;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,7 +24,6 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.Text;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> Class that represents a v-file.
@@ -245,7 +243,7 @@ public final class VFile {
         this.setDocumentTime(newTime);
         this.updateTaggedNode(changeMap, newNodeMap, this.getRootElement());
         this.addOrphanNodes(newNodeMap);
-        this.reorderNodes(reorderMap);
+        VFile.reorderNodes(reorderMap);
         this.cleanDocument();
     }
 
@@ -253,7 +251,7 @@ public final class VFile {
             Map<TaggedNode, DeferredChanges> reorderMap,
             MultiMap<String, Element> newNodeMap, Difference d) {
 
-        CHANGE change = this.classifyChange(d.getId());
+        CHANGE change = VFile.classifyChange(d.getId());
         if (change == CHANGE.IGNORED) {
             return;
         }
@@ -264,7 +262,7 @@ public final class VFile {
 
         if (controlNode == null) {
             // TODO Add better support for mixed-text nodes.
-            String testParentLocation = this.getXPathParent(testLocation);
+            String testParentLocation = VFile.getXPathParent(testLocation);
             newNodeMap.put(testParentLocation, (Element) testNode);
         } else {
             TaggedNode element = this.findIndexNode(controlNode, controlLocation);
@@ -304,9 +302,11 @@ public final class VFile {
         }
     }
 
-    private void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
+    private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
         for (TaggedNode e : reorderMap.keySet()) {
-            this.reorderElementChildren(e, reorderMap.get(e).testNode);
+            int location = ElementUtils
+                    .getChildIndex((Element) reorderMap.get(e).testNode);
+            e.reorder(location);
         }
     }
 
@@ -320,7 +320,7 @@ public final class VFile {
      * @throws UnsupportedOperationException
      *             If the change type in question isn't implemented yet.
      */
-    private CHANGE classifyChange(int id) {
+    private static CHANGE classifyChange(int id) {
         switch (id) {
         case DifferenceConstants.CHILD_NODE_NOT_FOUND_ID:
             return CHANGE.NODE_NOT_FOUND;
@@ -397,31 +397,31 @@ public final class VFile {
         switch (controlNode.getNodeType()) {
         case Node.ATTRIBUTE_NODE:
             Attr attr = (Attr) controlNode;
-            TaggedNode indexParent = this
-                    .findTaggedNode(this.getXPathParent(uniqueXPath));
+            TaggedNode indexParent = this.findTaggedNode(VFile
+                    .getXPathParent(uniqueXPath));
             return indexParent.getAttribute(attr.getNamespaceURI(), attr.getName());
         case Node.ELEMENT_NODE:
             return this.findTaggedNode(uniqueXPath);
         case Node.TEXT_NODE:
-            return this.findTaggedNode(this.getXPathParent(uniqueXPath));
+            return this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
         default:
             throw new UnsupportedOperationException();
         }
     }
 
-    private String getXPathParent(String xPath) {
+    private static String getXPathParent(String xPath) {
         return xPath.substring(0, xPath.lastIndexOf("/"));
     }
 
     private TaggedNode findTaggedNode(String uniqueXPath) {
-        Element result = (Element) this.xPathQuery(uniqueXPath, this.index);
+        Element result = (Element) VFile.xPathQuery(uniqueXPath, this.index);
         if (result == null) {
             return null;
         }
         return new TaggedNode(this, result);
     }
 
-    private Node xPathQuery(String xPath, Document doc) {
+    private static Node xPathQuery(String xPath, Document doc) {
         XPath xPathEvaluator = XPathFactory.newInstance().newXPath();
         try {
             return (Node) xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
@@ -456,99 +456,32 @@ public final class VFile {
                 element.delete();
                 return;
             case ELEM_CHILDREN_NUMBER:
-                this.updateElementChildren(newNodeMap, element, d.testLocation);
+                element.updateElementChildren(newNodeMap, d.testLocation);
                 break;
             case HAS_CHILD:
-                this.updateElementChild(element, d.controlNode, d.testNode);
-                break;
-            case TEXT_VALUE:
-                this.updateTextValue(element, d.testNode);
+                element.updateElementChild((Element) d.controlNode, (Element) d.testNode);
                 break;
             case ELEM_NAME_VALUE:
-                this.updateElementNameValue(element, d.testNode);
+                element.setNameValue(d.testNode.getNamespaceURI(),
+                        d.testNode.getNodeName(), d.testNode.getNodeValue());
                 break;
             case ATTR_VALUE:
-                this.updateAttributeValue(element, d.testNode);
+                Attr newAttr = (Attr) d.testNode;
+                element.setValue(newAttr.getValue());
                 break;
             case ELEM_ATTRS:
-                this.updateElementAttrs(element, d.controlNode, d.testNode);
+                element.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
                 break;
-            default:
-                throw new UnsupportedOperationException();
+            case TEXT_VALUE:
+                // TODO Change this for mixed-text nodes.
+                element.setValue(d.testNode.getTextContent());
+                break;
+            case ELEM_CHILDREN_ORDER:
+                // Dealt with later.
+                break;
+            case IGNORED:
+                break;
             }
         }
-    }
-
-    private void updateElementNameValue(TaggedNode element, Node testNode) {
-        element.setNameValue(testNode.getNamespaceURI(), testNode.getNodeName(),
-                testNode.getNodeValue());
-    }
-
-    private void updateTextValue(TaggedNode element, Node testNode) {
-        // Delete old node, insert new similar node with new value.
-        Text newText = (Text) testNode;
-        String newValue = newText.getWholeText();
-        if (newValue == null) {
-            element.setValue("");
-        } else {
-            element.setValue(newValue);
-        }
-    }
-
-    private void updateElementAttrs(TaggedNode changedNode, Node controlNode,
-            Node testNode) {
-        Element oldElement = (Element) controlNode;
-        Element newElement = (Element) testNode;
-
-        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
-                changedNode.deleteAttribute(oldAttr.getNamespaceURI(), oldAttr.getName());
-            }
-        }
-        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
-                changedNode.setAttribute(newAttr.getNamespaceURI(), newAttr.getName(),
-                        newAttr.getValue());
-            }
-        }
-    }
-
-    private void updateElementChildren(MultiMap<String, Element> newNodeMap,
-            TaggedNode element, String testNodeLocation) {
-        Set<Element> newElems = newNodeMap.remove(testNodeLocation);
-        for (Element e : newElems) {
-            element.normalizeElement(e);
-        }
-    }
-
-    private void updateElementChild(TaggedNode element, Node controlNode, Node testNode) {
-        Element newElement = (Element) testNode;
-        Element oldElement = (Element) controlNode;
-        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
-        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
-
-        if (newElements.isEmpty() && oldElements.isEmpty()) {
-            throw new RuntimeException("Missing child element.");
-        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
-            throw new RuntimeException("Found two child elements where expected one.");
-        } else if (newElements.isEmpty()) {
-            for (Element e : oldElements) {
-                element.deleteChildElement(e);
-            }
-        } else if (oldElements.isEmpty()) {
-            for (Element e : newElements) {
-                element.normalizeElement(e);
-            }
-        }
-    }
-
-    private void updateAttributeValue(TaggedNode attr, Node testNode) {
-        Attr newAttr = (Attr) testNode;
-        attr.setValue(newAttr.getValue());
-    }
-
-    private void reorderElementChildren(TaggedNode element, Node testNode) {
-        int location = ElementUtils.getChildIndex((Element) testNode);
-        element.reorder(location);
     }
 }

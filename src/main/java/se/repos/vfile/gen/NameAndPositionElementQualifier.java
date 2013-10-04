@@ -30,12 +30,12 @@ class NameAndPositionElementQualifier implements ElementQualifier {
         if (!elmnt1.getTagName().equals(elmnt2.getTagName())) {
             return false;
         }
-        int elmnt1Pos = this.getPosition(elmnt1);
-        int elmnt2Pos = this.getPosition(elmnt2);
+        int elmnt1Pos = NameAndPositionElementQualifier.getPosition(elmnt1);
+        int elmnt2Pos = NameAndPositionElementQualifier.getPosition(elmnt2);
         return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;
     }
 
-    private int getPosition(Element elmnt) {
+    private static int getPosition(Element elmnt) {
         Node parent = elmnt.getParentNode();
         if (parent.getNodeType() == Node.DOCUMENT_NODE) {
             return 1;

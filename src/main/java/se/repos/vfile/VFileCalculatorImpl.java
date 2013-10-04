@@ -63,7 +63,7 @@ public class VFileCalculatorImpl {
         logger.debug("Increment requested for {} {}->{}", itemId, previous, current);
         VFile index;
         try {
-            if (!this.storage.has(itemId)) {
+            if (oldContent == null) {
                 index = VFile.normalizeDocument(this.db.parse(newContent),
                         Long.toString(current.getDate().getTime()),
                         Long.toString(current.getNumber()));

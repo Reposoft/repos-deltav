@@ -2,6 +2,7 @@ package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -42,19 +43,15 @@ public class TaggedNode {
         this.element = element;
     }
 
-    public TaggedNode getParent() {
+    private TaggedNode getParent() {
         return new TaggedNode(this.parentVFile, (Element) this.element.getParentNode());
     }
 
-    public VFile getParentIndex() {
-        return this.parentVFile;
-    }
-
-    public String getName() {
+    private String getName() {
         return this.element.getTagName();
     }
 
-    public String getValue() {
+    private String getValue() {
         return ElementUtils.getValue(this.element);
     }
 
@@ -62,7 +59,7 @@ public class TaggedNode {
         this.setNameValue(this.getNameSpaceURI(), this.getName(), value);
     }
 
-    public String getNameSpaceURI() {
+    private String getNameSpaceURI() {
         return this.element.getNamespaceURI();
     }
 
@@ -134,10 +131,6 @@ public class TaggedNode {
                 StringConstants.YES);
     }
 
-    public boolean hasAttribute(String nameSpaceURI, String name) {
-        return this.getAttribute(nameSpaceURI, name) != null;
-    }
-
     public TaggedNode getAttribute(String nameSpaceURI, String name) {
         for (TaggedNode a : this.getAttributes()) {
             if (a.getName().equals(name)
@@ -148,7 +141,7 @@ public class TaggedNode {
         return null;
     }
 
-    public ArrayList<TaggedNode> getAttributes() {
+    private ArrayList<TaggedNode> getAttributes() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (TaggedNode child : this.elements(true)) {
             if (child.isAttribute()) {
@@ -182,11 +175,11 @@ public class TaggedNode {
         this.element.appendChild(child.element);
     }
 
-    public void insertBefore(TaggedNode e, TaggedNode ref) {
+    private void insertBefore(TaggedNode e, TaggedNode ref) {
         this.element.insertBefore(e.element, ref.element);
     }
 
-    public void insertElementAt(TaggedNode e, int index) {
+    private void insertElementAt(TaggedNode e, int index) {
         ArrayList<TaggedNode> children = this.getChildElements();
         TaggedNode ref = children.get(index);
         this.element.insertBefore(e.element, ref.element);
@@ -217,15 +210,17 @@ public class TaggedNode {
         }
     }
 
-    public void deleteChildElement(Element e) {
-        TaggedNode elem = this.getEqualElement(e);
-        if (elem == null) {
-            throw new RuntimeException("Tried to delete non-present element.");
+    private void deleteChildElement(Element target) {
+        for (TaggedNode e : this.getChildElements()) {
+            if (e.isEqualElement(target)) {
+                e.delete();
+                return;
+            }
         }
-        elem.delete();
+        throw new RuntimeException("Tried to delete non-present element.");
     }
 
-    public int childCount() {
+    private int childCount() {
         return this.getChildElements().size();
     }
 
@@ -305,17 +300,45 @@ public class TaggedNode {
         return true;
     }
 
-    public boolean hasEqualElement(Element target) {
-        return this.getEqualElement(target) != null;
-    }
-
-    public TaggedNode getEqualElement(Element target) {
-        for (TaggedNode e : this.getChildElements()) {
-            if (e.isEqualElement(target)) {
-                return e;
+    public void updateElementAttrs(Element oldElement, Element newElement) {
+        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
+            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
+                this.deleteAttribute(oldAttr.getNamespaceURI(), oldAttr.getName());
             }
         }
-        return null;
+        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
+            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
+                this.setAttribute(newAttr.getNamespaceURI(), newAttr.getName(),
+                        newAttr.getValue());
+            }
+        }
+    }
+
+    public void updateElementChildren(MultiMap<String, Element> newNodeMap,
+            String testNodeLocation) {
+        Set<Element> newElems = newNodeMap.remove(testNodeLocation);
+        for (Element e : newElems) {
+            this.normalizeElement(e);
+        }
+    }
+
+    public void updateElementChild(Element oldElement, Element newElement) {
+        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
+        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
+
+        if (newElements.isEmpty() && oldElements.isEmpty()) {
+            throw new RuntimeException("Missing child element.");
+        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
+            throw new RuntimeException("Found two child elements where expected one.");
+        } else if (newElements.isEmpty()) {
+            for (Element e : oldElements) {
+                this.deleteChildElement(e);
+            }
+        } else if (oldElements.isEmpty()) {
+            for (Element e : newElements) {
+                this.normalizeElement(e);
+            }
+        }
     }
 
     @Override
