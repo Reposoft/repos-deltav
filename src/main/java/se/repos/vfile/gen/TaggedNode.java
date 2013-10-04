@@ -2,7 +2,6 @@ package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -210,7 +209,7 @@ public class TaggedNode {
         }
     }
 
-    private void deleteChildElement(Element target) {
+    public void deleteChildElement(Element target) {
         for (TaggedNode e : this.getChildElements()) {
             if (e.isEqualElement(target)) {
                 e.delete();
@@ -298,47 +297,6 @@ public class TaggedNode {
             }
         }
         return true;
-    }
-
-    public void updateElementAttrs(Element oldElement, Element newElement) {
-        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
-                this.deleteAttribute(oldAttr.getNamespaceURI(), oldAttr.getName());
-            }
-        }
-        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
-                this.setAttribute(newAttr.getNamespaceURI(), newAttr.getName(),
-                        newAttr.getValue());
-            }
-        }
-    }
-
-    public void updateElementChildren(MultiMap<String, Element> newNodeMap,
-            String testNodeLocation) {
-        Set<Element> newElems = newNodeMap.remove(testNodeLocation);
-        for (Element e : newElems) {
-            this.normalizeElement(e);
-        }
-    }
-
-    public void updateElementChild(Element oldElement, Element newElement) {
-        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
-        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
-
-        if (newElements.isEmpty() && oldElements.isEmpty()) {
-            throw new RuntimeException("Missing child element.");
-        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
-            throw new RuntimeException("Found two child elements where expected one.");
-        } else if (newElements.isEmpty()) {
-            for (Element e : oldElements) {
-                this.deleteChildElement(e);
-            }
-        } else if (oldElements.isEmpty()) {
-            for (Element e : newElements) {
-                this.normalizeElement(e);
-            }
-        }
     }
 
     @Override

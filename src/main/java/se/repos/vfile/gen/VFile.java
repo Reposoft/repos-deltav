@@ -1,5 +1,6 @@
 package se.repos.vfile.gen;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -241,7 +242,7 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        this.updateTaggedNode(changeMap, newNodeMap, this.getRootElement());
+        VFile.updateTaggedNode(changeMap, newNodeMap, this.getRootElement());
         this.addOrphanNodes(newNodeMap);
         VFile.reorderNodes(reorderMap);
         this.cleanDocument();
@@ -441,10 +442,10 @@ public final class VFile {
      * @param element
      *            The element being updated.
      */
-    private void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
+    private static void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
             MultiMap<String, Element> newNodeMap, TaggedNode element) {
         for (TaggedNode child : element.elements(true)) {
-            this.updateTaggedNode(changeMap, newNodeMap, child);
+            VFile.updateTaggedNode(changeMap, newNodeMap, child);
         }
         if (!changeMap.containsKey(element)) {
             return;
@@ -456,10 +457,11 @@ public final class VFile {
                 element.delete();
                 return;
             case ELEM_CHILDREN_NUMBER:
-                element.updateElementChildren(newNodeMap, d.testLocation);
+                VFile.updateElementChildren(element, newNodeMap, d.testLocation);
                 break;
             case HAS_CHILD:
-                element.updateElementChild((Element) d.controlNode, (Element) d.testNode);
+                VFile.updateElementChild(element, (Element) d.controlNode,
+                        (Element) d.testNode);
                 break;
             case ELEM_NAME_VALUE:
                 element.setNameValue(d.testNode.getNamespaceURI(),
@@ -470,7 +472,8 @@ public final class VFile {
                 element.setValue(newAttr.getValue());
                 break;
             case ELEM_ATTRS:
-                element.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
+                VFile.updateElementAttrs(element, (Element) d.controlNode,
+                        (Element) d.testNode);
                 break;
             case TEXT_VALUE:
                 // TODO Change this for mixed-text nodes.
@@ -481,6 +484,49 @@ public final class VFile {
                 break;
             case IGNORED:
                 break;
+            }
+        }
+    }
+
+    private static void updateElementAttrs(TaggedNode element, Element oldElement,
+            Element newElement) {
+        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
+            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
+                element.deleteAttribute(oldAttr.getNamespaceURI(), oldAttr.getName());
+            }
+        }
+        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
+            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
+                element.setAttribute(newAttr.getNamespaceURI(), newAttr.getName(),
+                        newAttr.getValue());
+            }
+        }
+    }
+
+    private static void updateElementChildren(TaggedNode element,
+            MultiMap<String, Element> newNodeMap, String testNodeLocation) {
+        Set<Element> newElems = newNodeMap.remove(testNodeLocation);
+        for (Element e : newElems) {
+            element.normalizeElement(e);
+        }
+    }
+
+    private static void updateElementChild(TaggedNode element, Element oldElement,
+            Element newElement) {
+        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
+        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
+
+        if (newElements.isEmpty() && oldElements.isEmpty()) {
+            throw new RuntimeException("Missing child element.");
+        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
+            throw new RuntimeException("Found two child elements where expected one.");
+        } else if (newElements.isEmpty()) {
+            for (Element e : oldElements) {
+                element.deleteChildElement(e);
+            }
+        } else if (oldElements.isEmpty()) {
+            for (Element e : newElements) {
+                element.normalizeElement(e);
             }
         }
     }
