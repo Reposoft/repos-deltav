@@ -182,8 +182,8 @@ public class TaggedNode {
         this.element.appendChild(child.element);
     }
 
-    public void insertBefore(TaggedNode element, TaggedNode ref) {
-        this.element.insertBefore(element.element, ref.element);
+    public void insertBefore(TaggedNode e, TaggedNode ref) {
+        this.element.insertBefore(e.element, ref.element);
     }
 
     public void insertElementAt(TaggedNode e, int index) {

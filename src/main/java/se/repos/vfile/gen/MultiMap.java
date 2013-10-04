@@ -24,9 +24,8 @@ public class MultiMap<K, V> {
         Set<V> vals = this.values.get(key);
         if (vals == null) {
             return new LinkedHashSet<V>();
-        } else {
-            return vals;
         }
+        return vals;
     }
 
     public boolean containsKey(K key) {
@@ -51,9 +50,8 @@ public class MultiMap<K, V> {
         Set<V> vals = this.values.remove(key);
         if (vals == null) {
             return new LinkedHashSet<V>();
-        } else {
-            return vals;
         }
+        return vals;
     }
 
     public Set<K> keySet() {

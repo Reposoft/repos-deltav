@@ -187,7 +187,7 @@ public final class VFile {
     private enum CHANGE {
 
         HAS_CHILD, NODE_NOT_FOUND, ELEM_ATTRS, TEXT_VALUE, ELEM_NAME_VALUE, ELEM_CHILDREN_NUMBER, ELEM_CHILDREN_ORDER, ATTR_VALUE, IGNORED
-    };
+    }
 
     /**
      * A class that saves changes to be performed on a single node. Includes
@@ -417,9 +417,8 @@ public final class VFile {
         Element result = (Element) this.xPathQuery(uniqueXPath, this.index);
         if (result == null) {
             return null;
-        } else {
-            return new TaggedNode(this, result);
         }
+        return new TaggedNode(this, result);
     }
 
     private Node xPathQuery(String xPath, Document doc) {

@@ -85,9 +85,8 @@ public class ElementUtils {
                 String value = ((Text) c).getWholeText();
                 if (value.trim().isEmpty()) {
                     return "";
-                } else {
-                    return value;
                 }
+                return value;
             }
         }
         return "";
