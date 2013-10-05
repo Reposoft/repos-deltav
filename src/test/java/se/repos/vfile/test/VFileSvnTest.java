@@ -187,8 +187,7 @@ public class VFileSvnTest {
 
     @Test
     public void testTechdocDemo1() throws Exception {
-        // TODO Why does DOM try to open document type file even when validation
-        // is turned off?
+        // TODO Why does DOM try to open DTD file even when validation is off?
         this.testVFiling("900108.xml", "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
