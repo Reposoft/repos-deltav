@@ -64,27 +64,18 @@ public class TaggedNode {
     }
 
     public void setValue(String value) {
+        TaggedNode newElem;
         if (this.isElement()) {
             throw new RuntimeException();
-        }
-        TaggedNode parent = this.getParent();
-        TaggedNode newElem;
-        if (this.isAttribute()) {
+        } else if (this.isAttribute()) {
             newElem = this.parentVFile.createAttribute(this.getNameSpaceURI(),
                     this.getName(), value);
         } else {
-            newElem = this.parentVFile.createTaggedNode(this.getNameSpaceURI(),
-                    this.getName());
+            newElem = this.parentVFile.createText(value);
             this.element.setTextContent(value);
         }
-        for (TaggedNode attr : this.getAttributes()) {
-            newElem.setAttribute(this.getNameSpaceURI(), attr.getName(), attr.getValue());
-        }
-        for (TaggedNode child : this.getChildElements()) {
-            newElem.appendChild(child);
-        }
 
-        parent.insertBefore(newElem, this);
+        this.getParent().insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
     }
@@ -96,7 +87,9 @@ public class TaggedNode {
     public void setName(String nameSpaceURI, String name) {
         TaggedNode parent = this.getParent();
         TaggedNode newElem;
-        if (this.isAttribute()) {
+        if (this.isText()) {
+            throw new RuntimeException();
+        } else if (this.isAttribute()) {
             newElem = this.parentVFile.createAttribute(nameSpaceURI, name,
                     this.getValue());
         } else {
