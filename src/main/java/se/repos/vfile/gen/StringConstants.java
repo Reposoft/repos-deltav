@@ -16,4 +16,5 @@ public final class StringConstants {
     public static final String YES = "yes";
     public static final String DOCVERSION = "docVersion";
     public static final String DOCTIME = "docTime";
+    public static final String MIXTEXT = "mixtext";
 }

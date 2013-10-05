@@ -5,6 +5,8 @@ import java.util.Iterator;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> A single element of a VFile.
@@ -38,41 +40,70 @@ public class TaggedNode {
                 || !element.hasAttribute(StringConstants.TEND)) {
             throw new IllegalArgumentException("Missing lifetime information on element.");
         }
+        if (element.hasAttribute(StringConstants.ISATTR)
+                && element.getNodeName().equals(StringConstants.MIXTEXT)) {
+            throw new IllegalArgumentException("Invalid metadata on element.");
+        }
         this.parentVFile = parentIndex;
         this.element = element;
     }
 
-    private TaggedNode getParent() {
+    public TaggedNode getParent() {
         return new TaggedNode(this.parentVFile, (Element) this.element.getParentNode());
     }
 
-    private String getName() {
+    public String getName() {
         return this.element.getTagName();
     }
 
-    private String getValue() {
-        return ElementUtils.getValue(this.element);
+    public String getValue() {
+        if (this.isElement()) {
+            return "";
+        }
+        return this.element.getTextContent();
     }
 
     public void setValue(String value) {
-        this.setNameValue(this.getNameSpaceURI(), this.getName(), value);
-    }
-
-    private String getNameSpaceURI() {
-        return this.element.getNamespaceURI();
-    }
-
-    public void setNameValue(String nameSpaceURI, String name, String value) {
+        if (this.isElement()) {
+            throw new RuntimeException();
+        }
         TaggedNode parent = this.getParent();
         TaggedNode newElem;
         if (this.isAttribute()) {
-            newElem = this.parentVFile.createAttribute(nameSpaceURI, name, value);
+            newElem = this.parentVFile.createAttribute(this.getNameSpaceURI(),
+                    this.getName(), value);
         } else {
-            newElem = this.parentVFile.createTaggedNode(nameSpaceURI, name);
-            ElementUtils.setValue(newElem.element, value);
+            newElem = this.parentVFile.createTaggedNode(this.getNameSpaceURI(),
+                    this.getName());
+            this.element.setTextContent(value);
         }
         for (TaggedNode attr : this.getAttributes()) {
-            newElem.setAttribute(nameSpaceURI, attr.getName(), attr.getValue());
+            newElem.setAttribute(this.getNameSpaceURI(), attr.getName(), attr.getValue());
+        }
+        for (TaggedNode child : this.getChildElements()) {
+            newElem.appendChild(child);
+        }
+
+        parent.insertBefore(newElem, this);
+        this.delete();
+        this.element = newElem.element;
+    }
+
+    public String getNameSpaceURI() {
+        return this.element.getNamespaceURI();
+    }
+
+    public void setName(String nameSpaceURI, String name) {
+        TaggedNode parent = this.getParent();
+        TaggedNode newElem;
+        if (this.isAttribute()) {
+            newElem = this.parentVFile.createAttribute(nameSpaceURI, name,
+                    this.getValue());
+        } else {
+            newElem = this.parentVFile.createTaggedNode(nameSpaceURI, name);
+        }
+        for (TaggedNode attr : this.getAttributes()) {
+            newElem.setAttribute(this.getNameSpaceURI(), attr.getName(), attr.getValue());
         }
         for (TaggedNode child : this.getChildElements()) {
             newElem.appendChild(child);
@@ -130,6 +161,14 @@ public class TaggedNode {
                 StringConstants.YES);
     }
 
+    public boolean isText() {
+        return this.element.getNodeName().equals(StringConstants.MIXTEXT);
+    }
+
+    public boolean isElement() {
+        return !this.isAttribute() && !this.isText();
+    }
+
     public TaggedNode getAttribute(String nameSpaceURI, String name) {
         for (TaggedNode a : this.getAttributes()) {
             if (a.getName().equals(name)
@@ -140,7 +179,7 @@ public class TaggedNode {
         return null;
     }
 
-    private ArrayList<TaggedNode> getAttributes() {
+    public ArrayList<TaggedNode> getAttributes() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (TaggedNode child : this.elements(true)) {
             if (child.isAttribute()) {
@@ -184,6 +223,29 @@ public class TaggedNode {
         this.element.insertBefore(e.element, ref.element);
     }
 
+    public void normalizeNode(Node child) {
+        switch (child.getNodeType()) {
+        case Node.TEXT_NODE:
+            this.normalizeText((Text) child);
+            return;
+        case Node.ELEMENT_NODE:
+            this.normalizeElement((Element) child);
+            return;
+        default:
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void normalizeText(Text child) {
+        TaggedNode text = this.parentVFile.createText(child.getData());
+        int index = ElementUtils.getTextIndex(child);
+        if (index == this.childCount()) {
+            this.appendChild(text);
+        } else {
+            this.insertElementAt(text, index);
+        }
+    }
+
     /**
      * Adds a new element to this IndexNode. The element is assumed not to be
      * tagged, and is normalized to the current docVersion.
@@ -197,9 +259,8 @@ public class TaggedNode {
         for (Element c : ElementUtils.getChildElements(child)) {
             newChild.normalizeElement(c);
         }
-        String value = ElementUtils.getValue(child);
-        if (!value.isEmpty()) {
-            ElementUtils.setValue(newChild.element, value);
+        for (Text t : ElementUtils.getText(child)) {
+            newChild.normalizeText(t);
         }
         int index = ElementUtils.getChildIndex(child);
         if (index == this.childCount()) {
@@ -224,13 +285,19 @@ public class TaggedNode {
     }
 
     public ArrayList<TaggedNode> getChildElements() {
-        return this.getChildElements(true);
+        ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
+        for (TaggedNode child : this.elements(true)) {
+            if (child.isElement()) {
+                results.add(child);
+            }
+        }
+        return results;
     }
 
-    public ArrayList<TaggedNode> getChildElements(boolean mustBeLive) {
+    public ArrayList<TaggedNode> getText() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
-        for (TaggedNode child : this.elements(mustBeLive)) {
-            if (!child.isAttribute()) {
+        for (TaggedNode child : this.elements(true)) {
+            if (child.isText()) {
                 results.add(child);
             }
         }
@@ -256,16 +323,24 @@ public class TaggedNode {
      * @return True if the elements are equal.
      */
     public boolean isEqualElement(Element docElem) {
-        return !this.isAttribute() && this.isLive()
+        return this.isElement() && this.isLive()
                 && this.element.getTagName().equals(docElem.getTagName())
-                && this.hasEqualValue(docElem) && this.hasSameAttributes(docElem)
+                && this.hasSameText(docElem) && this.hasSameAttributes(docElem)
                 && this.hasSameChildren(docElem);
     }
 
-    private boolean hasEqualValue(Element docElem) {
-        String thisValue = ElementUtils.getValue(this.element);
-        String docValue = ElementUtils.getValue(docElem);
-        return docValue.equals(thisValue);
+    private boolean hasSameText(Element docElem) {
+        ArrayList<TaggedNode> thisText = this.getText();
+        ArrayList<Text> thatText = ElementUtils.getText(docElem);
+        if (thisText.size() != thatText.size()) {
+            return false;
+        }
+        for (int i = 0; i < thisText.size(); i++) {
+            if (!thisText.get(i).getValue().equals(thatText.get(i).getData())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean hasSameChildren(Element docElem) {

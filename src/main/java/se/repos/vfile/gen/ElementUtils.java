@@ -51,6 +51,20 @@ public class ElementUtils {
         return results;
     }
 
+    public static ArrayList<Text> getText(Element element) {
+        ArrayList<Text> results = new ArrayList<Text>();
+        NodeList children = element.getChildNodes();
+        if (children == null) {
+            return results;
+        }
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i).getNodeType() == Node.TEXT_NODE) {
+                results.add((Text) children.item(i));
+            }
+        }
+        return results;
+    }
+
     /**
      * Retrieves the attributes elements of a node.
      * 
@@ -71,55 +85,6 @@ public class ElementUtils {
     }
 
     /**
-     * Gets the text value of an element.
-     * 
-     * @param elem
-     *            The element whose value to retrieve.
-     * @return The value of the node, or the empty string if none exists.
-     */
-    public static String getValue(Element elem) {
-        NodeList children = elem.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node c = children.item(i);
-            if (isTextNode(c)) {
-                String value = ((Text) c).getWholeText();
-                if (value.trim().isEmpty()) {
-                    return "";
-                }
-                return value;
-            }
-        }
-        return "";
-    }
-
-    /**
-     * Sets the text value of elem.
-     * 
-     * @param elem
-     *            The element whose value to set.
-     * @param value
-     *            The value which to set it to.
-     */
-    public static void setValue(Element elem, String value) {
-        // First try to replace existing text field.
-        NodeList children = elem.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node c = children.item(i);
-            if (isTextNode(c)) {
-                ((Text) c).replaceWholeText(value);
-                return;
-            }
-        }
-        // Otherwise, create new one.
-        elem.appendChild(elem.getOwnerDocument().createTextNode(value));
-    }
-
-    private static boolean isTextNode(Node n) {
-        short nodeType = n.getNodeType();
-        return nodeType == Node.TEXT_NODE || nodeType == Node.CDATA_SECTION_NODE;
-    }
-
-    /**
      * Retrieves at which index position of it's parent node you can find child.
      * 
      * @throws RuntimeException
@@ -135,5 +100,23 @@ public class ElementUtils {
             i++;
         }
         throw new RuntimeException("Element not found.");
+    }
+
+    /**
+     * Retrieves at which index position of it's parent node you can find text.
+     * 
+     * @throws RuntimeException
+     *             If the parent node of child does not contain an equal node.
+     */
+    public static int getTextIndex(Text text) {
+        Element parent = (Element) text.getParentNode();
+        int i = 0;
+        for (Text t : getText(parent)) {
+            if (t.equals(text)) {
+                return i;
+            }
+            i++;
+        }
+        throw new RuntimeException("Text not found.");
     }
 }

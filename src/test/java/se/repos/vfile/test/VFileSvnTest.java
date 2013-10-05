@@ -1,6 +1,7 @@
 package se.repos.vfile.test;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,6 +124,7 @@ public class VFileSvnTest {
         dbf.setIgnoringComments(true);
         dbf.setIgnoringElementContentWhitespace(true);
         dbf.setNamespaceAware(true);
+        dbf.setValidating(false);
         db = dbf.newDocumentBuilder();
 
         ArrayList<Document> documents = new ArrayList<Document>();
@@ -173,7 +175,7 @@ public class VFileSvnTest {
             VFile v = new VFile(store.get(testID));
             assertNotNull("V-file calculation should have stored something", v);
             Document d = documents.get(i);
-            assert (v.documentEquals(d));
+            assertTrue((v.documentEquals(d)));
         }
     }
 
@@ -185,7 +187,9 @@ public class VFileSvnTest {
 
     @Test
     public void testTechdocDemo1() throws Exception {
-        this.testVFiling("techdemo.xml", "se/repos/vfile/techdoc-demo1/900108_A.xml",
+        // TODO Why does DOM try to open document type file even when validation
+        // is turned off?
+        this.testVFiling("900108.xml", "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
     }

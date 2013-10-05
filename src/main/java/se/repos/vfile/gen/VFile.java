@@ -25,6 +25,7 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> Class that represents a v-file.
@@ -120,7 +121,27 @@ public final class VFile {
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
         elem.setAttribute(StringConstants.ISATTR, StringConstants.YES);
-        ElementUtils.setValue(elem, value);
+        elem.setTextContent(value);
+        TaggedNode attr = new TaggedNode(this, elem);
+        return attr;
+    }
+
+    /**
+     * Creates a new text element belonging to this index.
+     * 
+     * @see TaggedNode
+     * @return The new TaggedNode.
+     */
+    public TaggedNode createText(String value) {
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException("Empty text node.");
+        }
+        Element elem = this.index.createElement(StringConstants.MIXTEXT);
+        elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
+        elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
+        elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
+        elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        elem.setTextContent(value);
         TaggedNode attr = new TaggedNode(this, elem);
         return attr;
     }
@@ -172,12 +193,11 @@ public final class VFile {
             idx.getRootElement().setAttribute(a.getNamespaceURI(), a.getName(),
                     a.getValue());
         }
-        String value = ElementUtils.getValue(root);
-        if (!value.isEmpty()) {
-            ElementUtils.setValue(root, value);
-        }
         for (Element c : ElementUtils.getChildElements(root)) {
             idx.getRootElement().normalizeElement(c);
+        }
+        for (Text t : ElementUtils.getText(root)) {
+            idx.getRootElement().normalizeText(t);
         }
         return idx;
     }
@@ -185,7 +205,7 @@ public final class VFile {
     // Enum for which update function to call for a changed element.
     private enum CHANGE {
 
-        HAS_CHILD, NODE_NOT_FOUND, ELEM_ATTRS, TEXT_VALUE, ELEM_NAME_VALUE, ELEM_CHILDREN_NUMBER, ELEM_CHILDREN_ORDER, ATTR_VALUE, IGNORED
+        HAS_CHILD, NODE_NOT_FOUND, ELEM_ATTRS, TEXT_VALUE, ELEM_NAME, ELEM_CHILDREN_NUMBER, ELEM_CHILDREN_ORDER, ATTR_VALUE, IGNORED
     }
 
     /**
@@ -232,7 +252,7 @@ public final class VFile {
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
-        MultiMap<String, Element> newNodeMap = new MultiMap<String, Element>();
+        MultiMap<String, Node> newNodeMap = new MultiMap<String, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
@@ -250,7 +270,7 @@ public final class VFile {
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
             Map<TaggedNode, DeferredChanges> reorderMap,
-            MultiMap<String, Element> newNodeMap, Difference d) {
+            MultiMap<String, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
         if (change == CHANGE.IGNORED) {
@@ -262,9 +282,8 @@ public final class VFile {
         String testLocation = d.getTestNodeDetail().getXpathLocation();
 
         if (controlNode == null) {
-            // TODO Add better support for mixed-text nodes.
             String testParentLocation = VFile.getXPathParent(testLocation);
-            newNodeMap.put(testParentLocation, (Element) testNode);
+            newNodeMap.put(testParentLocation, testNode);
         } else {
             TaggedNode element = this.findIndexNode(controlNode, controlLocation);
             Map<TaggedNode, DeferredChanges> map;
@@ -283,7 +302,7 @@ public final class VFile {
     }
 
     // Add any node that couldn't be added in updateTaggedNode.
-    private void addOrphanNodes(MultiMap<String, Element> newNodeMap) {
+    private void addOrphanNodes(MultiMap<String, Node> newNodeMap) {
         Iterator<String> xPaths = newNodeMap.keySet().iterator();
         while (xPaths.hasNext()) {
             String xPath = xPaths.next();
@@ -292,10 +311,10 @@ public final class VFile {
                 throw new RuntimeException("Unable to find node " + xPath
                         + " to add child nodes to.");
             }
-            Set<Element> newNodes = newNodeMap.get(xPath);
+            Set<Node> newNodes = newNodeMap.get(xPath);
             xPaths.remove();
-            for (Element e : newNodes) {
-                parent.normalizeElement(e);
+            for (Node n : newNodes) {
+                parent.normalizeNode(n);
             }
         }
         if (!newNodeMap.isEmpty()) {
@@ -332,8 +351,7 @@ public final class VFile {
         case DifferenceConstants.TEXT_VALUE_ID:
             return CHANGE.TEXT_VALUE;
         case DifferenceConstants.ELEMENT_TAG_NAME_ID:
-        case DifferenceConstants.CDATA_VALUE_ID:
-            return CHANGE.ELEM_NAME_VALUE;
+            return CHANGE.ELEM_NAME;
         case DifferenceConstants.ATTR_VALUE_ID:
         case DifferenceConstants.ATTR_VALUE_EXPLICITLY_SPECIFIED_ID:
             return CHANGE.ATTR_VALUE;
@@ -395,16 +413,18 @@ public final class VFile {
      * @return The TaggedNode to update.
      */
     private TaggedNode findIndexNode(Node controlNode, String uniqueXPath) {
+        TaggedNode indexParent;
         switch (controlNode.getNodeType()) {
         case Node.ATTRIBUTE_NODE:
             Attr attr = (Attr) controlNode;
-            TaggedNode indexParent = this.findTaggedNode(VFile
-                    .getXPathParent(uniqueXPath));
+            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
             return indexParent.getAttribute(attr.getNamespaceURI(), attr.getName());
         case Node.ELEMENT_NODE:
             return this.findTaggedNode(uniqueXPath);
         case Node.TEXT_NODE:
-            return this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
+            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
+            int textIndex = ElementUtils.getTextIndex((Text) controlNode);
+            return indexParent.getText().get(textIndex);
         default:
             throw new UnsupportedOperationException();
         }
@@ -443,7 +463,7 @@ public final class VFile {
      *            The element being updated.
      */
     private static void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
-            MultiMap<String, Element> newNodeMap, TaggedNode element) {
+            MultiMap<String, Node> newNodeMap, TaggedNode element) {
         for (TaggedNode child : element.elements(true)) {
             VFile.updateTaggedNode(changeMap, newNodeMap, child);
         }
@@ -463,9 +483,8 @@ public final class VFile {
                 VFile.updateElementChild(element, (Element) d.controlNode,
                         (Element) d.testNode);
                 break;
-            case ELEM_NAME_VALUE:
-                element.setNameValue(d.testNode.getNamespaceURI(),
-                        d.testNode.getNodeName(), d.testNode.getNodeValue());
+            case ELEM_NAME:
+                element.setName(d.testNode.getNamespaceURI(), d.testNode.getNodeName());
                 break;
             case ATTR_VALUE:
                 Attr newAttr = (Attr) d.testNode;
@@ -476,7 +495,6 @@ public final class VFile {
                         (Element) d.testNode);
                 break;
             case TEXT_VALUE:
-                // TODO Change this for mixed-text nodes.
                 element.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
@@ -504,10 +522,9 @@ public final class VFile {
     }
 
     private static void updateElementChildren(TaggedNode element,
-            MultiMap<String, Element> newNodeMap, String testNodeLocation) {
-        Set<Element> newElems = newNodeMap.remove(testNodeLocation);
-        for (Element e : newElems) {
-            element.normalizeElement(e);
+            MultiMap<String, Node> newNodeMap, String testNodeLocation) {
+        for (Node n : newNodeMap.remove(testNodeLocation)) {
+            element.normalizeNode(n);
         }
     }
 
