@@ -21,6 +21,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -69,6 +70,30 @@ public class VFileSvnTest {
         FSRepositoryFactory.setup();
     }
 
+    /**
+     * An answer to the TODO in {@link #testTechdocDemo1()}, maybe not needed for the tests.
+     */
+	@BeforeClass // maybe we should just pass DOMs to XMLUnit instead
+	public static void setUpXMLUnit() {
+		javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+		dbf.setValidating(false);
+		try {
+			dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+			dbf.setFeature("http://xml.org/sax/features/validation", false);
+			dbf.setFeature(
+					"http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
+					false);
+			dbf.setFeature(
+					"http://apache.org/xml/features/nonvalidating/load-external-dtd",
+					false);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		org.custommonkey.xmlunit.XMLUnit.setTestDocumentBuilderFactory(dbf);
+		org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
+	}    
+    
     @Before
     public void setUp() throws IOException, SVNException {
         this.testDir = File.createTempFile("test-" + this.getClass().getName(), "");
@@ -185,6 +210,14 @@ public class VFileSvnTest {
                 "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3.xml");
     }
 
+    @Test
+    public void testBasicInline() throws Exception {
+        this.testVFiling("basic.xml",
+        		"se/repos/vfile/basic_1.xml",
+                "se/repos/vfile/basic_2.xml",
+                "se/repos/vfile/basic_3_inline.xml");
+    }    
+    
     @Test
     public void testTechdocDemo1() throws Exception {
         // TODO Why does DOM try to open DTD file even when validation is off?
