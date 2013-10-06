@@ -2,6 +2,7 @@ package se.repos.vfile.test;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.custommonkey.xmlunit.XMLAssert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -215,7 +216,8 @@ public class VFileSvnTest {
         Document document = store.get(testID);
         assertNotNull("Result should be available through VFileStore", document);
         
-        
+        // this document has no inline nodes and should therefore not have such history info
+        assertXpathNotExists("//mixtext", document);
     }
 
     @Test
