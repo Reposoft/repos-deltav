@@ -8,9 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -20,12 +17,13 @@ import org.custommonkey.xmlunit.DetailedDiff;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.Difference;
 import org.custommonkey.xmlunit.DifferenceConstants;
-import org.custommonkey.xmlunit.XMLUnit;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
+
+import se.repos.vfile.VFileDocumentBuilder;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> Class that represents a v-file.
@@ -61,15 +59,6 @@ public final class VFile {
             throw new IllegalArgumentException();
         }
         this.index = indexDocument;
-
-        // Set global parameters for XMLUnit.
-        XMLUnit.setCompareUnmatched(false);
-        XMLUnit.setIgnoreAttributeOrder(true);
-        XMLUnit.setIgnoreComments(true);
-        XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
-        XMLUnit.setIgnoreWhitespace(true);
-        XMLUnit.setNormalize(true);
-        XMLUnit.setNormalizeWhitespace(false);
     }
 
     public void setDocumentVersion(String version) {
@@ -162,17 +151,7 @@ public final class VFile {
     public static VFile normalizeDocument(Document firstVersion, String time,
             String version) {
         firstVersion.normalizeDocument();
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        dbf.setIgnoringComments(true);
-        dbf.setIgnoringElementContentWhitespace(true);
-        dbf.setValidating(false);
-        DocumentBuilder db;
-        try {
-            db = dbf.newDocumentBuilder();
-        } catch (ParserConfigurationException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+        VFileDocumentBuilder db = new VFileDocumentBuilder();
 
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());

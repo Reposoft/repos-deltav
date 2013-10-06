@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.inject.Provider;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -20,6 +18,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
+import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,6 +36,7 @@ import org.w3c.dom.Document;
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
+import se.repos.vfile.VFileDocumentBuilder;
 import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.repos.vfile.store.VFileStoreDisk;
@@ -92,6 +92,14 @@ public class VFileSvnTest {
 
         org.custommonkey.xmlunit.XMLUnit.setTestDocumentBuilderFactory(dbf);
         org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
+
+        XMLUnit.setCompareUnmatched(false);
+        XMLUnit.setIgnoreAttributeOrder(true);
+        XMLUnit.setIgnoreComments(true);
+        XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
+        XMLUnit.setIgnoreWhitespace(true);
+        XMLUnit.setNormalize(true);
+        XMLUnit.setNormalizeWhitespace(false);
     }
 
     @Before
@@ -145,18 +153,7 @@ public class VFileSvnTest {
             throws Exception {
 
         // Parse the files as Documents for data integrity checking.
-        DocumentBuilder db = null;
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setIgnoringComments(true);
-        dbf.setIgnoringElementContentWhitespace(true);
-        dbf.setNamespaceAware(true);
-        dbf.setValidating(false);
-        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
-                false);
-        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                false);
-        db = dbf.newDocumentBuilder();
-
+        VFileDocumentBuilder db = new VFileDocumentBuilder();
         ArrayList<Document> documents = new ArrayList<Document>();
         for (String filePath : filePaths) {
             Document d = db.parse(this.getClass().getClassLoader()

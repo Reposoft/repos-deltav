@@ -3,9 +3,6 @@ package se.repos.vfile;
 import java.io.IOException;
 
 import javax.inject.Inject;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,20 +20,12 @@ public class VFileCalculatorImpl {
             .getLogger(VFileCalculatorImpl.class);
 
     private VFileStore storage;
-    private DocumentBuilder db;
+    private VFileDocumentBuilder db;
 
     @Inject
     public VFileCalculatorImpl(VFileStore storage) {
         this.storage = storage;
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setIgnoringComments(true);
-        dbf.setIgnoringElementContentWhitespace(true);
-        dbf.setNamespaceAware(true);
-        try {
-            this.db = dbf.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        this.db = new VFileDocumentBuilder();
     }
 
     /**
