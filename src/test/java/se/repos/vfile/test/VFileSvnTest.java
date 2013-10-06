@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.inject.Provider;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -36,7 +38,7 @@ import org.w3c.dom.Document;
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
-import se.repos.vfile.VFileDocumentBuilder;
+import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.repos.vfile.store.VFileStoreDisk;
@@ -74,22 +76,7 @@ public class VFileSvnTest {
 
     @BeforeClass
     public static void setUpXMLUnit() {
-        javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory
-                .newInstance();
-        dbf.setValidating(false);
-        try {
-            dbf.setFeature("http://xml.org/sax/features/namespaces", false);
-            dbf.setFeature("http://xml.org/sax/features/validation", false);
-            dbf.setFeature(
-                    "http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
-                    false);
-            dbf.setFeature(
-                    "http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        DocumentBuilderFactory dbf = new VFileDocumentBuilderFactory();
         org.custommonkey.xmlunit.XMLUnit.setTestDocumentBuilderFactory(dbf);
         org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
 
@@ -153,7 +140,7 @@ public class VFileSvnTest {
             throws Exception {
 
         // Parse the files as Documents for data integrity checking.
-        VFileDocumentBuilder db = new VFileDocumentBuilder();
+        DocumentBuilder db = new VFileDocumentBuilderFactory().newDocumentBuilder();
         ArrayList<Document> documents = new ArrayList<Document>();
         for (String filePath : filePaths) {
             Document d = db.parse(this.getClass().getClassLoader()

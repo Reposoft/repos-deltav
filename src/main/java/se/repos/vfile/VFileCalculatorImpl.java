@@ -3,6 +3,7 @@ package se.repos.vfile;
 import java.io.IOException;
 
 import javax.inject.Inject;
+import javax.xml.parsers.DocumentBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,12 @@ public class VFileCalculatorImpl {
             .getLogger(VFileCalculatorImpl.class);
 
     private VFileStore storage;
-    private VFileDocumentBuilder db;
+    private DocumentBuilder db;
 
     @Inject
     public VFileCalculatorImpl(VFileStore storage) {
         this.storage = storage;
-        this.db = new VFileDocumentBuilder();
+        this.db = new VFileDocumentBuilderFactory().newDocumentBuilder();
     }
 
     /**

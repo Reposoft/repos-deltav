@@ -3,6 +3,7 @@ package se.repos.vfile.store;
 import java.io.File;
 import java.io.IOException;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -16,13 +17,13 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import se.repos.vfile.VFileDocumentBuilder;
+import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.simonsoft.cms.item.CmsItemId;
 
 public class VFileStoreDisk extends VFileStore {
 
     private File vFileFolder;
-    private VFileDocumentBuilder db;
+    private DocumentBuilder db;
     private Transformer trans;
 
     public VFileStoreDisk(String localFilePath) {
@@ -30,7 +31,7 @@ public class VFileStoreDisk extends VFileStore {
         if (!this.vFileFolder.exists()) {
             this.vFileFolder.mkdirs();
         }
-        this.db = new VFileDocumentBuilder();
+        this.db = new VFileDocumentBuilderFactory().newDocumentBuilder();
         try {
             this.trans = TransformerFactory.newInstance().newTransformer();
         } catch (TransformerConfigurationException e) {

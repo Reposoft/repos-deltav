@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -23,7 +24,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
-import se.repos.vfile.VFileDocumentBuilder;
+import se.repos.vfile.VFileDocumentBuilderFactory;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> Class that represents a v-file.
@@ -151,7 +152,7 @@ public final class VFile {
     public static VFile normalizeDocument(Document firstVersion, String time,
             String version) {
         firstVersion.normalizeDocument();
-        VFileDocumentBuilder db = new VFileDocumentBuilder();
+        DocumentBuilder db = new VFileDocumentBuilderFactory().newDocumentBuilder();
 
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
