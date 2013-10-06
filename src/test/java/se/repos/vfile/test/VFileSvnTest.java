@@ -45,6 +45,7 @@ import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
 import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
+import se.simonsoft.cms.item.CmsRepository;
 import se.simonsoft.cms.item.RepoRevision;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 
@@ -141,7 +142,7 @@ public class VFileSvnTest {
      * Takes a series of file paths, runs unit test that asserts they can be
      * v-filed. Puts generated v-file at testFilePath.
      */
-    private void testVFiling(String testFilePath, String... filePaths) throws Exception {
+    private VFileStore testVFiling(CmsItemId testID, String... filePaths) throws Exception {
 
         // Parse the files as Documents for data integrity checking.
         DocumentBuilder db = null;
@@ -158,8 +159,8 @@ public class VFileSvnTest {
                     .getResourceAsStream(filePath)));
         }
 
-        CmsRepositorySvn repository = new CmsRepositorySvn("/anyparent", "anyname",
-                this.repoDir);
+        CmsRepositorySvn repository = new CmsRepositorySvn(testID.getRepository().getParentPath(),
+        		testID.getRepository().getName(), this.repoDir);
         CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
         contentsReader.setSVNLookClientProvider(this.svnlookProvider);
         CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
@@ -169,7 +170,7 @@ public class VFileSvnTest {
 
         ArrayList<RepoRevision> revisions = new ArrayList<RepoRevision>();
 
-        File testFile = new File(this.wc, testFilePath);
+        File testFile = new File(this.wc, testID.getRelPath().getPath());
         boolean addedToSVN = false;
 
         Transformer trans = TransformerFactory.newInstance().newTransformer();
@@ -193,8 +194,6 @@ public class VFileSvnTest {
         VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
                 .setCmsChangesetReader(changesetReader);
 
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/"
-                + testFilePath));
         for (int i = 0; i < documents.size(); i++) {
             commitHandler.onCommit(revisions.get(i));
             VFile v = new VFile(store.get(testID));
@@ -202,17 +201,28 @@ public class VFileSvnTest {
             Document d = documents.get(i);
             assertTrue((v.documentEquals(d)));
         }
+        
+        return store;
     }
 
     @Test
     public void testBasic() throws Exception {
-        this.testVFiling("basic.xml", "se/repos/vfile/basic_1.xml",
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));    	
+        VFileStore store = this.testVFiling(testID, "se/repos/vfile/basic_1.xml",
                 "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3.xml");
+        
+        Document document = store.get(testID);
+        assertNotNull("Result should be available through VFileStore", document);
+        
+        
     }
 
     @Test
     public void testBasicInline() throws Exception {
-        this.testVFiling("basic.xml",
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));       	
+        this.testVFiling(testID,
         		"se/repos/vfile/basic_1.xml",
                 "se/repos/vfile/basic_2.xml",
                 "se/repos/vfile/basic_3_inline.xml");
@@ -220,8 +230,10 @@ public class VFileSvnTest {
     
     @Test
     public void testTechdocDemo1() throws Exception {
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));    	
         // TODO Why does DOM try to open DTD file even when validation is off?
-        this.testVFiling("900108.xml", "se/repos/vfile/techdoc-demo1/900108_A.xml",
+        this.testVFiling(testID, "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
     }
