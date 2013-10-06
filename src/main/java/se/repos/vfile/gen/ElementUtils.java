@@ -59,7 +59,10 @@ public class ElementUtils {
         }
         for (int i = 0; i < children.getLength(); i++) {
             if (children.item(i).getNodeType() == Node.TEXT_NODE) {
-                results.add((Text) children.item(i));
+                Text t = (Text) children.item(i);
+                if (!t.getData().trim().isEmpty()) {
+                    results.add(t);
+                }
             }
         }
         return results;

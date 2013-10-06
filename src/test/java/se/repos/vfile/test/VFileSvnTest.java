@@ -1,8 +1,8 @@
 package se.repos.vfile.test;
 
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.custommonkey.xmlunit.XMLAssert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,30 +72,28 @@ public class VFileSvnTest {
         FSRepositoryFactory.setup();
     }
 
-    /**
-     * An answer to the TODO in {@link #testTechdocDemo1()}, maybe not needed for the tests.
-     */
-	@BeforeClass // maybe we should just pass DOMs to XMLUnit instead
-	public static void setUpXMLUnit() {
-		javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-		dbf.setValidating(false);
-		try {
-			dbf.setFeature("http://xml.org/sax/features/namespaces", false);
-			dbf.setFeature("http://xml.org/sax/features/validation", false);
-			dbf.setFeature(
-					"http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
-					false);
-			dbf.setFeature(
-					"http://apache.org/xml/features/nonvalidating/load-external-dtd",
-					false);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    @BeforeClass
+    public static void setUpXMLUnit() {
+        javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory
+                .newInstance();
+        dbf.setValidating(false);
+        try {
+            dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+            dbf.setFeature("http://xml.org/sax/features/validation", false);
+            dbf.setFeature(
+                    "http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
+                    false);
+            dbf.setFeature(
+                    "http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                    false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		org.custommonkey.xmlunit.XMLUnit.setTestDocumentBuilderFactory(dbf);
-		org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
-	}    
-    
+        org.custommonkey.xmlunit.XMLUnit.setTestDocumentBuilderFactory(dbf);
+        org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
+    }
+
     @Before
     public void setUp() throws IOException, SVNException {
         this.testDir = File.createTempFile("test-" + this.getClass().getName(), "");
@@ -143,7 +141,8 @@ public class VFileSvnTest {
      * Takes a series of file paths, runs unit test that asserts they can be
      * v-filed. Puts generated v-file at testFilePath.
      */
-    private VFileStore testVFiling(CmsItemId testID, String... filePaths) throws Exception {
+    private VFileStore testVFiling(CmsItemId testID, String... filePaths)
+            throws Exception {
 
         // Parse the files as Documents for data integrity checking.
         DocumentBuilder db = null;
@@ -152,16 +151,22 @@ public class VFileSvnTest {
         dbf.setIgnoringElementContentWhitespace(true);
         dbf.setNamespaceAware(true);
         dbf.setValidating(false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
+                false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+                false);
         db = dbf.newDocumentBuilder();
 
         ArrayList<Document> documents = new ArrayList<Document>();
         for (String filePath : filePaths) {
-            documents.add(db.parse(this.getClass().getClassLoader()
-                    .getResourceAsStream(filePath)));
+            Document d = db.parse(this.getClass().getClassLoader()
+                    .getResourceAsStream(filePath));
+            d.normalizeDocument();
+            documents.add(d);
         }
 
-        CmsRepositorySvn repository = new CmsRepositorySvn(testID.getRepository().getParentPath(),
-        		testID.getRepository().getName(), this.repoDir);
+        CmsRepositorySvn repository = new CmsRepositorySvn(testID.getRepository()
+                .getParentPath(), testID.getRepository().getName(), this.repoDir);
         CmsContentsReaderSvnkitLook contentsReader = new CmsContentsReaderSvnkitLook();
         contentsReader.setSVNLookClientProvider(this.svnlookProvider);
         CmsChangesetReaderSvnkitLook changesetReader = new CmsChangesetReaderSvnkitLook();
@@ -202,39 +207,38 @@ public class VFileSvnTest {
             Document d = documents.get(i);
             assertTrue((v.documentEquals(d)));
         }
-        
+
         return store;
     }
 
     @Test
     public void testBasic() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));    	
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
         VFileStore store = this.testVFiling(testID, "se/repos/vfile/basic_1.xml",
                 "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3.xml");
-        
+
         Document document = store.get(testID);
         assertNotNull("Result should be available through VFileStore", document);
-        
-        // this document has no inline nodes and should therefore not have such history info
+
+        // this document has no inline nodes and should therefore not have such
+        // history info
         assertXpathNotExists("//mixtext", document);
     }
 
     @Test
     public void testBasicInline() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));       	
-        this.testVFiling(testID,
-        		"se/repos/vfile/basic_1.xml",
-                "se/repos/vfile/basic_2.xml",
-                "se/repos/vfile/basic_3_inline.xml");
-    }    
-    
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+                "/basic-inline.xml"));
+        this.testVFiling(testID, "se/repos/vfile/basic_1.xml",
+                "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3_inline.xml");
+    }
+
     @Test
     public void testTechdocDemo1() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));    	
-        // TODO Why does DOM try to open DTD file even when validation is off?
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
         this.testVFiling(testID, "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
