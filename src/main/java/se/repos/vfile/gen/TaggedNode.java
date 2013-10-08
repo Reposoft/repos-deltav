@@ -330,6 +330,7 @@ public class TaggedNode {
      * @return True if the elements are equal.
      */
     public boolean isEqualElement(Element docElem) {
+        // TODO Add comparison on name spaces.
         return this.isElement() && this.isLive()
                 && this.element.getTagName().equals(docElem.getTagName())
                 && this.hasSameText(docElem) && this.hasSameAttributes(docElem)
