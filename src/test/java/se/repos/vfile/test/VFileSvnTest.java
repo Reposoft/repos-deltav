@@ -1,6 +1,6 @@
 package se.repos.vfile.test;
 
-import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
+import static org.custommonkey.xmlunit.XMLAssert.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -219,11 +219,24 @@ public class VFileSvnTest {
     }
 
     @Test
-    public void testTechdocDemo1() throws Exception {
+    public void testTechdocDemo1Rids() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
         this.testVFiling(testID, "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
+    }
+    
+    @Test
+    public void testTechdocDemo1() throws Exception {
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
+        VFileStore store = this.testVFiling(testID, "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
+                "se/repos/vfile/techdoc-demo1-norid/900108_B.xml",
+                "se/repos/vfile/techdoc-demo1-norid/900108_C.xml");
+        
+        Document document = store.get(testID);
+        // label text has changed once
+        assertXpathEvaluatesTo("2", "count(//infosection//p/label)", document);
     }
 }

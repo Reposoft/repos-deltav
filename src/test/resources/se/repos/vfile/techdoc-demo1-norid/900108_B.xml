@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Arbortext, Inc., 1988-2012, v.4002-->
+<!DOCTYPE document PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 VVAB//EN"
+ "vvab.dtd">
+<document docno="900108" modifiedby="test"
+modifieddate="2012-09-27 07:17" revision="144" status="Released"
+type="operator" xml:lang="en-GB"
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/documents/900108.xml?p=136"
+xmlns:cms="http://www.simonsoft.se/namespace/cms" cms:translation-project="1004">
+<title>SEED HAWK</title>
+<subtitle>SH 600C</subtitle>
+<frontm>
+<graphic align="center"
+fileref="x-svn:///svn/demo1^/vvab/graphics/0001.tif" scalefit="yes"/>
+<infosection status="In_Work"
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/INTRODUCTION.xml?p=136">
+<title>Introduction</title>
+<p>Väderstad <label type="product">Seed Hawk 600C</label> are combination
+machines designed for direct seed drilling.</p>
+<p>Carefully read the instructions and make
+sure you understand their meaning.</p>
+<note>
+<p>This instruction manual is based on the
+experience and results obtained during the development of the project.
+The hints and advice it contains are to be regarded as guidance only
+and entail no responsibility whatsoever on the part of Väderstad-Verken
+AB and/or its representatives. All responsibility for usage, road
+transport, maintenance and repair, etc. of the seed drill rests with
+the owner/driver.</p>
+</note>
+</infosection>
+<toc/></frontm>
+<body>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Safety%20regulations.xml?p=136">
+<title>Safety regulations</title>
+<section>
+<title>Before the seed drill is put into
+operation</title>
+<figure>
+<graphic fileref="x-svn:///svn/demo1^/vvab/graphics/0002.tif"/>
+<title></title>
+</figure>
+<admon
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/common/admons/Always%20pay%20special%20attention%20to%20the%20text%20or%20illustration%20indicated%20by%20th.xml?p=83">
+<itemlist>
+<li><p>Always
+pay special attention to the text or illustration indicated by this
+symbol!</p></li>
+<li><p>Learn how
+to operate the seed drill correctly and carefully! In the wrong hands
+or during careless operation, the drill can become a dangerous implement.</p>
+</li>
+</itemlist>
+</admon></section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Warnings%20and%20mandatory%20instructions%20decals.xml?p=136">
+<title>Warnings and mandatory instructions
+decals</title>
+<figure>
+<graphic fileref="x-svn:///svn/demo1^/vvab/graphics/0003.tif"/>
+<title></title>
+</figure>
+<numlist type="alpha_upper">
+<li><p>Carefully
+read the instructions and make sure you understand their meaning.</p>
+</li>
+<li><p>Make sure
+the whole of the working area and area for folding out the sections
+are free. Never walk under a suspended section! Always check that
+the automatic stoppers have been locked during transport and parking.</p>
+</li>
+<li><p>Do not
+stand between the tractor and the machine when the tractor is reversed
+to hitch the seed drill.</p></li>
+<li><p>Warning
+tape, watch out for the risk of crushing or impact. Also used on safety-related
+parts</p></li>
+<li><p>Watch your
+feet. Risk of pinching.</p></li>
+<li><p>Always
+make sure that the working area of the bout markers is free from obstructions!
+Keep in mind that there is a risk of injury when the bout markers
+are extended and there is a risk of crushing between the seed drill
+and the bout markers when they are retracted.</p>
+<note>
+<p>The bout markers are always retracted
+when the machine is lifted no matter what is shown on the control
+box. The indicated bout markers are always extended when the machine
+is lowered. Therefore, when the machine is not in the field, always
+block the bout markers with the catches and switch off the Control
+Station. The control box will keep all settings in the memory when
+it is switched off.</p>
+</note>
+</li>
+<li><p>Do not
+climb on to the seed drill unit packer wheels when the machine is
+parked, as they can rotate.</p></li>
+<li><p>Make sure
+nobody is on the seed drill when it is moving.</p></li>
+<li><p>Make sure
+nobody is on the seed drill when loading seed.</p></li>
+<li><p>The ladder
+and platform on the machine are not intended to be used for manual
+loading from small sacks.</p></li>
+<li><p>Warning
+of piercing oil jet; the hydraulic system includes accumulators that
+are pressurised. Before performing servicing or repairs, the hydraulic
+system pressure must be released, see "5.7 Emptying the hydraulic
+system accumulators" on page 88.</p></li>
+<li><p>Following
+10-15 km of transport on the road, retighten the wheel nuts. Retighten
+the nuts similarly after changing wheels. Tighten the nuts using a
+torque wrench. See "5.2 General" on page 83.</p></li>
+<li><p>Use ear
+defenders when adjacent to the running fan.</p></li>
+</numlist>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Other%20safety%20regulations.xml?p=81">
+<title>Other safety regulations</title>
+<itemlist>
+<li><p>Never crawl
+under the machine chassis unless the seed drill unit is lowered onto
+the support frame and the yellow-marked hydraulic hoses are disconnected
+from the tractor.</p></li>
+<li><p>The platform
+must be kept clean so that there is no risk of slipping.</p></li>
+<li><p>When transporting
+the seed drill on public roads, show good judgement and drive carefully.</p>
+</li>
+<li><p>We recommend
+the use of a tractor with a gross weight that is at least equal to
+the gross weight of the seed drill, if the seed drill is not equipped
+with brakes. Note that transport of a seed drill that is not equipped
+with brakes and has a full seed hopper is not permitted on public
+roads. National legislation must always be complied with!</p></li>
+<li><p>The rearwards
+view is very limited. Check the positioning of the rear view mirrors
+on the tractor.</p></li>
+<li><p>The owner/driver
+has sole responsibility when transporting the seed drill on a public
+road.</p></li>
+<li><p>In order
+to avoid any risk arising by accidental operation of the tractor's
+hydraulic controls during road transport, the yellow-marked hydraulic
+hoses to the seed drill unit must be disconnected from the tractor
+before transport driving begins.</p></li>
+<li><p>Ensure
+that at least 20% of the tractor's weight is still being carried by
+its front wheels when the seed drill has been connected and loaded.
+This is to ensure that the steering ability of the whole vehicle is
+maintained.</p></li>
+<li><p>This machine/equipment
+and its tyres are designed for a maximum speed of 30 km/h for transportation
+on the public highway.</p></li>
+<li><p>Always
+park the implement on a level and solid surface. The seed drill unit
+must be lowered when parking.</p></li>
+<li><p>Always
+make sure that the hydraulic quick connector couplings on the seed
+drill and the tractor are free of dirt prior to connecting hoses.</p>
+</li>
+<li><p>To maintain
+the high level of quality and operational safety, use only Väderstad
+genuine spare parts. The warranty and any claim commitments will become
+void if other than genuine parts are used.</p></li>
+<li><p>Any welding
+work on the machine/implement must be carried out to a professional
+standard.Note that imperfect welding may result in serious injuries
+or fatality.If in doubt, contact a professional welding service for
+proper instructions.</p></li>
+</itemlist>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Locations%20of%20warning%20decals.xml?p=109">
+<title>Locations of warning decals</title>
+<figure>
+<graphic align="center" contentdepth="180mm"
+fileref="x-svn:///svn/demo1^/vvab/graphics/0016.tif" scale=""
+scalefit="yes"/>
+<title></title>
+</figure>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Machine%20label.xml?p=110">
+<title>Machine label</title>
+<figure>
+<graphic fileref="x-svn:///svn/demo1^/vvab/graphics/0017.tif"/>
+<title></title>
+<figuretext>
+<numlist type="alpha_upper">
+<li><p>Machine
+type</p></li>
+<li><p>Manufacturing
+serial number (Always state the serial number of your machine when
+ordering spare parts and in case of servicing or warranty claims.)</p>
+</li>
+<li><p>Year of
+manufacture</p></li>
+<li><p>Working
+width</p></li>
+<li><p>Transport
+width</p></li>
+<li><p>Tare weight
+of the basic machine</p></li>
+<li><p>Maximum
+total weight</p></li>
+<li><p>Maximum
+permitted payload</p></li>
+<li><p>Maximum
+permitted axle loading</p></li>
+<li><p>Maximum
+coupling load (at the tractor hitch)</p></li>
+</numlist>
+<p>Also see "7.5 Technical data" on page
+116.</p>
+</figuretext>
+</figure>
+</section>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Installation%20instructions.xml?p=111">
+<title>Installation instructions</title>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Installation%20of%20the%20Control%20Station%20on%20the%20tractor.xml?p=111">
+<title>Installation of the Control Station
+on the tractor</title>
+<description>
+<descriptionblock>
+<figure>
+<graphic align="center"
+fileref="x-svn:///svn/demo1^/vvab/graphics/0019.tif"/>
+<title></title>
+</figure>
+<descriptiontext>
+<numlist>
+<li><p>Attach
+the control box securely in the tractor cab. The control box should
+be installed within the field of vision when driving forwards. Install
+the bracket as shown in the illustration.</p>
+<note>
+<p>Prior to any drilling in the tractor
+cabin, be sure to check for any concealed wiring that may be present.</p>
+</note>
+</li>
+<li><p>Connect
+the Control Station to the electrical socket on the tractor. If an
+electrical power outlet is not available, extra wiring must be installed.
+Preferably use 6 mm² cable. Connect the cables: brown to plus (+)
+and blue to ground (-).</p>
+<note>
+<p>Do not reverse the polarity!</p>
+</note>
+<note>
+<p>It is important to have good wiring connections,
+as a loose connection will prevent correct operation.</p>
+</note>
+<note>
+<p>Do not use a cigarette lighter outlet,
+as the current consumption is up to 20 A.</p>
+</note>
+<note>
+<p>Make sure the connection cable to the
+seed drill is not pinched under the rear window of the tractor, since
+this cable can be easily damaged. Use the designated connector port
+or cable lead-through. Securely clamp the cable in the tractor cab.
+This protects the Control Station from damage in case the connection
+cable has inadvertently not been disconnected prior to unhitching
+the drill.</p>
+</note>
+</li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+</section>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Instructions%20and%20settings.xml?p=136">
+<title>Instructions and settings</title>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Tractor.xml?p=112">
+<title>Tractor</title>
+<description>
+<descriptionblock>
+<figure>
+<graphic align="center"
+fileref="x-svn:///svn/demo1^/vvab/graphics/0020.tif"/>
+<title></title>
+</figure>
+<descriptiontext>
+<p>To minimise damaging soil compaction,
+the tractor used to tow the seed drill should be equipped with extra
+wide tyres, e.g. double installation of Twin wheels or similar. Try
+to have as low tyre pressure as possible. Any front weights on the
+tractor should be removed.</p>
+</descriptiontext>
+</descriptionblock>
+</description>
+<section>
+<title>Tractor hydraulic system requirements</title>
+<description>
+<descriptionblock>
+<figure>
+<graphic align="center"
+fileref="x-svn:///svn/demo1^/vvab/graphics/0021.tif"/>
+<title></title>
+</figure>
+<descriptiontext>
+<p>1 pressure-free return input, 3/4", for
+return oil from the fans. Contact your tractor distributor for instructions
+on how this is to be installed.</p>
+<p>3 x double-acting hydraulic couplings,
+1/2", with the following functions:</p>
+<numlist restart="no" type="alpha_upper">
+<li><p>For fan
+operation 1 double-acting hydraulic coupling is required, with a capacity
+of 40 l/min. at 180 bar. This coupling requires an individually adjustable
+flow.</p></li>
+<li><p>For the
+raising/lowering of the seed coulter units and the manipulation of
+the bout markers, 1 off double-acting hydraulic coupling is required,
+with a capacity of 40 l/min. at 180 bar.</p></li>
+</numlist>
+<note>
+<p>It must be possible to use the hydraulic
+couplings mentioned in A and B above simultaneously.</p>
+</note>
+<numlist restart="no" type="alpha_upper">
+<li><p>For the
+retraction and extension functions, 1 off double-acting hydraulic
+coupling is required, with a capacity of 20 l/min. at 180 bar.</p></li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+</section>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Hitching%20and%20unhitching%20the%20seed%20drill.xml?p=136">
+<title>Hitching and unhitching the seed
+drill</title>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Hitching.xml?p=89">
+<title>Hitching</title>
+<procedure>
+<procstep>
+<procfig>
+<graphic fileref="x-svn:///svn/demo1^/vvab/graphics/0022.tif"/></procfig>
+<proctext>
+<p>Connect the drill to the tractor lifting
+arms. The lifting arms must be locked, with side stabilising stays
+or possibly other equipment, to limit the lateral movements of the
+arms.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Raise and secure the machine parking
+supports.</p>
+</proctext>
+</procstep>
+</procedure>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Connection%20of%20the%20hydraulic%20hoses%20for%20operating%20the%20machine.xml?p=136">
+<title>Connection of the hydraulic hoses
+for operating the machine</title>
+<procedure>
+<procstep>
+<procfig>
+<graphic fileref="x-svn:///svn/demo1^/vvab/graphics/hydraul.iso"
+scalefit="yes"/></procfig>
+<proctext>
+<numlist>
+<li><p>The two
+3/8" diameter hoses marked by yellow plastic rings are used to raise
+and lower the seed coulter units and to operate the bout markers.</p>
+</li>
+<li><p>The two
+1/4" hoses marked by white plastic rings are used to fold down the
+wing sections.</p></li>
+</numlist>
+<note>
+<p>Carefully check that all hoses are connected
+in pairs to the correct hydraulic couplings on the tractor.</p>
+</note>
+<note>
+<p>All the seed drill hydraulic hoses must
+be connected to the tractor before any of its functions are used.</p>
+</note>
+</proctext>
+</procstep>
+</procedure>
+</section>
+</section>
+<section>
+<title>Hose length adjustment</title>
+<p>Connect the hydraulic hoses carefully
+and adjust their lengths. This will ensure that the hoses are always
+connected correctly and that the seed drill is operated using practised
+lever manipulations. Once work is completed, insert and fasten the
+quick-release connectors in the hose holder’s keyhole-shaped openings.</p>
+<note>
+<p>The hoses must not hang down against
+the drawbar due to the risk of being crushed or worn.</p>
+</note>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Switching%20between%20transport%20and%20operational%20conditions.xml?p=120">
+<title>Switching between transport and operational
+conditions</title>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Switching%20from%20transport%20to%20operational%20conditions.xml?p=119">
+<title>Switching from transport to operational
+condition</title>
+<procedure>
+<procstep>
+<proctext>
+<p>Use the fold-down cylinder to retract
+the wing sections.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Release the locking catches for both
+wing sections.</p>
+<admon type="2-warning"
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/common/admons/Never%20go%20into%20the%20fold-down%20area.xml?p=119">
+<p>Never go into the fold-down area when
+the wing sections are not secured!</p>
+</admon></proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Fold down the wing sections.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Release the safety pegs from the bout
+markers and place them in their parking locations.</p>
+</proctext>
+</procstep>
+</procedure>
+</section>
+<section
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/sections/Switching%20from%20operational%20to%20transport%20condition.xml?p=120">
+<title>Switching from operational to transport
+condition</title>
+<procedure>
+<procstep>
+<proctext>
+<p>Raise the seed drill unit as far as it
+will go.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Lock the bout markers with their safety
+pegs.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Fold up the seed drill wing sections.</p>
+</proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Check that the automatic stoppers have
+locked.</p>
+<admon type="2-warning"
+cms:rlogicalid="x-svn:///svn/demo1^/vvab/xml/common/admons/Never%20go%20into%20the%20fold-down%20area.xml?p=119">
+<p>Never go into the fold-down area when
+the wing sections are not secured!</p>
+</admon></proctext>
+</procstep>
+<procstep>
+<proctext>
+<p>Uncouple the yellow-marked hydraulic
+hoses before driving off for transport.</p>
+</proctext>
+</procstep>
+</procedure>
+</section>
+</section>
+</section>
+</body>
+</document><?Pub Caret -2?>
