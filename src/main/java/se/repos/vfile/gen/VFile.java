@@ -88,8 +88,8 @@ public final class VFile {
      * @see TaggedNode
      * @return The new TaggedNode.
      */
-    public TaggedNode createTaggedNode(String namespaceURI, String qualifiedName) {
-        Element elem = this.index.createElementNS(namespaceURI, qualifiedName);
+    public TaggedNode createTaggedNode(String name) {
+        Element elem = this.index.createElement(name);
         elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
         elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
@@ -104,8 +104,8 @@ public final class VFile {
      * @see TaggedNode
      * @return The new TaggedNode.
      */
-    public TaggedNode createAttribute(String namespaceURI, String name, String value) {
-        Element elem = this.index.createElementNS(namespaceURI, name);
+    public TaggedNode createAttribute(String name, String value) {
+        Element elem = this.index.createElement(name);
         elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
         elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
@@ -158,8 +158,7 @@ public final class VFile {
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
 
         Element root = firstVersion.getDocumentElement();
-        Element newRoot = indexXML.createElementNS(root.getNamespaceURI(),
-                root.getTagName());
+        Element newRoot = indexXML.createElement(root.getTagName());
         newRoot.setAttribute(StringConstants.VSTART, version);
         newRoot.setAttribute(StringConstants.VEND, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.TSTART, time);
@@ -169,9 +168,11 @@ public final class VFile {
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
 
+        for (Attr a : ElementUtils.getNamespaces(root)) {
+            newRoot.setAttribute(a.getName(), a.getValue());
+        }
         for (Attr a : ElementUtils.getAttributes(root)) {
-            idx.getRootElement().setAttribute(a.getNamespaceURI(), a.getName(),
-                    a.getValue());
+            idx.getRootElement().setAttribute(a.getName(), a.getValue());
         }
         for (Element c : ElementUtils.getChildElements(root)) {
             idx.getRootElement().normalizeElement(c);
@@ -398,7 +399,7 @@ public final class VFile {
         case Node.ATTRIBUTE_NODE:
             Attr attr = (Attr) controlNode;
             indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            return indexParent.getAttribute(attr.getNamespaceURI(), attr.getName());
+            return indexParent.getAttribute(attr.getName());
         case Node.ELEMENT_NODE:
             return this.findTaggedNode(uniqueXPath);
         case Node.TEXT_NODE:
@@ -464,7 +465,7 @@ public final class VFile {
                         (Element) d.testNode);
                 break;
             case ELEM_NAME:
-                element.setName(d.testNode.getNamespaceURI(), d.testNode.getNodeName());
+                element.setName(d.testNode.getNodeName());
                 break;
             case ATTR_VALUE:
                 Attr newAttr = (Attr) d.testNode;
@@ -488,15 +489,24 @@ public final class VFile {
 
     private static void updateElementAttrs(TaggedNode element, Element oldElement,
             Element newElement) {
+        for (Attr oldNS : ElementUtils.getNamespaces(oldElement)) {
+            if (!ElementUtils.hasEqualAttribute(newElement, oldNS)) {
+                element.deleteNamespace(oldNS);
+            }
+        }
+        for (Attr newNS : ElementUtils.getNamespaces(newElement)) {
+            if (!ElementUtils.hasEqualAttribute(oldElement, newNS)) {
+                element.setNamespace(newNS);
+            }
+        }
         for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
             if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
-                element.deleteAttribute(oldAttr.getNamespaceURI(), oldAttr.getName());
+                element.deleteAttribute(oldAttr.getName());
             }
         }
         for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
             if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
-                element.setAttribute(newAttr.getNamespaceURI(), newAttr.getName(),
-                        newAttr.getValue());
+                element.setAttribute(newAttr.getName(), newAttr.getValue());
             }
         }
     }

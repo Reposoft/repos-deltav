@@ -68,8 +68,7 @@ public class TaggedNode {
         if (this.isElement()) {
             throw new RuntimeException();
         } else if (this.isAttribute()) {
-            newElem = this.parentVFile.createAttribute(this.getNameSpaceURI(),
-                    this.getName(), value);
+            newElem = this.parentVFile.createAttribute(this.getName(), value);
         } else {
             newElem = this.parentVFile.createText(value);
             this.element.setTextContent(value);
@@ -80,23 +79,18 @@ public class TaggedNode {
         this.element = newElem.element;
     }
 
-    public String getNameSpaceURI() {
-        return this.element.getNamespaceURI();
-    }
-
-    public void setName(String nameSpaceURI, String name) {
+    public void setName(String name) {
         TaggedNode parent = this.getParent();
         TaggedNode newElem;
         if (this.isText()) {
             throw new RuntimeException();
         } else if (this.isAttribute()) {
-            newElem = this.parentVFile.createAttribute(nameSpaceURI, name,
-                    this.getValue());
+            newElem = this.parentVFile.createAttribute(name, this.getValue());
         } else {
-            newElem = this.parentVFile.createTaggedNode(nameSpaceURI, name);
+            newElem = this.parentVFile.createTaggedNode(name);
         }
         for (TaggedNode attr : this.getAttributes()) {
-            newElem.setAttribute(this.getNameSpaceURI(), attr.getName(), attr.getValue());
+            newElem.setAttribute(attr.getName(), attr.getValue());
         }
         for (TaggedNode child : this.getChildElements()) {
             newElem.appendChild(child);
@@ -105,6 +99,10 @@ public class TaggedNode {
         parent.insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
+    }
+
+    private void cloneElement() {
+        this.setName(this.getName());
     }
 
     /**
@@ -162,10 +160,9 @@ public class TaggedNode {
         return !this.isAttribute() && !this.isText();
     }
 
-    public TaggedNode getAttribute(String nameSpaceURI, String name) {
+    public TaggedNode getAttribute(String name) {
         for (TaggedNode a : this.getAttributes()) {
-            if (a.getName().equals(name)
-                    && (nameSpaceURI == null || nameSpaceURI.equals(a.getNameSpaceURI()))) {
+            if (a.getName().equals(name)) {
                 return a;
             }
         }
@@ -183,19 +180,34 @@ public class TaggedNode {
     }
 
     // Sets/creates an attribute on a index element.
-    public TaggedNode setAttribute(String nameSpaceURI, String name, String value) {
-        TaggedNode attr = this.getAttribute(nameSpaceURI, name);
+    public void setAttribute(String name, String value) {
+        TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
-            attr = this.parentVFile.createAttribute(nameSpaceURI, name, value);
+            attr = this.parentVFile.createAttribute(name, value);
             this.element.appendChild(attr.element);
         } else {
             attr.setValue(value);
         }
-        return attr;
     }
 
-    public void deleteAttribute(String nameSpaceURI, String name) {
-        TaggedNode attr = this.getAttribute(nameSpaceURI, name);
+    public void setNamespace(Attr namespace) {
+        if (!ElementUtils.isNameSpace(namespace)) {
+            throw new IllegalArgumentException();
+        }
+        this.cloneElement();
+        this.element.setAttribute(namespace.getName(), namespace.getValue());
+    }
+
+    public void deleteNamespace(Attr namespace) {
+        if (!namespace.getPrefix().equals("xmlns")) {
+            throw new IllegalArgumentException();
+        }
+        this.cloneElement();
+        this.element.removeAttribute(namespace.getName());
+    }
+
+    public void deleteAttribute(String name) {
+        TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
             throw new RuntimeException("Tried to delete non-present attribute.");
         }
@@ -244,10 +256,12 @@ public class TaggedNode {
      * tagged, and is normalized to the current docVersion.
      */
     public void normalizeElement(Element child) {
-        TaggedNode newChild = this.parentVFile.createTaggedNode(child.getNamespaceURI(),
-                child.getTagName());
+        TaggedNode newChild = this.parentVFile.createTaggedNode(child.getTagName());
+        for (Attr a : ElementUtils.getNamespaces(child)) {
+            newChild.element.setAttributeNode(a);
+        }
         for (Attr a : ElementUtils.getAttributes(child)) {
-            newChild.setAttribute(a.getNamespaceURI(), a.getName(), a.getValue());
+            newChild.setAttribute(a.getName(), a.getValue());
         }
         for (Element c : ElementUtils.getChildElements(child)) {
             newChild.normalizeElement(c);
@@ -359,7 +373,7 @@ public class TaggedNode {
             }
         }
         for (Attr a1 : ElementUtils.getAttributes(docElem)) {
-            TaggedNode a2 = this.getAttribute(a1.getNamespaceURI(), a1.getName());
+            TaggedNode a2 = this.getAttribute(a1.getName());
             if (a2 == null || !a1.getValue().equals(a2.getValue())) {
                 return false;
             }

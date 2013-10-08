@@ -25,9 +25,8 @@ public class ElementUtils {
      * @return Whether elem contains attr.
      */
     public static boolean hasEqualAttribute(Element elem, Attr attr) {
-        return elem.hasAttributeNS(attr.getNamespaceURI(), attr.getLocalName())
-                && elem.getAttributeNS(attr.getNamespaceURI(), attr.getLocalName())
-                        .equals(attr.getValue());
+        return elem.hasAttribute(attr.getName())
+                && elem.getAttribute(attr.getName()).equals(attr.getValue());
     }
 
     /**
@@ -73,7 +72,7 @@ public class ElementUtils {
      * 
      * @param element
      *            The parent node.
-     * @return The list of attributes of element.
+     * @return The list of attributes of the element.
      */
     public static ArrayList<Attr> getAttributes(Element element) {
         ArrayList<Attr> results = new ArrayList<Attr>();
@@ -82,9 +81,38 @@ public class ElementUtils {
             return results;
         }
         for (int i = 0; i < attrs.getLength(); i++) {
-            results.add((Attr) attrs.item(i));
+            Attr a = (Attr) attrs.item(i);
+            if (!ElementUtils.isNameSpace(a)) {
+                results.add(a);
+            }
         }
         return results;
+    }
+
+    /**
+     * Retrieves the name space declarations of a node.
+     * 
+     * @param element
+     *            The parent node.
+     * @return The list of name space declarations of the element.
+     */
+    public static ArrayList<Attr> getNamespaces(Element element) {
+        ArrayList<Attr> results = new ArrayList<Attr>();
+        NamedNodeMap attrs = element.getAttributes();
+        if (attrs == null) {
+            return results;
+        }
+        for (int i = 0; i < attrs.getLength(); i++) {
+            Attr a = (Attr) attrs.item(i);
+            if (ElementUtils.isNameSpace(a)) {
+                results.add(a);
+            }
+        }
+        return results;
+    }
+
+    public static boolean isNameSpace(Attr a) {
+        return a.getName().startsWith("xmlns:");
     }
 
     /**

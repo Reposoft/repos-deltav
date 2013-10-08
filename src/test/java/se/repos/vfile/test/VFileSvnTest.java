@@ -82,7 +82,7 @@ public class VFileSvnTest {
 
         XMLUnit.setCompareUnmatched(false);
         XMLUnit.setIgnoreAttributeOrder(true);
-        XMLUnit.setIgnoreComments(true);
+        XMLUnit.setIgnoreComments(false); // TODO Set this to true?
         XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
         XMLUnit.setIgnoreWhitespace(true);
         XMLUnit.setNormalize(true);
