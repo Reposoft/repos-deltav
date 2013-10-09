@@ -57,6 +57,7 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
  * algorithm might be better placed in a more isolated test using test files
  * directly.
  */
+@SuppressWarnings("deprecation")
 public class VFileSvnTest {
 
     // set to false to examine repository after test
@@ -135,7 +136,7 @@ public class VFileSvnTest {
      * Takes a series of file paths, runs unit test that asserts they can be
      * v-filed. Puts generated v-file at testFilePath.
      */
-    private VFileStore testVFiling(CmsItemId testID, String... filePaths)
+	private VFileStore testVFiling(CmsItemId testID, String... filePaths)
             throws Exception {
 
         // Parse the files as Documents for data integrity checking.
