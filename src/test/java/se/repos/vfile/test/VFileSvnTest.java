@@ -1,6 +1,7 @@
 package se.repos.vfile.test;
 
-import static org.custommonkey.xmlunit.XMLAssert.*;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -57,7 +58,6 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
  * algorithm might be better placed in a more isolated test using test files
  * directly.
  */
-@SuppressWarnings("deprecation")
 public class VFileSvnTest {
 
     // set to false to examine repository after test
@@ -136,7 +136,7 @@ public class VFileSvnTest {
      * Takes a series of file paths, runs unit test that asserts they can be
      * v-filed. Puts generated v-file at testFilePath.
      */
-	private VFileStore testVFiling(CmsItemId testID, String... filePaths)
+    private VFileStore testVFiling(CmsItemId testID, String... filePaths)
             throws Exception {
 
         // Parse the files as Documents for data integrity checking.
@@ -227,15 +227,16 @@ public class VFileSvnTest {
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
     }
-    
+
     @Test
     public void testTechdocDemo1() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
-        VFileStore store = this.testVFiling(testID, "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
+        VFileStore store = this.testVFiling(testID,
+                "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1-norid/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1-norid/900108_C.xml");
-        
+
         Document document = store.get(testID);
         // label text has changed once
         assertXpathEvaluatesTo("2", "count(//infosection//p/label)", document);

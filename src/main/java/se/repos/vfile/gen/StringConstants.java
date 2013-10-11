@@ -7,14 +7,15 @@ package se.repos.vfile.gen;
  */
 public final class StringConstants {
 
-    public static final String VSTART = "vstart";
-    public static final String VEND = "vend";
-    public static final String TSTART = "tstart";
-    public static final String TEND = "tend";
+    public static final String START = "v:start";
+    public static final String END = "v:end";
+    public static final String TSTART = "v:tstart";
+    public static final String TEND = "v:tend";
     public static final String NOW = "NOW";
-    public static final String ISATTR = "isAttr";
-    public static final String YES = "yes";
-    public static final String DOCVERSION = "docVersion";
-    public static final String DOCTIME = "docTime";
-    public static final String MIXTEXT = "mixtext";
+    public static final String ATTR = "v:attr";
+    public static final String NAME = "v:name";
+    public static final String DOCVERSION = "v:docVersion";
+    public static final String DOCTIME = "v:docTime";
+    public static final String TEXT = "v:text";
+    public static final String REORDER = "v:reorder";
 }

@@ -51,8 +51,8 @@ public final class VFile {
             throw new NullPointerException();
         }
         Element root = indexDocument.getDocumentElement();
-        if (root == null || !root.hasAttribute(StringConstants.VSTART)
-                || !root.hasAttribute(StringConstants.VEND)
+        if (root == null || !root.hasAttribute(StringConstants.START)
+                || !root.hasAttribute(StringConstants.END)
                 || !root.hasAttribute(StringConstants.TSTART)
                 || !root.hasAttribute(StringConstants.TEND)
                 || !root.hasAttribute(StringConstants.DOCVERSION)
@@ -90,8 +90,8 @@ public final class VFile {
      */
     public TaggedNode createTaggedNode(String name) {
         Element elem = this.index.createElement(name);
-        elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
-        elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
+        elem.setAttribute(StringConstants.START, this.getDocumentVersion());
+        elem.setAttribute(StringConstants.END, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
         TaggedNode indexElem = new TaggedNode(this, elem);
@@ -105,12 +105,12 @@ public final class VFile {
      * @return The new TaggedNode.
      */
     public TaggedNode createAttribute(String name, String value) {
-        Element elem = this.index.createElement(name);
-        elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
-        elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
+        Element elem = this.index.createElement(StringConstants.ATTR);
+        elem.setAttribute(StringConstants.NAME, name);
+        elem.setAttribute(StringConstants.START, this.getDocumentVersion());
+        elem.setAttribute(StringConstants.END, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        elem.setAttribute(StringConstants.ISATTR, StringConstants.YES);
         elem.setTextContent(value);
         TaggedNode attr = new TaggedNode(this, elem);
         return attr;
@@ -126,9 +126,9 @@ public final class VFile {
         if (value.isEmpty()) {
             throw new IllegalArgumentException("Empty text node.");
         }
-        Element elem = this.index.createElement(StringConstants.MIXTEXT);
-        elem.setAttribute(StringConstants.VSTART, this.getDocumentVersion());
-        elem.setAttribute(StringConstants.VEND, StringConstants.NOW);
+        Element elem = this.index.createElement(StringConstants.TEXT);
+        elem.setAttribute(StringConstants.START, this.getDocumentVersion());
+        elem.setAttribute(StringConstants.END, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
         elem.setTextContent(value);
@@ -159,12 +159,13 @@ public final class VFile {
 
         Element root = firstVersion.getDocumentElement();
         Element newRoot = indexXML.createElement(root.getTagName());
-        newRoot.setAttribute(StringConstants.VSTART, version);
-        newRoot.setAttribute(StringConstants.VEND, StringConstants.NOW);
+        newRoot.setAttribute(StringConstants.START, version);
+        newRoot.setAttribute(StringConstants.END, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.TSTART, time);
         newRoot.setAttribute(StringConstants.TEND, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.DOCVERSION, version);
         newRoot.setAttribute(StringConstants.DOCTIME, time);
+        newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
 
@@ -360,7 +361,7 @@ public final class VFile {
      * the bottom of the file
      */
     private static void cleanNode(TaggedNode parent, TaggedNode child) {
-        if (child.getVStart().equals(child.getVEnd())) {
+        if (child.getVStart().equals(child.getEnd())) {
             parent.eraseChild(child);
         } else {
             if (!child.isLive()) {

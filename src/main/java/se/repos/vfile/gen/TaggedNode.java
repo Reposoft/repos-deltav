@@ -34,15 +34,11 @@ public class TaggedNode {
         if (parentIndex == null || element == null) {
             throw new NullPointerException();
         }
-        if (!element.hasAttribute(StringConstants.VSTART)
-                || !element.hasAttribute(StringConstants.VEND)
+        if (!element.hasAttribute(StringConstants.START)
+                || !element.hasAttribute(StringConstants.END)
                 || !element.hasAttribute(StringConstants.TSTART)
                 || !element.hasAttribute(StringConstants.TEND)) {
             throw new IllegalArgumentException("Missing lifetime information on element.");
-        }
-        if (element.hasAttribute(StringConstants.ISATTR)
-                && element.getNodeName().equals(StringConstants.MIXTEXT)) {
-            throw new IllegalArgumentException("Invalid metadata on element.");
         }
         this.parentVFile = parentIndex;
         this.element = element;
@@ -53,6 +49,9 @@ public class TaggedNode {
     }
 
     public String getName() {
+        if (this.isAttribute()) {
+            return this.element.getAttribute(StringConstants.NAME);
+        }
         return this.element.getTagName();
     }
 
@@ -120,21 +119,21 @@ public class TaggedNode {
         for (TaggedNode elem : this.getChildElements()) {
             elem.delete();
         }
-        this.element.setAttribute(StringConstants.VEND,
+        this.element.setAttribute(StringConstants.END,
                 this.parentVFile.getDocumentVersion());
         this.element.setAttribute(StringConstants.TEND,
                 this.parentVFile.getDocumentTime());
     }
 
     public String getVStart() {
-        return this.element.getAttribute(StringConstants.VSTART);
+        return this.element.getAttribute(StringConstants.START);
     }
 
-    public String getVEnd() {
-        return this.element.getAttribute(StringConstants.VEND);
+    public String getEnd() {
+        return this.element.getAttribute(StringConstants.END);
     }
 
-    public String getTStart() {
+    public String getStart() {
         return this.element.getAttribute(StringConstants.TSTART);
     }
 
@@ -144,16 +143,15 @@ public class TaggedNode {
 
     public boolean isLive() {
         return this.getTEnd().equals(StringConstants.NOW)
-                && this.getVEnd().equals(StringConstants.NOW);
+                && this.getEnd().equals(StringConstants.NOW);
     }
 
     public boolean isAttribute() {
-        return this.element.getAttribute(StringConstants.ISATTR).equals(
-                StringConstants.YES);
+        return this.element.getTagName().equals(StringConstants.ATTR);
     }
 
     public boolean isText() {
-        return this.element.getNodeName().equals(StringConstants.MIXTEXT);
+        return this.element.getNodeName().equals(StringConstants.TEXT);
     }
 
     public boolean isElement() {
@@ -431,6 +429,7 @@ public class TaggedNode {
         } else {
             parent.insertElementAt(this, index);
         }
+        this.setAttribute(StringConstants.REORDER, this.parentVFile.getDocumentVersion());
     }
 
     /**
