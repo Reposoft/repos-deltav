@@ -429,7 +429,8 @@ public class TaggedNode {
         } else {
             parent.insertElementAt(this, index);
         }
-        this.setAttribute(StringConstants.REORDER, this.parentVFile.getDocumentVersion());
+        this.element.setAttribute(StringConstants.REORDER,
+                this.parentVFile.getDocumentVersion());
     }
 
     /**

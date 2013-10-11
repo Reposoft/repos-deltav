@@ -222,7 +222,8 @@ public class VFileSvnTest {
     @Test
     public void testTechdocDemo1Rids() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+                "/900108-rids.xml"));
         this.testVFiling(testID, "se/repos/vfile/techdoc-demo1/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1/900108_C.xml");
