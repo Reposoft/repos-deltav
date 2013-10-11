@@ -230,9 +230,9 @@ public class VFileSvnTest {
     }
 
     @Test
-    public void testTechdocDemo1() throws Exception {
+    public void testTechdocDemo1Norid() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108.xml"));
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/900108-norid.xml"));
         VFileStore store = this.testVFiling(testID,
                 "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1-norid/900108_B.xml",
