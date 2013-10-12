@@ -240,6 +240,7 @@ public class VFileSvnTest {
 
         Document document = store.get(testID);
         // label text has changed once
-        assertXpathEvaluatesTo("2", "count(//infosection//p/label)", document);
+        assertXpathEvaluatesTo("1", "count(//infosection//p/label)", document);
+        assertXpathEvaluatesTo("2", "count(//infosection//p/label/v:text)", document);
     }
 }
