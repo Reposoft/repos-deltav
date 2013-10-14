@@ -1,9 +1,7 @@
 package se.repos.vfile.gen;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +60,7 @@ public final class VFile {
         this.index = indexDocument;
     }
 
-    public void setDocumentVersion(String version) {
+    private void setDocumentVersion(String version) {
         this.index.getDocumentElement().setAttribute(StringConstants.DOCVERSION, version);
     }
 
@@ -74,11 +72,11 @@ public final class VFile {
         return this.index.getDocumentElement().getAttribute(StringConstants.DOCTIME);
     }
 
-    public void setDocumentTime(String time) {
+    private void setDocumentTime(String time) {
         this.index.getDocumentElement().setAttribute(StringConstants.DOCTIME, time);
     }
 
-    public TaggedNode getRootElement() {
+    private TaggedNode getRootElement() {
         return new TaggedNode(this, this.index.getDocumentElement());
     }
 
@@ -168,52 +166,10 @@ public final class VFile {
         newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
-
-        for (Attr a : ElementUtils.getNamespaces(root)) {
-            newRoot.setAttribute(a.getName(), a.getValue());
-        }
-        for (Attr a : ElementUtils.getAttributes(root)) {
-            idx.getRootElement().setAttribute(a.getName(), a.getValue());
-        }
-        for (Element c : ElementUtils.getChildElements(root)) {
-            idx.getRootElement().normalizeElement(c);
-        }
-        for (Text t : ElementUtils.getText(root)) {
-            idx.getRootElement().normalizeText(t);
+        for (Node c : ElementUtils.getNodes(root)) {
+            idx.getRootElement().normalizeNode(c);
         }
         return idx;
-    }
-
-    // Enum for which update function to call for a changed element.
-    private enum CHANGE {
-
-        HAS_CHILD, NODE_NOT_FOUND, ELEM_ATTRS, TEXT_VALUE, ELEM_NAME, ELEM_CHILDREN_NUMBER, ELEM_CHILDREN_ORDER, ATTR_VALUE, IGNORED
-    }
-
-    /**
-     * A class that saves changes to be performed on a single node. Includes
-     * links to the old and new versions of the node, and a set of changes to
-     * perform.
-     * 
-     * @see CHANGE
-     */
-    private class DeferredChanges {
-
-        public final Node controlNode;
-        public final Node testNode;
-        public final String testLocation;
-        public final Set<CHANGE> changes;
-
-        public DeferredChanges(Node controlNode, Node testNode, String testLocation) {
-            this.controlNode = controlNode;
-            this.testNode = testNode;
-            this.testLocation = testLocation;
-            this.changes = new LinkedHashSet<CHANGE>();
-        }
-
-        public void addChange(CHANGE change) {
-            this.changes.add(change);
-        }
     }
 
     /**
@@ -244,10 +200,9 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        VFile.updateTaggedNode(changeMap, newNodeMap, this.getRootElement());
+        this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
         VFile.reorderNodes(reorderMap);
-        this.cleanDocument();
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
@@ -304,6 +259,7 @@ public final class VFile {
         }
     }
 
+    // TODO Change element ordering.
     private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
         for (TaggedNode e : reorderMap.keySet()) {
             int location = ElementUtils
@@ -350,30 +306,6 @@ public final class VFile {
         }
     }
 
-    private void cleanDocument() {
-        for (TaggedNode child : this.getRootElement().elements(false)) {
-            VFile.cleanNode(this.getRootElement(), child);
-        }
-    }
-
-    /*
-     * Removes nodes with the same VSTART/VEND time, and sort deleted nodes to
-     * the bottom of the file
-     */
-    private static void cleanNode(TaggedNode parent, TaggedNode child) {
-        if (child.getVStart().equals(child.getEnd())) {
-            parent.eraseChild(child);
-        } else {
-            if (!child.isLive()) {
-                parent.eraseChild(child);
-                parent.appendChild(child);
-            }
-            for (TaggedNode childOfChild : child.elements(false)) {
-                VFile.cleanNode(child, childOfChild);
-            }
-        }
-    }
-
     /**
      * Returns whether the given document is the latest version of this index.
      * 
@@ -404,9 +336,11 @@ public final class VFile {
         case Node.ELEMENT_NODE:
             return this.findTaggedNode(uniqueXPath);
         case Node.TEXT_NODE:
-            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
+            String indexParentPath = VFile.getXPathParent(uniqueXPath);
             int textIndex = ElementUtils.getTextIndex((Text) controlNode);
-            return indexParent.getText().get(textIndex);
+            String textNodePath = indexParentPath + "/" + StringConstants.TEXT + "["
+                    + textIndex + "]";
+            return this.findTaggedNode(textNodePath);
         default:
             throw new UnsupportedOperationException();
         }
@@ -430,112 +364,6 @@ public final class VFile {
             return (Node) xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
         } catch (XPathExpressionException ex) {
             throw new RuntimeException(ex.getMessage());
-        }
-    }
-
-    /**
-     * Does a bottom-up update of the XML index.
-     * 
-     * @param changeMap
-     *            A map of TaggedNodes to changes to be performed on that node.
-     * @param newNodeMap
-     *            A map from XPath location of an element to the new nodes that
-     *            are to be added there.
-     * @param element
-     *            The element being updated.
-     */
-    private static void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
-            MultiMap<String, Node> newNodeMap, TaggedNode element) {
-        for (TaggedNode child : element.elements(true)) {
-            VFile.updateTaggedNode(changeMap, newNodeMap, child);
-        }
-        if (!changeMap.containsKey(element)) {
-            return;
-        }
-        DeferredChanges d = changeMap.get(element);
-        for (CHANGE change : d.changes) {
-            switch (change) {
-            case NODE_NOT_FOUND:
-                element.delete();
-                return;
-            case ELEM_CHILDREN_NUMBER:
-                VFile.updateElementChildren(element, newNodeMap, d.testLocation);
-                break;
-            case HAS_CHILD:
-                VFile.updateElementChild(element, (Element) d.controlNode,
-                        (Element) d.testNode);
-                break;
-            case ELEM_NAME:
-                element.setName(d.testNode.getNodeName());
-                break;
-            case ATTR_VALUE:
-                Attr newAttr = (Attr) d.testNode;
-                element.setValue(newAttr.getValue());
-                break;
-            case ELEM_ATTRS:
-                VFile.updateElementAttrs(element, (Element) d.controlNode,
-                        (Element) d.testNode);
-                break;
-            case TEXT_VALUE:
-                element.setValue(d.testNode.getTextContent());
-                break;
-            case ELEM_CHILDREN_ORDER:
-                // Dealt with later.
-                break;
-            case IGNORED:
-                break;
-            }
-        }
-    }
-
-    private static void updateElementAttrs(TaggedNode element, Element oldElement,
-            Element newElement) {
-        for (Attr oldNS : ElementUtils.getNamespaces(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldNS)) {
-                element.deleteNamespace(oldNS);
-            }
-        }
-        for (Attr newNS : ElementUtils.getNamespaces(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newNS)) {
-                element.setNamespace(newNS);
-            }
-        }
-        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
-                element.deleteAttribute(oldAttr.getName());
-            }
-        }
-        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
-                element.setAttribute(newAttr.getName(), newAttr.getValue());
-            }
-        }
-    }
-
-    private static void updateElementChildren(TaggedNode element,
-            MultiMap<String, Node> newNodeMap, String testNodeLocation) {
-        for (Node n : newNodeMap.remove(testNodeLocation)) {
-            element.normalizeNode(n);
-        }
-    }
-
-    private static void updateElementChild(TaggedNode element, Element oldElement,
-            Element newElement) {
-        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
-        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
-
-        if (newElements.isEmpty() && oldElements.isEmpty()) {
-            throw new RuntimeException("Missing child element.");
-        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
-            throw new RuntimeException("Found two child elements where expected one.");
-        } else if (newElements.isEmpty()) {
-            for (Element e : oldElements) {
-                element.deleteChildElement(e);
-            }
-        } else if (oldElements.isEmpty()) {
-            for (Element e : newElements) {
-                element.normalizeElement(e);
-            }
         }
     }
 }

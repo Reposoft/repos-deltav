@@ -2,10 +2,13 @@ package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.w3c.dom.Attr;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 
 /**
@@ -44,57 +47,81 @@ public class TaggedNode {
         this.element = element;
     }
 
-    public TaggedNode getParent() {
+    private short getNodetype() {
+        if (this.element.getTagName().equals(StringConstants.ATTR)) {
+            return Node.ATTRIBUTE_NODE;
+        } else if (this.element.getTagName().equals(StringConstants.TEXT)) {
+            return Node.TEXT_NODE;
+        } else if (this.element.getTagName().equals(StringConstants.COMMENT)) {
+            return Node.COMMENT_NODE;
+        } else if (this.element.getTagName().equals(StringConstants.PI)) {
+            return Node.PROCESSING_INSTRUCTION_NODE;
+        } else {
+            return Node.ELEMENT_NODE;
+        }
+    }
+
+    private TaggedNode getParent() {
         return new TaggedNode(this.parentVFile, (Element) this.element.getParentNode());
     }
 
-    public String getName() {
-        if (this.isAttribute()) {
+    private String getName() {
+        if (this.getNodetype() == Node.ATTRIBUTE_NODE) {
             return this.element.getAttribute(StringConstants.NAME);
         }
         return this.element.getTagName();
     }
 
-    public String getValue() {
-        if (this.isElement()) {
+    private String getValue() {
+        if (this.getNodetype() == Node.ELEMENT_NODE) {
             return "";
         }
         return this.element.getTextContent();
     }
 
-    public void setValue(String value) {
+    private void setValue(String value) {
         TaggedNode newElem;
-        if (this.isElement()) {
+        switch (this.getNodetype()) {
+        case Node.ELEMENT_NODE:
             throw new RuntimeException();
-        } else if (this.isAttribute()) {
+        case Node.ATTRIBUTE_NODE:
             newElem = this.parentVFile.createAttribute(this.getName(), value);
-        } else {
+            break;
+        case Node.TEXT_NODE:
             newElem = this.parentVFile.createText(value);
-            this.element.setTextContent(value);
+            break;
+        default:
+            throw new UnsupportedOperationException();
         }
-
+        this.element.setTextContent(value);
         this.getParent().insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
     }
 
-    public void setName(String name) {
+    private void setName(String name) {
         TaggedNode parent = this.getParent();
-        TaggedNode newElem;
-        if (this.isText()) {
+        TaggedNode newElem = null;
+        switch (this.getNodetype()) {
+        case Node.TEXT_NODE:
             throw new RuntimeException();
-        } else if (this.isAttribute()) {
+        case Node.ATTRIBUTE_NODE:
             newElem = this.parentVFile.createAttribute(name, this.getValue());
-        } else {
+            break;
+        case Node.ELEMENT_NODE:
             newElem = this.parentVFile.createTaggedNode(name);
+            break;
+        default:
+            throw new UnsupportedOperationException();
         }
+
+        // TODO Add support for all child nodes.
         for (TaggedNode attr : this.getAttributes()) {
             newElem.setAttribute(attr.getName(), attr.getValue());
         }
         for (TaggedNode child : this.getChildElements()) {
             newElem.appendChild(child);
         }
-
         parent.insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
@@ -109,7 +136,7 @@ public class TaggedNode {
      * current docVersion. Also deletes all this TaggedNodes children and
      * attributes.
      */
-    public void delete() {
+    private void delete() {
         if (!this.isLive()) {
             return;
         }
@@ -123,41 +150,34 @@ public class TaggedNode {
                 this.parentVFile.getDocumentVersion());
         this.element.setAttribute(StringConstants.TEND,
                 this.parentVFile.getDocumentTime());
+        if (this.getTStart().equals(this.getTEnd())
+                && this.getStart().equals(this.getEnd())) {
+            this.getParent().eraseChild(this);
+        }
     }
 
-    public String getVStart() {
-        return this.element.getAttribute(StringConstants.START);
-    }
-
-    public String getEnd() {
-        return this.element.getAttribute(StringConstants.END);
-    }
-
-    public String getStart() {
-        return this.element.getAttribute(StringConstants.TSTART);
-    }
-
-    public String getTEnd() {
-        return this.element.getAttribute(StringConstants.TEND);
-    }
-
-    public boolean isLive() {
+    private boolean isLive() {
         return this.getTEnd().equals(StringConstants.NOW)
                 && this.getEnd().equals(StringConstants.NOW);
     }
 
-    public boolean isAttribute() {
-        return this.element.getTagName().equals(StringConstants.ATTR);
+    private String getStart() {
+        return this.element.getAttribute(StringConstants.START);
     }
 
-    public boolean isText() {
-        return this.element.getNodeName().equals(StringConstants.TEXT);
+    private String getEnd() {
+        return this.element.getAttribute(StringConstants.END);
     }
 
-    public boolean isElement() {
-        return !this.isAttribute() && !this.isText();
+    private String getTStart() {
+        return this.element.getAttribute(StringConstants.TSTART);
     }
 
+    private String getTEnd() {
+        return this.element.getAttribute(StringConstants.TEND);
+    }
+
+    // TODO Refactor this to become private.
     public TaggedNode getAttribute(String name) {
         for (TaggedNode a : this.getAttributes()) {
             if (a.getName().equals(name)) {
@@ -167,10 +187,10 @@ public class TaggedNode {
         return null;
     }
 
-    public ArrayList<TaggedNode> getAttributes() {
+    private ArrayList<TaggedNode> getAttributes() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (TaggedNode child : this.elements(true)) {
-            if (child.isAttribute()) {
+            if (child.getNodetype() == Node.ATTRIBUTE_NODE) {
                 results.add(child);
             }
         }
@@ -178,7 +198,7 @@ public class TaggedNode {
     }
 
     // Sets/creates an attribute on a index element.
-    public void setAttribute(String name, String value) {
+    private void setAttribute(String name, String value) {
         TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
             attr = this.parentVFile.createAttribute(name, value);
@@ -188,31 +208,7 @@ public class TaggedNode {
         }
     }
 
-    public void setNamespace(Attr namespace) {
-        if (!ElementUtils.isNameSpace(namespace)) {
-            throw new IllegalArgumentException();
-        }
-        this.cloneElement();
-        this.element.setAttribute(namespace.getName(), namespace.getValue());
-    }
-
-    public void deleteNamespace(Attr namespace) {
-        if (!namespace.getPrefix().equals("xmlns")) {
-            throw new IllegalArgumentException();
-        }
-        this.cloneElement();
-        this.element.removeAttribute(namespace.getName());
-    }
-
-    public void deleteAttribute(String name) {
-        TaggedNode attr = this.getAttribute(name);
-        if (attr == null) {
-            throw new RuntimeException("Tried to delete non-present attribute.");
-        }
-        attr.delete();
-    }
-
-    public void appendChild(TaggedNode child) {
+    private void appendChild(TaggedNode child) {
         this.element.appendChild(child.element);
     }
 
@@ -239,7 +235,7 @@ public class TaggedNode {
         }
     }
 
-    public void normalizeText(Text child) {
+    private void normalizeText(Text child) {
         TaggedNode text = this.parentVFile.createText(child.getData());
         int index = ElementUtils.getTextIndex(child);
         if (index == this.childCount()) {
@@ -253,7 +249,7 @@ public class TaggedNode {
      * Adds a new element to this IndexNode. The element is assumed not to be
      * tagged, and is normalized to the current docVersion.
      */
-    public void normalizeElement(Element child) {
+    private void normalizeElement(Element child) {
         TaggedNode newChild = this.parentVFile.createTaggedNode(child.getTagName());
         for (Attr a : ElementUtils.getNamespaces(child)) {
             newChild.element.setAttributeNode(a);
@@ -275,41 +271,21 @@ public class TaggedNode {
         }
     }
 
-    public void deleteChildElement(Element target) {
-        for (TaggedNode e : this.getChildElements()) {
-            if (e.isEqualElement(target)) {
-                e.delete();
-                return;
-            }
-        }
-        throw new RuntimeException("Tried to delete non-present element.");
-    }
-
     private int childCount() {
         return this.getChildElements().size();
     }
 
-    public ArrayList<TaggedNode> getChildElements() {
+    private ArrayList<TaggedNode> getChildElements() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (TaggedNode child : this.elements(true)) {
-            if (child.isElement()) {
+            if (child.getNodetype() == Node.ELEMENT_NODE) {
                 results.add(child);
             }
         }
         return results;
     }
 
-    public ArrayList<TaggedNode> getText() {
-        ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
-        for (TaggedNode child : this.elements(true)) {
-            if (child.isText()) {
-                results.add(child);
-            }
-        }
-        return results;
-    }
-
-    public ArrayList<TaggedNode> elements(boolean mustBeLive) {
+    private ArrayList<TaggedNode> elements(boolean mustBeLive) {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (Element c : ElementUtils.getChildElements(this.element)) {
             TaggedNode child = new TaggedNode(this.parentVFile, c);
@@ -327,53 +303,36 @@ public class TaggedNode {
      * 
      * @return True if the elements are equal.
      */
-    public boolean isEqualElement(Element docElem) {
-        // TODO Add comparison on name spaces.
-        return this.isElement() && this.isLive()
-                && this.element.getTagName().equals(docElem.getTagName())
-                && this.hasSameText(docElem) && this.hasSameAttributes(docElem)
-                && this.hasSameChildren(docElem);
-    }
-
-    private boolean hasSameText(Element docElem) {
-        ArrayList<TaggedNode> thisText = this.getText();
-        ArrayList<Text> thatText = ElementUtils.getText(docElem);
-        if (thisText.size() != thatText.size()) {
+    public boolean isEqualElement(Node docNode) {
+        if (!(this.getNodetype() == docNode.getNodeType() && this.isLive() && this
+                .getName().equals(docNode.getNodeName()))) {
             return false;
         }
-        for (int i = 0; i < thisText.size(); i++) {
-            if (!thisText.get(i).getValue().equals(thatText.get(i).getData())) {
-                return false;
-            }
+        switch (this.getNodetype()) {
+        case Node.ATTRIBUTE_NODE:
+            Attr docAttr = (Attr) docNode;
+            return this.getValue().equals(docAttr.getValue());
+        case Node.ELEMENT_NODE:
+            return this.hasSameChildren(docNode);
+        case Node.TEXT_NODE:
+            return ((Text) docNode).getTextContent().equals(this.getValue());
+        case Node.PROCESSING_INSTRUCTION_NODE:
+            return ((ProcessingInstruction) docNode).getData().equals(this.getValue());
+        case Node.COMMENT_NODE:
+            return ((Comment) docNode).getData().equals(this.getValue());
+        default:
+            throw new UnsupportedOperationException();
         }
-        return true;
     }
 
-    private boolean hasSameChildren(Element docElem) {
+    private boolean hasSameChildren(Node docNode) {
         ArrayList<TaggedNode> theseChildren = this.getChildElements();
-        ArrayList<Element> thoseChildren = ElementUtils.getChildElements(docElem);
+        ArrayList<Node> thoseChildren = ElementUtils.getNodes(docNode);
         if (theseChildren.size() != thoseChildren.size()) {
             return false;
         }
         for (int i = 0; i < theseChildren.size(); i++) {
             if (!theseChildren.get(i).isEqualElement(thoseChildren.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean hasSameAttributes(Element docElem) {
-        for (TaggedNode attr : this.getAttributes()) {
-            String iVal = attr.getValue();
-            String dVal = docElem.getAttribute(attr.getName());
-            if (dVal == null || !iVal.equals(dVal)) {
-                return false;
-            }
-        }
-        for (Attr a1 : ElementUtils.getAttributes(docElem)) {
-            TaggedNode a2 = this.getAttribute(a1.getName());
-            if (a2 == null || !a1.getValue().equals(a2.getValue())) {
                 return false;
             }
         }
@@ -421,6 +380,7 @@ public class TaggedNode {
      * @param index
      *            The position to move this element to.
      */
+    // TODO Change element ordering.
     public void reorder(int index) {
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
@@ -436,7 +396,141 @@ public class TaggedNode {
     /**
      * Permanently deletes e from this TaggedNode's child list.
      */
-    public void eraseChild(TaggedNode e) {
+    private void eraseChild(TaggedNode e) {
         this.element.removeChild(e.element);
+    }
+
+    /**
+     * Does a bottom-up update of the XML index.
+     * 
+     * @param changeMap
+     *            A map of TaggedNodes to changes to be performed on that node.
+     * @param newNodeMap
+     *            A map from XPath location of an element to the new nodes that
+     *            are to be added there.
+     */
+    public void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
+            MultiMap<String, Node> newNodeMap) {
+        for (TaggedNode child : this.elements(true)) {
+            child.updateTaggedNode(changeMap, newNodeMap);
+        }
+        if (!changeMap.containsKey(this)) {
+            return;
+        }
+        DeferredChanges d = changeMap.get(this);
+        for (CHANGE change : d.changes) {
+            switch (change) {
+            case NODE_NOT_FOUND:
+                this.delete();
+                return;
+            case ELEM_CHILDREN_NUMBER:
+                this.updateElementChildren(newNodeMap, d.testLocation);
+                break;
+            case HAS_CHILD:
+                this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
+                break;
+            case ELEM_NAME:
+                this.setName(d.testNode.getNodeName());
+                break;
+            case ATTR_VALUE:
+                Attr newAttr = (Attr) d.testNode;
+                this.setValue(newAttr.getValue());
+                break;
+            case ELEM_ATTRS:
+                this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
+                break;
+            case TEXT_VALUE:
+                this.setValue(d.testNode.getTextContent());
+                break;
+            case ELEM_CHILDREN_ORDER:
+                // Dealt with later.
+                break;
+            case IGNORED:
+                break;
+            }
+        }
+    }
+
+    private void updateElementAttrs(Element oldElement, Element newElement) {
+        for (Attr oldNS : ElementUtils.getNamespaces(oldElement)) {
+            if (!ElementUtils.hasEqualAttribute(newElement, oldNS)) {
+                this.deleteNamespace(oldNS);
+            }
+        }
+        for (Attr newNS : ElementUtils.getNamespaces(newElement)) {
+            if (!ElementUtils.hasEqualAttribute(oldElement, newNS)) {
+                this.setNamespace(newNS);
+            }
+        }
+        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
+            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
+                this.deleteAttribute(oldAttr.getName());
+            }
+        }
+        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
+            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
+                this.setAttribute(newAttr.getName(), newAttr.getValue());
+            }
+        }
+    }
+
+    private void setNamespace(Attr namespace) {
+        if (!ElementUtils.isNameSpace(namespace)) {
+            throw new IllegalArgumentException();
+        }
+        this.cloneElement();
+        this.element.setAttribute(namespace.getName(), namespace.getValue());
+    }
+
+    private void deleteNamespace(Attr namespace) {
+        if (!namespace.getPrefix().equals("xmlns")) {
+            throw new IllegalArgumentException();
+        }
+        this.cloneElement();
+        this.element.removeAttribute(namespace.getName());
+    }
+
+    private void deleteAttribute(String name) {
+        TaggedNode attr = this.getAttribute(name);
+        if (attr == null) {
+            throw new RuntimeException("Tried to delete non-present attribute.");
+        }
+        attr.delete();
+    }
+
+    private void updateElementChildren(MultiMap<String, Node> newNodeMap,
+            String testNodeLocation) {
+        for (Node n : newNodeMap.remove(testNodeLocation)) {
+            this.normalizeNode(n);
+        }
+    }
+
+    private void updateElementChild(Element oldElement, Element newElement) {
+        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
+        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
+
+        if (newElements.isEmpty() && oldElements.isEmpty()) {
+            throw new RuntimeException("Missing child element.");
+        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
+            throw new RuntimeException("Found two child elements where expected one.");
+        } else if (newElements.isEmpty()) {
+            for (Element e : oldElements) {
+                this.deleteChildElement(e);
+            }
+        } else if (oldElements.isEmpty()) {
+            for (Element e : newElements) {
+                this.normalizeElement(e);
+            }
+        }
+    }
+
+    private void deleteChildElement(Element target) {
+        for (TaggedNode e : this.getChildElements()) {
+            if (e.isEqualElement(target)) {
+                e.delete();
+                return;
+            }
+        }
+        throw new RuntimeException("Tried to delete non-present element.");
     }
 }

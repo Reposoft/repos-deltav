@@ -15,6 +15,18 @@ import org.w3c.dom.Text;
  */
 public class ElementUtils {
 
+    public static ArrayList<Node> getNodes(Node parent) {
+        ArrayList<Node> results = new ArrayList<Node>();
+        NodeList children = parent.getChildNodes();
+        if (children == null) {
+            return results;
+        }
+        for (int i = 0; i < children.getLength(); i++) {
+            results.add(children.item(i));
+        }
+        return results;
+    }
+
     /**
      * Method that checks whether elem has an element equal to attr.
      * 
