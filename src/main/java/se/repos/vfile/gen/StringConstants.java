@@ -5,6 +5,7 @@ package se.repos.vfile.gen;
  *         are used throughout the project. Mostly the names of tagged node
  *         attributes and some special values thereof.
  */
+// TODO Move this to private fields of TaggedNode.
 public final class StringConstants {
 
     public static final String START = "v:start";

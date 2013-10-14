@@ -2,9 +2,7 @@ package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
@@ -13,6 +11,7 @@ import org.w3c.dom.Text;
  * @author Hugo Svallfors <keiter@lavabit.com> A utility class for dealing with
  *         DOM Element nodes.
  */
+// TODO Remove this file.
 public class ElementUtils {
 
     public static ArrayList<Node> getNodes(Node parent) {
@@ -28,17 +27,21 @@ public class ElementUtils {
     }
 
     /**
-     * Method that checks whether elem has an element equal to attr.
+     * Retrieves at which index position of it's parent node you can find child.
      * 
-     * @param elem
-     *            The element to search.
-     * @param attr
-     *            The attribute to search for in elem.
-     * @return Whether elem contains attr.
+     * @throws RuntimeException
+     *             If the parent node of child does not contain an equal node.
      */
-    public static boolean hasEqualAttribute(Element elem, Attr attr) {
-        return elem.hasAttribute(attr.getName())
-                && elem.getAttribute(attr.getName()).equals(attr.getValue());
+    public static int getChildIndex(Element child) {
+        Element parent = (Element) child.getParentNode();
+        int i = 0;
+        for (Element e : getChildElements(parent)) {
+            if (e.equals(child)) {
+                return i;
+            }
+            i++;
+        }
+        throw new RuntimeException("Element not found.");
     }
 
     /**
@@ -62,89 +65,6 @@ public class ElementUtils {
         return results;
     }
 
-    public static ArrayList<Text> getText(Element element) {
-        ArrayList<Text> results = new ArrayList<Text>();
-        NodeList children = element.getChildNodes();
-        if (children == null) {
-            return results;
-        }
-        for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i).getNodeType() == Node.TEXT_NODE) {
-                Text t = (Text) children.item(i);
-                if (!t.getData().trim().isEmpty()) {
-                    results.add(t);
-                }
-            }
-        }
-        return results;
-    }
-
-    /**
-     * Retrieves the attributes elements of a node.
-     * 
-     * @param element
-     *            The parent node.
-     * @return The list of attributes of the element.
-     */
-    public static ArrayList<Attr> getAttributes(Element element) {
-        ArrayList<Attr> results = new ArrayList<Attr>();
-        NamedNodeMap attrs = element.getAttributes();
-        if (attrs == null) {
-            return results;
-        }
-        for (int i = 0; i < attrs.getLength(); i++) {
-            Attr a = (Attr) attrs.item(i);
-            if (!ElementUtils.isNameSpace(a)) {
-                results.add(a);
-            }
-        }
-        return results;
-    }
-
-    /**
-     * Retrieves the name space declarations of a node.
-     * 
-     * @param element
-     *            The parent node.
-     * @return The list of name space declarations of the element.
-     */
-    public static ArrayList<Attr> getNamespaces(Element element) {
-        ArrayList<Attr> results = new ArrayList<Attr>();
-        NamedNodeMap attrs = element.getAttributes();
-        if (attrs == null) {
-            return results;
-        }
-        for (int i = 0; i < attrs.getLength(); i++) {
-            Attr a = (Attr) attrs.item(i);
-            if (ElementUtils.isNameSpace(a)) {
-                results.add(a);
-            }
-        }
-        return results;
-    }
-
-    public static boolean isNameSpace(Attr a) {
-        return a.getName().startsWith("xmlns:");
-    }
-
-    /**
-     * Retrieves at which index position of it's parent node you can find child.
-     * 
-     * @throws RuntimeException
-     *             If the parent node of child does not contain an equal node.
-     */
-    public static int getChildIndex(Element child) {
-        Element parent = (Element) child.getParentNode();
-        int i = 0;
-        for (Element e : getChildElements(parent)) {
-            if (e.equals(child)) {
-                return i;
-            }
-            i++;
-        }
-        throw new RuntimeException("Element not found.");
-    }
-
     /**
      * Retrieves at which index position of it's parent node you can find text.
      * 
@@ -161,5 +81,22 @@ public class ElementUtils {
             i++;
         }
         throw new RuntimeException("Text not found.");
+    }
+
+    private static ArrayList<Text> getText(Element element) {
+        ArrayList<Text> results = new ArrayList<Text>();
+        NodeList children = element.getChildNodes();
+        if (children == null) {
+            return results;
+        }
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i).getNodeType() == Node.TEXT_NODE) {
+                Text t = (Text) children.item(i);
+                if (!t.getData().trim().isEmpty()) {
+                    results.add(t);
+                }
+            }
+        }
+        return results;
     }
 }

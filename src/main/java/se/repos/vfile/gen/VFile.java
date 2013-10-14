@@ -155,6 +155,7 @@ public final class VFile {
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
 
+        // TODO Move this part to a static method on TaggedNode.
         Element root = firstVersion.getDocumentElement();
         Element newRoot = indexXML.createElement(root.getTagName());
         newRoot.setAttribute(StringConstants.START, version);
@@ -260,6 +261,7 @@ public final class VFile {
     }
 
     // TODO Change element ordering.
+    // TODO Move this to TaggedNode.
     private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
         for (TaggedNode e : reorderMap.keySet()) {
             int location = ElementUtils

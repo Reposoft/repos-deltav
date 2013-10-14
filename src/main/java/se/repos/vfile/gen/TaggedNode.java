@@ -7,6 +7,7 @@ import java.util.Map;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
@@ -223,6 +224,7 @@ public class TaggedNode {
     }
 
     public void normalizeNode(Node child) {
+        // TODO Add support for all child nodes.
         switch (child.getNodeType()) {
         case Node.TEXT_NODE:
             this.normalizeText((Text) child);
@@ -251,17 +253,8 @@ public class TaggedNode {
      */
     private void normalizeElement(Element child) {
         TaggedNode newChild = this.parentVFile.createTaggedNode(child.getTagName());
-        for (Attr a : ElementUtils.getNamespaces(child)) {
-            newChild.element.setAttributeNode(a);
-        }
-        for (Attr a : ElementUtils.getAttributes(child)) {
-            newChild.setAttribute(a.getName(), a.getValue());
-        }
-        for (Element c : ElementUtils.getChildElements(child)) {
-            newChild.normalizeElement(c);
-        }
-        for (Text t : ElementUtils.getText(child)) {
-            newChild.normalizeText(t);
+        for (Node n : ElementUtils.getNodes(child)) {
+            newChild.normalizeNode(n);
         }
         int index = ElementUtils.getChildIndex(child);
         if (index == this.childCount()) {
@@ -452,30 +445,92 @@ public class TaggedNode {
     }
 
     private void updateElementAttrs(Element oldElement, Element newElement) {
-        for (Attr oldNS : ElementUtils.getNamespaces(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldNS)) {
+        for (Attr oldNS : TaggedNode.getNamespaces(oldElement)) {
+            if (!TaggedNode.hasEqualAttribute(newElement, oldNS)) {
                 this.deleteNamespace(oldNS);
             }
         }
-        for (Attr newNS : ElementUtils.getNamespaces(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newNS)) {
+        for (Attr newNS : TaggedNode.getNamespaces(newElement)) {
+            if (!TaggedNode.hasEqualAttribute(oldElement, newNS)) {
                 this.setNamespace(newNS);
             }
         }
-        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
-            if (!ElementUtils.hasEqualAttribute(newElement, oldAttr)) {
+        for (Attr oldAttr : TaggedNode.getAttributes(oldElement)) {
+            if (!TaggedNode.hasEqualAttribute(newElement, oldAttr)) {
                 this.deleteAttribute(oldAttr.getName());
             }
         }
-        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
-            if (!ElementUtils.hasEqualAttribute(oldElement, newAttr)) {
+        for (Attr newAttr : TaggedNode.getAttributes(newElement)) {
+            if (!TaggedNode.hasEqualAttribute(oldElement, newAttr)) {
                 this.setAttribute(newAttr.getName(), newAttr.getValue());
             }
         }
     }
 
+    /**
+     * Method that checks whether elem has an element equal to attr.
+     * 
+     * @param elem
+     *            The element to search.
+     * @param attr
+     *            The attribute to search for in elem.
+     * @return Whether elem contains attr.
+     */
+    private static boolean hasEqualAttribute(Element elem, Attr attr) {
+        return elem.hasAttribute(attr.getName())
+                && elem.getAttribute(attr.getName()).equals(attr.getValue());
+    }
+
+    /**
+     * Retrieves the attributes elements of a node.
+     * 
+     * @param element
+     *            The parent node.
+     * @return The list of attributes of the element.
+     */
+    private static ArrayList<Attr> getAttributes(Element element) {
+        ArrayList<Attr> results = new ArrayList<Attr>();
+        NamedNodeMap attrs = element.getAttributes();
+        if (attrs == null) {
+            return results;
+        }
+        for (int i = 0; i < attrs.getLength(); i++) {
+            Attr a = (Attr) attrs.item(i);
+            if (!TaggedNode.isNameSpace(a)) {
+                results.add(a);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Retrieves the name space declarations of a node.
+     * 
+     * @param element
+     *            The parent node.
+     * @return The list of name space declarations of the element.
+     */
+    private static ArrayList<Attr> getNamespaces(Element element) {
+        ArrayList<Attr> results = new ArrayList<Attr>();
+        NamedNodeMap attrs = element.getAttributes();
+        if (attrs == null) {
+            return results;
+        }
+        for (int i = 0; i < attrs.getLength(); i++) {
+            Attr a = (Attr) attrs.item(i);
+            if (TaggedNode.isNameSpace(a)) {
+                results.add(a);
+            }
+        }
+        return results;
+    }
+
+    private static boolean isNameSpace(Attr a) {
+        return a.getName().startsWith("xmlns:");
+    }
+
     private void setNamespace(Attr namespace) {
-        if (!ElementUtils.isNameSpace(namespace)) {
+        if (!TaggedNode.isNameSpace(namespace)) {
             throw new IllegalArgumentException();
         }
         this.cloneElement();
