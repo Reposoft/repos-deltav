@@ -223,6 +223,7 @@ public class TaggedNode {
         this.element.insertBefore(e.element, ref.element);
     }
 
+    // TODO Refactor this to become private.
     public void normalizeNode(Node child) {
         // TODO Add support for all child nodes.
         switch (child.getNodeType()) {
@@ -374,6 +375,7 @@ public class TaggedNode {
      *            The position to move this element to.
      */
     // TODO Change element ordering.
+    // TODO Refactor this to become private.
     public void reorder(int index) {
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
