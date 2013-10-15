@@ -34,6 +34,7 @@ public class ElementUtils {
     }
 
     public static ArrayList<Node> getChildren(Node parent) {
+        // TODO This method should return comments and PIs.
         ArrayList<Node> results = new ArrayList<Node>();
         NodeList children = parent.getChildNodes();
         if (children == null) {

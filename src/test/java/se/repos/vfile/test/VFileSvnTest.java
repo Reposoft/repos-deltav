@@ -86,6 +86,7 @@ public class VFileSvnTest {
         XMLUnit.setIgnoreWhitespace(true);
         XMLUnit.setNormalize(true);
         XMLUnit.setNormalizeWhitespace(false);
+        XMLUnit.setIgnoreComments(false);
     }
 
     @Before

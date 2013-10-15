@@ -447,7 +447,6 @@ public class TaggedNode {
     }
 
     public void reorder(int index) {
-        // TODO Fix element ordering.
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
         if (parent.childCount() == index) {
