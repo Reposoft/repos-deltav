@@ -86,52 +86,32 @@ public final class VFile {
      * @see TaggedNode
      * @return The new TaggedNode.
      */
-    public TaggedNode createTaggedNode(String name) {
-        Element elem = this.index.createElement(name);
+    public TaggedNode createTaggedNode(String nodeName, String elementName, String value) {
+        if(nodeName == null || nodeName.isEmpty()) {
+            throw new IllegalArgumentException("Empty node name.");
+        }
+        if(elementName != null && elementName.isEmpty()) {
+            throw new IllegalArgumentException("Empty element name.");
+        }
+        if(value != null && value.isEmpty()) {
+            throw new IllegalArgumentException("Empty value.");
+        }
+        
+        Element elem = this.index.createElement(nodeName);
         elem.setAttribute(StringConstants.START, this.getDocumentVersion());
         elem.setAttribute(StringConstants.END, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        
+        if(elementName != null) {
+            elem.setAttribute(StringConstants.NAME, elementName);
+        }
+        if(value != null) {
+            elem.setTextContent(value);
+        }
+        
         TaggedNode indexElem = new TaggedNode(this, elem);
         return indexElem;
-    }
-
-    /**
-     * Creates a new attribute belonging to this index.
-     * 
-     * @see TaggedNode
-     * @return The new TaggedNode.
-     */
-    public TaggedNode createAttribute(String name, String value) {
-        Element elem = this.index.createElement(StringConstants.ATTR);
-        elem.setAttribute(StringConstants.NAME, name);
-        elem.setAttribute(StringConstants.START, this.getDocumentVersion());
-        elem.setAttribute(StringConstants.END, StringConstants.NOW);
-        elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
-        elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        elem.setTextContent(value);
-        TaggedNode attr = new TaggedNode(this, elem);
-        return attr;
-    }
-
-    /**
-     * Creates a new text element belonging to this index.
-     * 
-     * @see TaggedNode
-     * @return The new TaggedNode.
-     */
-    public TaggedNode createText(String value) {
-        if (value.isEmpty()) {
-            throw new IllegalArgumentException("Empty text node.");
-        }
-        Element elem = this.index.createElement(StringConstants.TEXT);
-        elem.setAttribute(StringConstants.START, this.getDocumentVersion());
-        elem.setAttribute(StringConstants.END, StringConstants.NOW);
-        elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
-        elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        elem.setTextContent(value);
-        TaggedNode attr = new TaggedNode(this, elem);
-        return attr;
     }
 
     public Document toDocument() {

@@ -87,10 +87,12 @@ public class TaggedNode {
         case Node.ELEMENT_NODE:
             throw new RuntimeException();
         case Node.ATTRIBUTE_NODE:
-            newElem = this.parentVFile.createAttribute(this.getName(), value);
+            newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
+                    this.getName(), value);
             break;
         case Node.TEXT_NODE:
-            newElem = this.parentVFile.createText(value);
+            newElem = this.parentVFile
+                    .createTaggedNode(StringConstants.TEXT, null, value);
             break;
         default:
             throw new UnsupportedOperationException();
@@ -107,10 +109,11 @@ public class TaggedNode {
         case Node.TEXT_NODE:
             throw new RuntimeException();
         case Node.ATTRIBUTE_NODE:
-            newElem = this.parentVFile.createAttribute(name, this.getValue());
+            newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR, name,
+                    this.getValue());
             break;
         case Node.ELEMENT_NODE:
-            newElem = this.parentVFile.createTaggedNode(name);
+            newElem = this.parentVFile.createTaggedNode(name, null, null);
             break;
         default:
             throw new UnsupportedOperationException();
@@ -214,7 +217,7 @@ public class TaggedNode {
     private void setAttribute(String name, String value) {
         TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
-            attr = this.parentVFile.createAttribute(name, value);
+            attr = this.parentVFile.createTaggedNode(StringConstants.ATTR, name, value);
             this.element.appendChild(attr.element);
         } else {
             attr.setValue(value);
@@ -236,59 +239,42 @@ public class TaggedNode {
     }
 
     public void normalizeNode(Node child) {
+        TaggedNode norm;
         switch (child.getNodeType()) {
         case Node.TEXT_NODE:
-            this.normalizeText((Text) child);
-            return;
+            Text t = (Text) child;
+            norm = this.parentVFile.createTaggedNode(StringConstants.TEXT, null,
+                    t.getData());
+            break;
         case Node.ELEMENT_NODE:
-            this.normalizeElement((Element) child);
-            return;
+            Element e = (Element) child;
+            norm = this.parentVFile.createTaggedNode(e.getTagName(), null, null);
+            for (Attr a : TaggedNode.getAttributes(e)) {
+                norm.setAttribute(a.getName(), a.getValue());
+            }
+            for (Node n : ElementUtils.getChildren(child)) {
+                norm.normalizeNode(n);
+            }
+            break;
         case Node.PROCESSING_INSTRUCTION_NODE:
-            this.normalizeProcessInstruction((ProcessingInstruction) child);
+            ProcessingInstruction p = (ProcessingInstruction) child;
+            norm = this.parentVFile.createTaggedNode(StringConstants.PI, p.getTarget(),
+                    p.getData());
             break;
         case Node.COMMENT_NODE:
-            this.normalizeComment((Comment) child);
+            Comment c = (Comment) child;
+            norm = this.parentVFile.createTaggedNode(StringConstants.COMMENT, null,
+                    c.getData());
             break;
         default:
             throw new UnsupportedOperationException();
         }
-    }
 
-    private void normalizeComment(Comment child) {
-        // TODO Auto-generated method stub
-    }
-
-    private void normalizeProcessInstruction(ProcessingInstruction child) {
-        // TODO Auto-generated method stub
-    }
-
-    private void normalizeText(Text child) {
-        TaggedNode text = this.parentVFile.createText(child.getData());
-        int index = ElementUtils.getTextIndex(child);
-        if (index == this.childCount()) {
-            this.appendChild(text);
-        } else {
-            this.insertElementAt(text, index);
-        }
-    }
-
-    /**
-     * Adds a new element to this IndexNode. The element is assumed not to be
-     * tagged, and is normalized to the current docVersion.
-     */
-    private void normalizeElement(Element child) {
-        TaggedNode newChild = this.parentVFile.createTaggedNode(child.getTagName());
-        for (Attr a : TaggedNode.getAttributes(child)) {
-            newChild.setAttribute(a.getName(), a.getValue());
-        }
-        for (Node n : ElementUtils.getChildren(child)) {
-            newChild.normalizeNode(n);
-        }
         int index = TaggedNode.getChildIndex(child);
         if (index == this.childCount()) {
-            this.appendChild(newChild);
+            this.appendChild(norm);
         } else {
-            this.insertElementAt(newChild, index);
+            this.insertElementAt(norm, index);
         }
     }
 
@@ -400,19 +386,6 @@ public class TaggedNode {
         return val;
     }
 
-    // TODO Change element ordering.
-    private void reorder(int index) {
-        TaggedNode parent = this.getParent();
-        parent.eraseChild(this);
-        if (parent.childCount() == index) {
-            parent.appendChild(this);
-        } else {
-            parent.insertElementAt(this, index);
-        }
-        this.element.setAttribute(StringConstants.REORDER,
-                this.parentVFile.getDocumentVersion());
-    }
-
     /**
      * Permanently deletes e from this TaggedNode's child list.
      */
@@ -466,13 +439,26 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                int location = TaggedNode.getChildIndex((Element) d.testNode);
+                int location = TaggedNode.getChildIndex(d.testNode);
                 this.reorder(location);
                 break;
             case IGNORED:
                 break;
             }
         }
+    }
+
+    private void reorder(int index) {
+        // TODO Fix element ordering.
+        TaggedNode parent = this.getParent();
+        parent.eraseChild(this);
+        if (parent.childCount() == index) {
+            parent.appendChild(this);
+        } else {
+            parent.insertElementAt(this, index);
+        }
+        this.element.setAttribute(StringConstants.REORDER,
+                this.parentVFile.getDocumentVersion());
     }
 
     private void updateElementAttrs(Element oldElement, Element newElement) {
@@ -605,7 +591,7 @@ public class TaggedNode {
             }
         } else if (oldElements.isEmpty()) {
             for (Element e : newElements) {
-                this.normalizeElement(e);
+                this.normalizeNode(e);
             }
         }
     }
@@ -616,11 +602,11 @@ public class TaggedNode {
      * @throws RuntimeException
      *             If the parent node of child does not contain an equal node.
      */
-    private static int getChildIndex(Element child) {
+    private static int getChildIndex(Node child) {
         Element parent = (Element) child.getParentNode();
         int i = 0;
-        for (Element e : getChildElements(parent)) {
-            if (e.equals(child)) {
+        for (Node n : ElementUtils.getChildren(parent)) {
+            if (n.equals(child)) {
                 return i;
             }
             i++;
