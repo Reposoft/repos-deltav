@@ -102,18 +102,21 @@ public class TaggedNode {
         this.element = newElem.element;
     }
 
-    private void setName(String name) {
+    private void cloneElement() {
         TaggedNode parent = this.getParent();
         TaggedNode newElem = null;
         switch (this.getNodetype()) {
         case Node.TEXT_NODE:
-            throw new RuntimeException();
-        case Node.ATTRIBUTE_NODE:
-            newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR, name,
+            newElem = this.parentVFile.createTaggedNode(StringConstants.TEXT, null,
                     this.getValue());
             break;
         case Node.ELEMENT_NODE:
-            newElem = this.parentVFile.createTaggedNode(name, null, null);
+            newElem = this.parentVFile.createTaggedNode(StringConstants.TEXT, null,
+                    this.getValue());
+            break;
+        case Node.ATTRIBUTE_NODE:
+            newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
+                    this.getName(), this.getValue());
             break;
         default:
             throw new UnsupportedOperationException();
@@ -128,10 +131,6 @@ public class TaggedNode {
         parent.insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
-    }
-
-    private void cloneElement() {
-        this.setName(this.getName());
     }
 
     /**
@@ -159,7 +158,7 @@ public class TaggedNode {
         }
     }
 
-    private boolean isLive() {
+    public boolean isLive() {
         return this.getTEnd().equals(StringConstants.NOW)
                 && this.getEnd().equals(StringConstants.NOW);
     }
@@ -214,7 +213,7 @@ public class TaggedNode {
     }
 
     // Sets/creates an attribute on a index element.
-    private void setAttribute(String name, String value) {
+    public void setAttribute(String name, String value) {
         TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
             attr = this.parentVFile.createTaggedNode(StringConstants.ATTR, name, value);
@@ -249,7 +248,7 @@ public class TaggedNode {
         case Node.ELEMENT_NODE:
             Element e = (Element) child;
             norm = this.parentVFile.createTaggedNode(e.getTagName(), null, null);
-            for (Attr a : TaggedNode.getAttributes(e)) {
+            for (Attr a : ElementUtils.getAttributes(e)) {
                 norm.setAttribute(a.getName(), a.getValue());
             }
             for (Node n : ElementUtils.getChildren(child)) {
@@ -270,7 +269,7 @@ public class TaggedNode {
             throw new UnsupportedOperationException();
         }
 
-        int index = TaggedNode.getChildIndex(child);
+        int index = ElementUtils.getChildIndex(child);
         if (index == this.childCount()) {
             this.appendChild(norm);
         } else {
@@ -328,7 +327,7 @@ public class TaggedNode {
     }
 
     private boolean hasSameAttributes(Element docElem) {
-        ArrayList<Attr> thoseAttrs = TaggedNode.getAttributes(docElem);
+        ArrayList<Attr> thoseAttrs = ElementUtils.getAttributes(docElem);
         for (int i = 0; i < thoseAttrs.size(); i++) {
             Attr thatAttr = thoseAttrs.get(i);
             TaggedNode thisAttr = this.getAttribute(thatAttr.getName());
@@ -425,9 +424,6 @@ public class TaggedNode {
             case HAS_CHILD:
                 this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
                 break;
-            case ELEM_NAME:
-                this.setName(d.testNode.getNodeName());
-                break;
             case ATTR_VALUE:
                 Attr newAttr = (Attr) d.testNode;
                 this.setValue(newAttr.getValue());
@@ -436,10 +432,12 @@ public class TaggedNode {
                 this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
                 break;
             case TEXT_VALUE:
+            case COMMENT_VALUE:
+            case PI_DATA:
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                int location = TaggedNode.getChildIndex(d.testNode);
+                int location = ElementUtils.getChildIndex(d.testNode);
                 this.reorder(location);
                 break;
             case IGNORED:
@@ -448,7 +446,7 @@ public class TaggedNode {
         }
     }
 
-    private void reorder(int index) {
+    public void reorder(int index) {
         // TODO Fix element ordering.
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
@@ -472,12 +470,12 @@ public class TaggedNode {
                 this.setNamespace(newNS);
             }
         }
-        for (Attr oldAttr : TaggedNode.getAttributes(oldElement)) {
+        for (Attr oldAttr : ElementUtils.getAttributes(oldElement)) {
             if (!TaggedNode.hasEqualAttribute(newElement, oldAttr)) {
                 this.deleteAttribute(oldAttr.getName());
             }
         }
-        for (Attr newAttr : TaggedNode.getAttributes(newElement)) {
+        for (Attr newAttr : ElementUtils.getAttributes(newElement)) {
             if (!TaggedNode.hasEqualAttribute(oldElement, newAttr)) {
                 this.setAttribute(newAttr.getName(), newAttr.getValue());
             }
@@ -499,28 +497,6 @@ public class TaggedNode {
     }
 
     /**
-     * Retrieves the attributes elements of a node.
-     * 
-     * @param element
-     *            The parent node.
-     * @return The list of attributes of the element.
-     */
-    private static ArrayList<Attr> getAttributes(Element element) {
-        ArrayList<Attr> results = new ArrayList<Attr>();
-        NamedNodeMap attrs = element.getAttributes();
-        if (attrs == null) {
-            return results;
-        }
-        for (int i = 0; i < attrs.getLength(); i++) {
-            Attr a = (Attr) attrs.item(i);
-            if (!TaggedNode.isNameSpace(a)) {
-                results.add(a);
-            }
-        }
-        return results;
-    }
-
-    /**
      * Retrieves the name space declarations of a node.
      * 
      * @param element
@@ -535,19 +511,15 @@ public class TaggedNode {
         }
         for (int i = 0; i < attrs.getLength(); i++) {
             Attr a = (Attr) attrs.item(i);
-            if (TaggedNode.isNameSpace(a)) {
+            if (ElementUtils.isNameSpace(a)) {
                 results.add(a);
             }
         }
         return results;
     }
 
-    private static boolean isNameSpace(Attr a) {
-        return a.getName().startsWith("xmlns:");
-    }
-
     private void setNamespace(Attr namespace) {
-        if (!TaggedNode.isNameSpace(namespace)) {
+        if (!ElementUtils.isNameSpace(namespace)) {
             throw new IllegalArgumentException();
         }
         this.cloneElement();
@@ -594,24 +566,6 @@ public class TaggedNode {
                 this.normalizeNode(e);
             }
         }
-    }
-
-    /**
-     * Retrieves at which index position of it's parent node you can find child.
-     * 
-     * @throws RuntimeException
-     *             If the parent node of child does not contain an equal node.
-     */
-    private static int getChildIndex(Node child) {
-        Element parent = (Element) child.getParentNode();
-        int i = 0;
-        for (Node n : ElementUtils.getChildren(parent)) {
-            if (n.equals(child)) {
-                return i;
-            }
-            i++;
-        }
-        throw new RuntimeException("Element not found.");
     }
 
     /**

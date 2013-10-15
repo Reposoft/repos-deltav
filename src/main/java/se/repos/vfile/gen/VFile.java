@@ -87,29 +87,26 @@ public final class VFile {
      * @return The new TaggedNode.
      */
     public TaggedNode createTaggedNode(String nodeName, String elementName, String value) {
-        if(nodeName == null || nodeName.isEmpty()) {
+        if (nodeName == null || nodeName.isEmpty()) {
             throw new IllegalArgumentException("Empty node name.");
         }
-        if(elementName != null && elementName.isEmpty()) {
+        if (elementName != null && elementName.isEmpty()) {
             throw new IllegalArgumentException("Empty element name.");
         }
-        if(value != null && value.isEmpty()) {
-            throw new IllegalArgumentException("Empty value.");
-        }
-        
+
         Element elem = this.index.createElement(nodeName);
         elem.setAttribute(StringConstants.START, this.getDocumentVersion());
         elem.setAttribute(StringConstants.END, StringConstants.NOW);
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        
-        if(elementName != null) {
+
+        if (elementName != null) {
             elem.setAttribute(StringConstants.NAME, elementName);
         }
-        if(value != null) {
+        if (value != null) {
             elem.setTextContent(value);
         }
-        
+
         TaggedNode indexElem = new TaggedNode(this, elem);
         return indexElem;
     }
@@ -146,6 +143,9 @@ public final class VFile {
         newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
+        for (Attr a : ElementUtils.getAttributes(root)) {
+            idx.getRootElement().setAttribute(a.getName(), a.getValue());
+        }
         for (Node c : ElementUtils.getChildren(root)) {
             idx.getRootElement().normalizeNode(c);
         }
@@ -169,21 +169,24 @@ public final class VFile {
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
+        Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         MultiMap<String, Node> newNodeMap = new MultiMap<String, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            this.scheduleChange(changeMap, newNodeMap, d);
+            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
         this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
+        VFile.reorderNodes(reorderMap);
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
+            Map<TaggedNode, DeferredChanges> reorderMap,
             MultiMap<String, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
@@ -200,12 +203,17 @@ public final class VFile {
             newNodeMap.put(testParentLocation, testNode);
         } else {
             TaggedNode element = this.findIndexNode(controlNode, controlLocation);
-            if (!changeMap.containsKey(element)) {
-                changeMap.put(element, new DeferredChanges(controlNode, testNode,
-                        testLocation));
-                changeMap.get(element).addChange(change);
+            Map<TaggedNode, DeferredChanges> map;
+            if (change == CHANGE.ELEM_CHILDREN_ORDER) {
+                map = reorderMap;
             } else {
-                changeMap.get(element).addChange(change);
+                map = changeMap;
+            }
+            if (!map.containsKey(element)) {
+                map.put(element, new DeferredChanges(controlNode, testNode, testLocation));
+                map.get(element).addChange(change);
+            } else {
+                map.get(element).addChange(change);
             }
         }
     }
@@ -231,6 +239,13 @@ public final class VFile {
         }
     }
 
+    private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
+        for (TaggedNode e : reorderMap.keySet()) {
+            int location = ElementUtils.getChildIndex(reorderMap.get(e).testNode);
+            e.reorder(location);
+        }
+    }
+
     /**
      * Classifies each change constant of XMLUnit into a function to be called.
      * 
@@ -251,8 +266,10 @@ public final class VFile {
             return CHANGE.HAS_CHILD;
         case DifferenceConstants.TEXT_VALUE_ID:
             return CHANGE.TEXT_VALUE;
-        case DifferenceConstants.ELEMENT_TAG_NAME_ID:
-            return CHANGE.ELEM_NAME;
+        case DifferenceConstants.COMMENT_VALUE_ID:
+            return CHANGE.COMMENT_VALUE;
+        case DifferenceConstants.PROCESSING_INSTRUCTION_DATA_ID:
+            return CHANGE.PI_DATA;
         case DifferenceConstants.ATTR_VALUE_ID:
         case DifferenceConstants.ATTR_VALUE_EXPLICITLY_SPECIFIED_ID:
             return CHANGE.ATTR_VALUE;
@@ -262,7 +279,6 @@ public final class VFile {
         case DifferenceConstants.CHILD_NODELIST_SEQUENCE_ID:
             return CHANGE.ELEM_CHILDREN_ORDER;
         case DifferenceConstants.ATTR_SEQUENCE_ID:
-        case DifferenceConstants.COMMENT_VALUE_ID:
             return CHANGE.IGNORED;
         default:
             throw new UnsupportedOperationException();
@@ -311,6 +327,9 @@ public final class VFile {
         }
         if (returnNode == null) {
             throw new RuntimeException("Could not find changed node.");
+        }
+        if(!returnNode.isLive()) {
+            throw new RuntimeException("Found node is not live.");
         }
         return returnNode;
     }

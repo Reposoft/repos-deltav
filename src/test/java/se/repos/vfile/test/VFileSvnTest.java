@@ -1,6 +1,5 @@
 package se.repos.vfile.test;
 
-import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -234,14 +233,8 @@ public class VFileSvnTest {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
                 "/900108-norid.xml"));
-        VFileStore store = this.testVFiling(testID,
-                "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
+        this.testVFiling(testID, "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
                 "se/repos/vfile/techdoc-demo1-norid/900108_B.xml",
                 "se/repos/vfile/techdoc-demo1-norid/900108_C.xml");
-
-        Document document = store.get(testID);
-        // label text has changed once
-        assertXpathEvaluatesTo("1", "count(//infosection//p/label)", document);
-        assertXpathEvaluatesTo("2", "count(//infosection//p/label/v:text)", document);
     }
 }
