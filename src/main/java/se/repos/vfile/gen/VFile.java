@@ -166,7 +166,7 @@ public final class VFile {
         newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
-        for (Node c : ElementUtils.getNodes(root)) {
+        for (Node c : ElementUtils.getChildren(root)) {
             idx.getRootElement().normalizeNode(c);
         }
         return idx;
@@ -311,22 +311,28 @@ public final class VFile {
      */
     private TaggedNode findIndexNode(Node controlNode, String uniqueXPath) {
         TaggedNode indexParent;
+        TaggedNode returnNode;
         switch (controlNode.getNodeType()) {
         case Node.ATTRIBUTE_NODE:
             Attr attr = (Attr) controlNode;
             indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            return indexParent.getAttribute(attr.getName());
+            returnNode = indexParent.getAttribute(attr.getName());
+            break;
         case Node.ELEMENT_NODE:
-            return this.findTaggedNode(uniqueXPath);
+            returnNode = this.findTaggedNode(uniqueXPath);
+            break;
         case Node.TEXT_NODE:
-            String indexParentPath = VFile.getXPathParent(uniqueXPath);
+            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
             int textIndex = ElementUtils.getTextIndex((Text) controlNode);
-            String textNodePath = indexParentPath + "/" + StringConstants.TEXT + "["
-                    + textIndex + "]";
-            return this.findTaggedNode(textNodePath);
+            returnNode = indexParent.getTextNode(textIndex);
+            break;
         default:
             throw new UnsupportedOperationException();
         }
+        if (returnNode == null) {
+            throw new RuntimeException("Could not find changed node.");
+        }
+        return returnNode;
     }
 
     private static String getXPathParent(String xPath) {

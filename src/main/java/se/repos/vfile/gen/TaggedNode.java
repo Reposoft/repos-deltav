@@ -95,7 +95,6 @@ public class TaggedNode {
         default:
             throw new UnsupportedOperationException();
         }
-        this.element.setTextContent(value);
         this.getParent().insertBefore(newElem, this);
         this.delete();
         this.element = newElem.element;
@@ -117,11 +116,10 @@ public class TaggedNode {
             throw new UnsupportedOperationException();
         }
 
-        // TODO Add support for all child nodes.
         for (TaggedNode attr : this.getAttributes()) {
             newElem.setAttribute(attr.getName(), attr.getValue());
         }
-        for (TaggedNode child : this.getChildElements()) {
+        for (TaggedNode child : this.getChildren()) {
             newElem.appendChild(child);
         }
         parent.insertBefore(newElem, this);
@@ -145,7 +143,7 @@ public class TaggedNode {
         for (TaggedNode attr : this.getAttributes()) {
             attr.delete();
         }
-        for (TaggedNode elem : this.getChildElements()) {
+        for (TaggedNode elem : this.getChildren()) {
             elem.delete();
         }
         this.element.setAttribute(StringConstants.END,
@@ -188,10 +186,24 @@ public class TaggedNode {
         return null;
     }
 
+    public TaggedNode getTextNode(int textIndex) {
+        int i = 0;
+        for (TaggedNode n : this.getChildren()) {
+            if (n.getNodetype() == Node.TEXT_NODE) {
+                if (i == textIndex) {
+                    return n;
+                }
+                i++;
+            }
+        }
+        return null;
+    }
+
     private ArrayList<TaggedNode> getAttributes() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
-        for (TaggedNode child : this.elements(true)) {
-            if (child.getNodetype() == Node.ATTRIBUTE_NODE) {
+        for (Element c : TaggedNode.getChildElements(this.element)) {
+            TaggedNode child = new TaggedNode(this.parentVFile, c);
+            if (child.isLive() && child.getNodetype() == Node.ATTRIBUTE_NODE) {
                 results.add(child);
             }
         }
@@ -218,13 +230,12 @@ public class TaggedNode {
     }
 
     private void insertElementAt(TaggedNode e, int index) {
-        ArrayList<TaggedNode> children = this.getChildElements();
+        ArrayList<TaggedNode> children = this.getChildren();
         TaggedNode ref = children.get(index);
         this.element.insertBefore(e.element, ref.element);
     }
 
     public void normalizeNode(Node child) {
-        // TODO Add support for all child nodes.
         switch (child.getNodeType()) {
         case Node.TEXT_NODE:
             this.normalizeText((Text) child);
@@ -232,9 +243,23 @@ public class TaggedNode {
         case Node.ELEMENT_NODE:
             this.normalizeElement((Element) child);
             return;
+        case Node.PROCESSING_INSTRUCTION_NODE:
+            this.normalizeProcessInstruction((ProcessingInstruction) child);
+            break;
+        case Node.COMMENT_NODE:
+            this.normalizeComment((Comment) child);
+            break;
         default:
             throw new UnsupportedOperationException();
         }
+    }
+
+    private void normalizeComment(Comment child) {
+        // TODO Auto-generated method stub
+    }
+
+    private void normalizeProcessInstruction(ProcessingInstruction child) {
+        // TODO Auto-generated method stub
     }
 
     private void normalizeText(Text child) {
@@ -253,7 +278,10 @@ public class TaggedNode {
      */
     private void normalizeElement(Element child) {
         TaggedNode newChild = this.parentVFile.createTaggedNode(child.getTagName());
-        for (Node n : ElementUtils.getNodes(child)) {
+        for (Attr a : TaggedNode.getAttributes(child)) {
+            newChild.setAttribute(a.getName(), a.getValue());
+        }
+        for (Node n : ElementUtils.getChildren(child)) {
             newChild.normalizeNode(n);
         }
         int index = TaggedNode.getChildIndex(child);
@@ -265,25 +293,17 @@ public class TaggedNode {
     }
 
     private int childCount() {
-        return this.getChildElements().size();
+        return this.getChildren().size();
     }
 
-    private ArrayList<TaggedNode> getChildElements() {
-        ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
-        for (TaggedNode child : this.elements(true)) {
-            if (child.getNodetype() == Node.ELEMENT_NODE) {
-                results.add(child);
-            }
-        }
-        return results;
-    }
-
-    private ArrayList<TaggedNode> elements(boolean mustBeLive) {
+    private ArrayList<TaggedNode> getChildren() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (Element c : TaggedNode.getChildElements(this.element)) {
             TaggedNode child = new TaggedNode(this.parentVFile, c);
-            if (!mustBeLive || child.isLive()) {
-                results.add(child);
+            if (child.isLive()) {
+                if (child.getNodetype() != Node.ATTRIBUTE_NODE) {
+                    results.add(child);
+                }
             }
         }
         return results;
@@ -297,18 +317,21 @@ public class TaggedNode {
      * @return True if the elements are equal.
      */
     public boolean isEqualElement(Node docNode) {
-        if (!(this.getNodetype() == docNode.getNodeType() && this.isLive() && this
-                .getName().equals(docNode.getNodeName()))) {
+        if (!(this.getNodetype() == docNode.getNodeType() && this.isLive())) {
             return false;
         }
         switch (this.getNodetype()) {
         case Node.ATTRIBUTE_NODE:
             Attr docAttr = (Attr) docNode;
-            return this.getValue().equals(docAttr.getValue());
+            return this.getValue().equals(docAttr.getValue())
+                    && this.getName().equals(docNode.getNodeName());
         case Node.ELEMENT_NODE:
-            return this.hasSameChildren(docNode);
+            Element docElem = (Element) docNode;
+            return this.hasSameAttributes(docElem) && this.hasSameChildren(docElem);
         case Node.TEXT_NODE:
-            return ((Text) docNode).getTextContent().equals(this.getValue());
+            String thisVal = this.getValue();
+            String thatVal = ((Text) docNode).getData();
+            return thisVal.equals(thatVal);
         case Node.PROCESSING_INSTRUCTION_NODE:
             return ((ProcessingInstruction) docNode).getData().equals(this.getValue());
         case Node.COMMENT_NODE:
@@ -318,9 +341,21 @@ public class TaggedNode {
         }
     }
 
-    private boolean hasSameChildren(Node docNode) {
-        ArrayList<TaggedNode> theseChildren = this.getChildElements();
-        ArrayList<Node> thoseChildren = ElementUtils.getNodes(docNode);
+    private boolean hasSameAttributes(Element docElem) {
+        ArrayList<Attr> thoseAttrs = TaggedNode.getAttributes(docElem);
+        for (int i = 0; i < thoseAttrs.size(); i++) {
+            Attr thatAttr = thoseAttrs.get(i);
+            TaggedNode thisAttr = this.getAttribute(thatAttr.getName());
+            if (thisAttr == null || !thisAttr.isEqualElement(thatAttr)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasSameChildren(Element docElem) {
+        ArrayList<TaggedNode> theseChildren = this.getChildren();
+        ArrayList<Node> thoseChildren = ElementUtils.getChildren(docElem);
         if (theseChildren.size() != thoseChildren.size()) {
             return false;
         }
@@ -396,7 +431,10 @@ public class TaggedNode {
      */
     public void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
             MultiMap<String, Node> newNodeMap) {
-        for (TaggedNode child : this.elements(true)) {
+        for (TaggedNode child : this.getAttributes()) {
+            child.updateTaggedNode(changeMap, newNodeMap);
+        }
+        for (TaggedNode child : this.getChildren()) {
             child.updateTaggedNode(changeMap, newNodeMap);
         }
         if (!changeMap.containsKey(this)) {
@@ -612,7 +650,7 @@ public class TaggedNode {
     }
 
     private void deleteChildElement(Element target) {
-        for (TaggedNode e : this.getChildElements()) {
+        for (TaggedNode e : this.getChildren()) {
             if (e.isEqualElement(target)) {
                 e.delete();
                 return;
