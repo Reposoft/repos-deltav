@@ -9,6 +9,7 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 
@@ -178,7 +179,6 @@ public class TaggedNode {
         return this.element.getAttribute(StringConstants.TEND);
     }
 
-    // TODO Refactor this to become private.
     public TaggedNode getAttribute(String name) {
         for (TaggedNode a : this.getAttributes()) {
             if (a.getName().equals(name)) {
@@ -223,7 +223,6 @@ public class TaggedNode {
         this.element.insertBefore(e.element, ref.element);
     }
 
-    // TODO Refactor this to become private.
     public void normalizeNode(Node child) {
         // TODO Add support for all child nodes.
         switch (child.getNodeType()) {
@@ -257,7 +256,7 @@ public class TaggedNode {
         for (Node n : ElementUtils.getNodes(child)) {
             newChild.normalizeNode(n);
         }
-        int index = ElementUtils.getChildIndex(child);
+        int index = TaggedNode.getChildIndex(child);
         if (index == this.childCount()) {
             this.appendChild(newChild);
         } else {
@@ -281,7 +280,7 @@ public class TaggedNode {
 
     private ArrayList<TaggedNode> elements(boolean mustBeLive) {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
-        for (Element c : ElementUtils.getChildElements(this.element)) {
+        for (Element c : TaggedNode.getChildElements(this.element)) {
             TaggedNode child = new TaggedNode(this.parentVFile, c);
             if (!mustBeLive || child.isLive()) {
                 results.add(child);
@@ -366,17 +365,8 @@ public class TaggedNode {
         return val;
     }
 
-    /**
-     * Reorders the position of this TaggedNode in the parent's child list, so
-     * that this index element is at the position given, or at the end if the
-     * index is larger than the child list length.
-     * 
-     * @param index
-     *            The position to move this element to.
-     */
     // TODO Change element ordering.
-    // TODO Refactor this to become private.
-    public void reorder(int index) {
+    private void reorder(int index) {
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
         if (parent.childCount() == index) {
@@ -438,7 +428,8 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                // Dealt with later.
+                int location = TaggedNode.getChildIndex((Element) d.testNode);
+                this.reorder(location);
                 break;
             case IGNORED:
                 break;
@@ -563,8 +554,8 @@ public class TaggedNode {
     }
 
     private void updateElementChild(Element oldElement, Element newElement) {
-        ArrayList<Element> newElements = ElementUtils.getChildElements(newElement);
-        ArrayList<Element> oldElements = ElementUtils.getChildElements(oldElement);
+        ArrayList<Element> newElements = TaggedNode.getChildElements(newElement);
+        ArrayList<Element> oldElements = TaggedNode.getChildElements(oldElement);
 
         if (newElements.isEmpty() && oldElements.isEmpty()) {
             throw new RuntimeException("Missing child element.");
@@ -579,6 +570,45 @@ public class TaggedNode {
                 this.normalizeElement(e);
             }
         }
+    }
+
+    /**
+     * Retrieves at which index position of it's parent node you can find child.
+     * 
+     * @throws RuntimeException
+     *             If the parent node of child does not contain an equal node.
+     */
+    private static int getChildIndex(Element child) {
+        Element parent = (Element) child.getParentNode();
+        int i = 0;
+        for (Element e : getChildElements(parent)) {
+            if (e.equals(child)) {
+                return i;
+            }
+            i++;
+        }
+        throw new RuntimeException("Element not found.");
+    }
+
+    /**
+     * Retrieves the child elements of a node.
+     * 
+     * @param element
+     *            The parent node.
+     * @return The list of child elements of element.
+     */
+    private static ArrayList<Element> getChildElements(Element element) {
+        ArrayList<Element> results = new ArrayList<Element>();
+        NodeList children = element.getChildNodes();
+        if (children == null) {
+            return results;
+        }
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                results.add((Element) children.item(i));
+            }
+        }
+        return results;
     }
 
     private void deleteChildElement(Element target) {

@@ -155,7 +155,6 @@ public final class VFile {
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
 
-        // TODO Move this part to a static method on TaggedNode.
         Element root = firstVersion.getDocumentElement();
         Element newRoot = indexXML.createElement(root.getTagName());
         newRoot.setAttribute(StringConstants.START, version);
@@ -190,24 +189,21 @@ public final class VFile {
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
-        Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         MultiMap<String, Node> newNodeMap = new MultiMap<String, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
+            this.scheduleChange(changeMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
         this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
-        VFile.reorderNodes(reorderMap);
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
-            Map<TaggedNode, DeferredChanges> reorderMap,
             MultiMap<String, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
@@ -224,17 +220,12 @@ public final class VFile {
             newNodeMap.put(testParentLocation, testNode);
         } else {
             TaggedNode element = this.findIndexNode(controlNode, controlLocation);
-            Map<TaggedNode, DeferredChanges> map;
-            if (change == CHANGE.ELEM_CHILDREN_ORDER) {
-                map = reorderMap;
+            if (!changeMap.containsKey(element)) {
+                changeMap.put(element, new DeferredChanges(controlNode, testNode,
+                        testLocation));
+                changeMap.get(element).addChange(change);
             } else {
-                map = changeMap;
-            }
-            if (!map.containsKey(element)) {
-                map.put(element, new DeferredChanges(controlNode, testNode, testLocation));
-                map.get(element).addChange(change);
-            } else {
-                map.get(element).addChange(change);
+                changeMap.get(element).addChange(change);
             }
         }
     }
@@ -257,16 +248,6 @@ public final class VFile {
         }
         if (!newNodeMap.isEmpty()) {
             throw new RuntimeException("Some new child nodes where not added.");
-        }
-    }
-
-    // TODO Change element ordering.
-    // TODO Move this to TaggedNode.
-    private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
-        for (TaggedNode e : reorderMap.keySet()) {
-            int location = ElementUtils
-                    .getChildIndex((Element) reorderMap.get(e).testNode);
-            e.reorder(location);
         }
     }
 
