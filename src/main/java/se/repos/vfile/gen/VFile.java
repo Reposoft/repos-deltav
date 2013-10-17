@@ -7,10 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.custommonkey.xmlunit.DetailedDiff;
 import org.custommonkey.xmlunit.Diff;
@@ -20,7 +16,6 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.Text;
 
 import se.repos.vfile.VFileDocumentBuilderFactory;
 
@@ -168,22 +163,24 @@ public final class VFile {
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
+        Map<String, TaggedNode> nodeMap = NodeMapper.getNodeMap(this, oldDocument);
         MultiMap<String, Node> newNodeMap = new MultiMap<String, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
+            VFile.scheduleChange(nodeMap, changeMap, reorderMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
         this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
-        this.addOrphanNodes(newNodeMap);
+        VFile.addOrphanNodes(nodeMap, newNodeMap);
         VFile.reorderNodes(reorderMap);
     }
 
-    private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
+    private static void scheduleChange(Map<String, TaggedNode> nodeMap,
+            Map<TaggedNode, DeferredChanges> changeMap,
             Map<TaggedNode, DeferredChanges> reorderMap,
             MultiMap<String, Node> newNodeMap, Difference d) {
 
@@ -194,10 +191,10 @@ public final class VFile {
         String testLocation = d.getTestNodeDetail().getXpathLocation();
 
         if (controlNode == null) {
-            String testParentLocation = VFile.getXPathParent(testLocation);
+            String testParentLocation = NodeMapper.getXPathParent(testLocation);
             newNodeMap.put(testParentLocation, testNode);
         } else {
-            TaggedNode element = this.findIndexNode(controlNode, controlLocation);
+            TaggedNode element = nodeMap.get(controlLocation);
             Map<TaggedNode, DeferredChanges> map;
             if (change == CHANGE.ELEM_CHILDREN_ORDER) {
                 map = reorderMap;
@@ -214,11 +211,12 @@ public final class VFile {
     }
 
     // Add any node that couldn't be added in updateTaggedNode.
-    private void addOrphanNodes(MultiMap<String, Node> newNodeMap) {
+    private static void addOrphanNodes(Map<String, TaggedNode> nodeMap,
+            MultiMap<String, Node> newNodeMap) {
         Iterator<String> xPaths = newNodeMap.keySet().iterator();
         while (xPaths.hasNext()) {
             String xPath = xPaths.next();
-            TaggedNode parent = this.findTaggedNode(xPath);
+            TaggedNode parent = nodeMap.get(xPath);
             if (parent == null) {
                 throw new RuntimeException("Unable to find node " + xPath
                         + " to add child nodes to.");
@@ -287,64 +285,5 @@ public final class VFile {
      */
     public boolean documentEquals(Document currentVersion) {
         return this.getRootElement().isEqualElement(currentVersion.getDocumentElement());
-    }
-
-    /**
-     * Finds the TaggedNode that corresponds to controlNode.
-     * 
-     * @param controlNode
-     *            The node we are looking for in the index.
-     * @param uniqueXPath
-     *            The unique XPath selector of controlNode.
-     * @return The TaggedNode to update.
-     */
-    private TaggedNode findIndexNode(Node controlNode, String uniqueXPath) {
-        TaggedNode indexParent;
-        TaggedNode returnNode;
-        switch (controlNode.getNodeType()) {
-        case Node.ATTRIBUTE_NODE:
-            Attr attr = (Attr) controlNode;
-            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            returnNode = indexParent.getAttribute(attr.getName());
-            break;
-        case Node.ELEMENT_NODE:
-            returnNode = this.findTaggedNode(uniqueXPath);
-            break;
-        case Node.TEXT_NODE:
-            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            int textIndex = ElementUtils.getTextIndex((Text) controlNode);
-            returnNode = indexParent.getTextNode(textIndex);
-            break;
-        default:
-            throw new UnsupportedOperationException();
-        }
-        if (returnNode == null) {
-            throw new RuntimeException("Could not find changed node.");
-        }
-        if (!returnNode.isLive()) {
-            throw new RuntimeException("Found node is not live.");
-        }
-        return returnNode;
-    }
-
-    private static String getXPathParent(String xPath) {
-        return xPath.substring(0, xPath.lastIndexOf("/"));
-    }
-
-    private TaggedNode findTaggedNode(String uniqueXPath) {
-        Element result = (Element) VFile.xPathQuery(uniqueXPath, this.index);
-        if (result == null) {
-            return null;
-        }
-        return new TaggedNode(this, result);
-    }
-
-    private static Node xPathQuery(String xPath, Document doc) {
-        XPath xPathEvaluator = XPathFactory.newInstance().newXPath();
-        try {
-            return (Node) xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
-        } catch (XPathExpressionException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
     }
 }

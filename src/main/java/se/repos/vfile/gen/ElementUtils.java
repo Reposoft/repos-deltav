@@ -22,13 +22,25 @@ public class ElementUtils {
      *             If the parent node of child does not contain an equal node.
      */
     public static int getChildIndex(Node child) {
-        Element parent = (Element) child.getParentNode();
+        return ElementUtils.getChildIndex(child, null);
+    }
+
+    /**
+     * Retrieves at which index position of it's parent node you can find child.
+     * 
+     * @throws RuntimeException
+     *             If the parent node of child does not contain an equal node.
+     */
+    public static int getChildIndex(Node child, Short nodeType) {
+        Node parent = child.getParentNode();
         int i = 0;
         for (Node n : ElementUtils.getChildren(parent)) {
             if (n.equals(child)) {
                 return i;
             }
-            i++;
+            if (nodeType == null || n.getNodeType() == nodeType) {
+                i++;
+            }
         }
         throw new RuntimeException("Element not found.");
     }
@@ -45,41 +57,6 @@ public class ElementUtils {
             if (c.getNodeType() != Node.TEXT_NODE
                     || !((Text) c).getData().trim().isEmpty()) {
                 results.add(c);
-            }
-        }
-        return results;
-    }
-
-    /**
-     * Retrieves at which index position of it's parent node you can find text.
-     * 
-     * @throws RuntimeException
-     *             If the parent node of child does not contain an equal node.
-     */
-    public static int getTextIndex(Text text) {
-        Element parent = (Element) text.getParentNode();
-        int i = 0;
-        for (Text t : getText(parent)) {
-            if (t.equals(text)) {
-                return i;
-            }
-            i++;
-        }
-        throw new RuntimeException("Text not found.");
-    }
-
-    private static ArrayList<Text> getText(Element element) {
-        ArrayList<Text> results = new ArrayList<Text>();
-        NodeList children = element.getChildNodes();
-        if (children == null) {
-            return results;
-        }
-        for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i).getNodeType() == Node.TEXT_NODE) {
-                Text t = (Text) children.item(i);
-                if (!t.getData().trim().isEmpty()) {
-                    results.add(t);
-                }
             }
         }
         return results;
