@@ -15,34 +15,34 @@ import org.w3c.dom.Text;
  */
 public class ElementUtils {
 
-    /**
-     * Retrieves at which index position of it's parent node you can find child.
-     * 
-     * @throws RuntimeException
-     *             If the parent node of child does not contain an equal node.
-     */
     public static int getChildIndex(Node child) {
-        return ElementUtils.getChildIndex(child, null);
+        return ElementUtils.getChildIndex(child, false, false);
     }
 
-    /**
-     * Retrieves at which index position of it's parent node you can find child.
-     * 
-     * @throws RuntimeException
-     *             If the parent node of child does not contain an equal node.
-     */
-    public static int getChildIndex(Node child, Short nodeType) {
+    public static int getChildIndex(Node child, boolean specificType) {
+        return ElementUtils.getChildIndex(child, specificType, false);
+    }
+
+    public static int getChildIndex(Node child, boolean specificType, boolean mustFind) {
         Node parent = child.getParentNode();
+        if (parent.getNodeType() == Node.DOCUMENT_NODE) {
+            return 0; // Node is root node.
+        }
         int i = 0;
         for (Node n : ElementUtils.getChildren(parent)) {
             if (n.equals(child)) {
                 return i;
             }
-            if (nodeType == null || n.getNodeType() == nodeType) {
+            if (!specificType
+                    || (n.getNodeType() == child.getNodeType() && n.getNodeName().equals(
+                            child.getNodeName()))) {
                 i++;
             }
         }
-        throw new RuntimeException("Element not found.");
+        if (mustFind) {
+            throw new RuntimeException("Could not find node.");
+        }
+        return -1;
     }
 
     public static ArrayList<Node> getChildren(Node parent) {

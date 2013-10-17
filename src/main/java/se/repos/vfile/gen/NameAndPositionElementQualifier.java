@@ -2,8 +2,6 @@ package se.repos.vfile.gen;
 
 import org.custommonkey.xmlunit.ElementQualifier;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * @author Hugo Svallfors <keiter@lavabit.com> The element qualifier for the XML
@@ -30,24 +28,8 @@ class NameAndPositionElementQualifier implements ElementQualifier {
         if (!elmnt1.getTagName().equals(elmnt2.getTagName())) {
             return false;
         }
-        int elmnt1Pos = NameAndPositionElementQualifier.getPosition(elmnt1);
-        int elmnt2Pos = NameAndPositionElementQualifier.getPosition(elmnt2);
+        int elmnt1Pos = ElementUtils.getChildIndex(elmnt1, true, false);
+        int elmnt2Pos = ElementUtils.getChildIndex(elmnt2, true, false);
         return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;
-    }
-
-    private static int getPosition(Element elmnt) {
-        Node parent = elmnt.getParentNode();
-        if (parent.getNodeType() == Node.DOCUMENT_NODE) {
-            return 1;
-        } else if (parent.getNodeType() == Node.ELEMENT_NODE) {
-            Element parentElement = (Element) parent;
-            NodeList sameName = parentElement.getElementsByTagName(elmnt.getTagName());
-            for (int i = 0; i < sameName.getLength(); i++) {
-                if (sameName.item(i).equals(elmnt)) {
-                    return i;
-                }
-            }
-        }
-        return -1;
     }
 }

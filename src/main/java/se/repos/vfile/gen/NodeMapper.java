@@ -16,46 +16,76 @@ import org.w3c.dom.Node;
 public class NodeMapper {
     public static Map<String, TaggedNode> getNodeMap(VFile vfile, Document controlDocument) {
         Map<String, TaggedNode> nodeMap = new HashMap<String, TaggedNode>();
-        for (Node n : ElementUtils.getChildren(controlDocument)) {
-            String uniqueXPath = uniqueXPathOf(n);
-            nodeMap.put(uniqueXPath, findIndexNode(vfile, n, uniqueXPath));
+        Map<Node, String> memoTable = new HashMap<Node, String>();
+        NodeMapper.getNodeMap(nodeMap, memoTable, vfile,
+                controlDocument.getDocumentElement());
+        return nodeMap;
+    }
+
+    private static Map<String, TaggedNode> getNodeMap(Map<String, TaggedNode> nodeMap,
+            Map<Node, String> memoTable, VFile vfile, Node controlNode) {
+        String uniqueXPath = uniqueXPathOf(memoTable, controlNode);
+        nodeMap.put(uniqueXPath, findIndexNode(vfile, controlNode, uniqueXPath));
+        for (Node n : ElementUtils.getChildren(controlNode)) {
+            getNodeMap(nodeMap, memoTable, vfile, n);
+        }
+        if (controlNode.getNodeType() == Node.ELEMENT_NODE) {
+            Element e = (Element) controlNode;
+            for (Attr a : ElementUtils.getAttributes(e)) {
+                String attrXPath = uniqueXPathOf(memoTable, a);
+                nodeMap.put(attrXPath, findIndexNode(vfile, a, attrXPath));
+            }
         }
         return nodeMap;
     }
 
-    private static String uniqueXPathOf(Node n) {
-        Node parent = n.getParentNode();
-        if (parent == null) {
-            return "/"; // Node is root.
+    /*
+     * Calculates an unique XPath to the given node. If this XPath is then run
+     * on the same document, the given node should be the only result.
+     */
+    private static String uniqueXPathOf(Map<Node, String> memoTable, Node n) {
+        if (memoTable.containsKey(n)) {
+            return memoTable.get(n);
+        }
+        short nodeType = n.getNodeType();
+        if (nodeType == Node.DOCUMENT_NODE) {
+            return "";
         }
         String localAxis;
-        int localIndex = 0;
-        switch (n.getNodeType()) {
+        int localIndex = -1;
+        Node parent;
+        switch (nodeType) {
         case Node.ELEMENT_NODE:
             localAxis = n.getNodeName();
-            localIndex = ElementUtils.getChildIndex(n, Node.ELEMENT_NODE);
+            localIndex = ElementUtils.getChildIndex(n, true);
+            parent = n.getParentNode();
             break;
         case Node.TEXT_NODE:
             localAxis = "text()";
-            localIndex = ElementUtils.getChildIndex(n, Node.TEXT_NODE);
+            localIndex = ElementUtils.getChildIndex(n, true);
+            parent = n.getParentNode();
             break;
         case Node.COMMENT_NODE:
             localAxis = "comment()";
-            localIndex = ElementUtils.getChildIndex(n, Node.COMMENT_NODE);
-
+            localIndex = ElementUtils.getChildIndex(n, true);
+            parent = n.getParentNode();
             break;
         case Node.PROCESSING_INSTRUCTION_NODE:
             localAxis = "processing-instruction()";
-            localIndex = ElementUtils.getChildIndex(n, Node.PROCESSING_INSTRUCTION_NODE);
+            localIndex = ElementUtils.getChildIndex(n, true);
+            parent = n.getParentNode();
             break;
         case Node.ATTRIBUTE_NODE:
             localAxis = "@" + n.getNodeName();
+            parent = ((Attr) n).getOwnerElement();
             break;
         default:
             throw new UnsupportedOperationException();
         }
-        return uniqueXPathOf(parent) + "/" + localAxis
-                + (localIndex == 0 ? "" : "[" + localIndex + "]");
+        String xPath = uniqueXPathOf(memoTable, parent) + "/" + localAxis
+                + (localIndex == -1 ? "" : "[" + (localIndex + 1) + "]");
+        memoTable.put(n, xPath);
+        return xPath;
     }
 
     /**
@@ -84,7 +114,7 @@ public class NodeMapper {
         case Node.TEXT_NODE:
             indexParent = NodeMapper.findTaggedNode(vfile,
                     NodeMapper.getXPathParent(uniqueXPath));
-            int textIndex = ElementUtils.getChildIndex(controlNode, Node.TEXT_NODE);
+            int textIndex = ElementUtils.getChildIndex(controlNode, true);
             returnNode = indexParent.getTextNode(textIndex);
             break;
         default:
@@ -106,7 +136,7 @@ public class NodeMapper {
     private static TaggedNode findTaggedNode(VFile vfile, String uniqueXPath) {
         Element result = (Element) NodeMapper.xPathQuery(uniqueXPath, vfile.toDocument());
         if (result == null) {
-            return null;
+            throw new RuntimeException("Could not find changed node.");
         }
         return new TaggedNode(vfile, result);
     }
