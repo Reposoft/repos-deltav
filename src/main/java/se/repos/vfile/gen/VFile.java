@@ -126,7 +126,6 @@ public final class VFile {
      */
     public static VFile normalizeDocument(Document firstVersion, String time,
             String version) {
-        firstVersion.normalizeDocument();
         DocumentBuilder db = new VFileDocumentBuilderFactory().newDocumentBuilder();
 
         Document indexXML = db.newDocument();
@@ -163,8 +162,6 @@ public final class VFile {
      */
     public void update(Document oldDocument, Document newDocument, String newTime,
             String newVersion) {
-        oldDocument.normalizeDocument();
-        newDocument.normalizeDocument();
         DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
@@ -190,9 +187,6 @@ public final class VFile {
             MultiMap<String, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
-        if (change == CHANGE.IGNORED) {
-            return;
-        }
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
         String controlLocation = d.getControlNodeDetail().getXpathLocation();
@@ -278,8 +272,6 @@ public final class VFile {
             return CHANGE.ELEM_ATTRS;
         case DifferenceConstants.CHILD_NODELIST_SEQUENCE_ID:
             return CHANGE.ELEM_CHILDREN_ORDER;
-        case DifferenceConstants.ATTR_SEQUENCE_ID:
-            return CHANGE.IGNORED;
         default:
             throw new UnsupportedOperationException();
         }
@@ -328,7 +320,7 @@ public final class VFile {
         if (returnNode == null) {
             throw new RuntimeException("Could not find changed node.");
         }
-        if(!returnNode.isLive()) {
+        if (!returnNode.isLive()) {
             throw new RuntimeException("Found node is not live.");
         }
         return returnNode;

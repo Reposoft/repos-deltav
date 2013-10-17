@@ -12,7 +12,7 @@ public class VFileDocumentBuilderFactory extends DocumentBuilderFactory {
         this.dbf = DocumentBuilderFactory.newInstance();
         this.dbf.setCoalescing(true);
         this.dbf.setIgnoringComments(false);
-        this.dbf.setNamespaceAware(false);
+        this.dbf.setNamespaceAware(true);
         this.dbf.setValidating(false);
         try {
             this.dbf.setFeature(

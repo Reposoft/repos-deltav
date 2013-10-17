@@ -440,8 +440,6 @@ public class TaggedNode {
                 int location = ElementUtils.getChildIndex(d.testNode);
                 this.reorder(location);
                 break;
-            case IGNORED:
-                break;
             }
         }
     }
