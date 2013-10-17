@@ -81,12 +81,14 @@ public class VFileSvnTest {
         org.custommonkey.xmlunit.XMLUnit.setControlDocumentBuilderFactory(dbf);
 
         XMLUnit.setCompareUnmatched(false);
+        XMLUnit.setExpandEntityReferences(true);
+        XMLUnit.setIgnoreComments(false);
         XMLUnit.setIgnoreAttributeOrder(true);
         XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
         XMLUnit.setIgnoreWhitespace(true);
-        XMLUnit.setNormalize(true);
+        // TODO Set normalization again.
+        XMLUnit.setNormalize(false);
         XMLUnit.setNormalizeWhitespace(false);
-        XMLUnit.setIgnoreComments(false);
     }
 
     @Before
@@ -145,7 +147,6 @@ public class VFileSvnTest {
         for (String filePath : filePaths) {
             Document d = db.parse(this.getClass().getClassLoader()
                     .getResourceAsStream(filePath));
-            d.normalizeDocument();
             documents.add(d);
         }
 

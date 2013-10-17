@@ -11,9 +11,12 @@ public class VFileDocumentBuilderFactory extends DocumentBuilderFactory {
     public VFileDocumentBuilderFactory() {
         this.dbf = DocumentBuilderFactory.newInstance();
         this.dbf.setCoalescing(true);
+        this.dbf.setExpandEntityReferences(true);
         this.dbf.setIgnoringComments(false);
-        this.dbf.setNamespaceAware(true);
+        this.dbf.setIgnoringElementContentWhitespace(false);
+        this.dbf.setNamespaceAware(false);
         this.dbf.setValidating(false);
+        this.dbf.setXIncludeAware(false);
         try {
             this.dbf.setFeature(
                     "http://apache.org/xml/features/nonvalidating/load-dtd-grammar",

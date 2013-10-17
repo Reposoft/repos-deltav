@@ -126,6 +126,7 @@ public final class VFile {
      */
     public static VFile normalizeDocument(Document firstVersion, String time,
             String version) {
+        // TODO Set normalization again.
         DocumentBuilder db = new VFileDocumentBuilderFactory().newDocumentBuilder();
 
         Document indexXML = db.newDocument();
