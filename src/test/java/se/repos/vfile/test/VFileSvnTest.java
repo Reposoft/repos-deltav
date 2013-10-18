@@ -1,6 +1,7 @@
 package se.repos.vfile.test;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -86,8 +87,7 @@ public class VFileSvnTest {
         XMLUnit.setIgnoreAttributeOrder(true);
         XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
         XMLUnit.setIgnoreWhitespace(true);
-        // TODO Set normalization again.
-        XMLUnit.setNormalize(false);
+        XMLUnit.setNormalize(true);
         XMLUnit.setNormalizeWhitespace(false);
     }
 
@@ -135,18 +135,16 @@ public class VFileSvnTest {
     }
 
     /*
-     * Takes a series of file paths, runs unit test that asserts they can be
-     * v-filed. Puts generated v-file at testFilePath.
+     * Takes a series of file paths, runs unit test that asserts they can be v-filed.
      */
-    private VFileStore testVFiling(CmsItemId testID, String... filePaths)
+    private VFileStore testVFiling(CmsItemId testID, File folder, String... filePaths)
             throws Exception {
 
         // Parse the files as Documents for data integrity checking.
         DocumentBuilder db = new VFileDocumentBuilderFactory().newDocumentBuilder();
         ArrayList<Document> documents = new ArrayList<Document>();
         for (String filePath : filePaths) {
-            Document d = db.parse(this.getClass().getClassLoader()
-                    .getResourceAsStream(filePath));
+            Document d = db.parse(new File(folder, filePath));
             documents.add(d);
         }
 
@@ -179,7 +177,6 @@ public class VFileSvnTest {
         VFileStore store = new VFileStoreDisk("./vfilestore");
         VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
 
-        // supporting infrastructure
         VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(calculator,
                 contentsReader);
         VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
@@ -200,8 +197,8 @@ public class VFileSvnTest {
     public void testBasic() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/basic.xml"));
-        VFileStore store = this.testVFiling(testID, "se/repos/vfile/basic_1.xml",
-                "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3.xml");
+        VFileStore store = this.testVFiling(testID, new File("src/test/resources/se/repos/vfile"),
+                "/basic_1.xml", "basic_2.xml", "basic_3.xml");
 
         Document document = store.get(testID);
         assertNotNull("Result should be available through VFileStore", document);
@@ -216,8 +213,8 @@ public class VFileSvnTest {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
                 "/basic-inline.xml"));
-        this.testVFiling(testID, "se/repos/vfile/basic_1.xml",
-                "se/repos/vfile/basic_2.xml", "se/repos/vfile/basic_3_inline.xml");
+        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile"), "basic_1.xml",
+                "basic_2.xml", "basic_3_inline.xml");
     }
 
     @Test
@@ -225,9 +222,14 @@ public class VFileSvnTest {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
                 "/900108-rids.xml"));
-        this.testVFiling(testID, "se/repos/vfile/techdoc-demo1/900108_A.xml",
-                "se/repos/vfile/techdoc-demo1/900108_B.xml",
-                "se/repos/vfile/techdoc-demo1/900108_C.xml");
+        VFileStore store = this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/techdoc-demo1"),
+                "900108_A.xml", "900108_B.xml", "900108_C.xml");
+        Document document = store.get(testID);
+        assertNotNull("Result should be available through VFileStore", document);
+        
+        // Assert that comments and PIs where saved.
+        assertXpathExists("//v:pi", document);
+        assertXpathExists("//v:comment", document);
     }
 
     @Test
@@ -235,8 +237,19 @@ public class VFileSvnTest {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
                 "/900108-norid.xml"));
-        this.testVFiling(testID, "se/repos/vfile/techdoc-demo1-norid/900108_A.xml",
-                "se/repos/vfile/techdoc-demo1-norid/900108_B.xml",
-                "se/repos/vfile/techdoc-demo1-norid/900108_C.xml");
+        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/techdoc-demo1-norid"),
+                "/900108_A.xml", "900108_B.xml", "900108_C.xml");
+    }
+
+    @Test
+    public void testManyRevs() throws Exception {
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+                "/200k-manyrevs.xml"));
+        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/200k-manyrevs"), "ed_0005.xml",
+                "ed_0083.xml", "ed_0249.xml", "ed_0571.xml", "ed_0601.xml",
+                "ed_0602.xml", "ed_0610.xml", "ed_0615.xml", "ed_0621.xml",
+                "ed_1184.xml", "ed_1185.xml", "ed_1186.xml", "ed_1188.xml",
+                "ed_1189.xml", "ed_1400.xml");
     }
 }
