@@ -132,6 +132,7 @@ public final class VFile {
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
 
+        // TODO Normalize any other root nodes.
         Element root = firstVersion.getDocumentElement();
         Element newRoot = indexXML.createElement(root.getTagName());
         newRoot.setAttribute(StringConstants.START, version);
@@ -179,6 +180,7 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
+        // TODO Update any other root nodes.
         this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
         VFile.addOrphanNodes(nodeMap, newNodeMap);
         VFile.reorderNodes(reorderMap);

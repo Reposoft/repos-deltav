@@ -87,7 +87,7 @@ public class VFileSvnTest {
         XMLUnit.setIgnoreAttributeOrder(true);
         XMLUnit.setIgnoreDiffBetweenTextAndCDATA(true);
         XMLUnit.setIgnoreWhitespace(true);
-        XMLUnit.setNormalize(false);
+        XMLUnit.setNormalize(true);
         XMLUnit.setNormalizeWhitespace(false);
     }
 
@@ -174,7 +174,6 @@ public class VFileSvnTest {
             }
             revisions.add(this.svncommit(""));
         }
-        // TODO By this point, document still has comments.
 
         VFileStore store = new VFileStoreDisk("./vfilestore");
         VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
