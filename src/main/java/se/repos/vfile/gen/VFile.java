@@ -200,6 +200,9 @@ public final class VFile {
             newNodeMap.put(testParentLocation, testNode);
         } else {
             TaggedNode element = nodeMap.get(controlLocation);
+            if (element == null) {
+                throw new NullPointerException("Nodemap did not contain control node.");
+            }
             Map<TaggedNode, DeferredChanges> map;
             if (change == CHANGE.ELEM_CHILDREN_ORDER) {
                 map = reorderMap;

@@ -305,25 +305,33 @@ public class TaggedNode {
         if (!(this.getNodetype() == docNode.getNodeType() && this.isLive())) {
             return false;
         }
+        boolean b;
         switch (this.getNodetype()) {
         case Node.ATTRIBUTE_NODE:
             Attr docAttr = (Attr) docNode;
-            return this.getValue().equals(docAttr.getValue())
-                    && this.getName().equals(docNode.getNodeName());
+            b = this.getName().equals(docNode.getNodeName())
+                    && this.getValue().equals(docAttr.getValue());
+            break;
         case Node.ELEMENT_NODE:
             Element docElem = (Element) docNode;
-            return this.hasSameAttributes(docElem) && this.hasSameChildren(docElem);
+            b = this.hasSameAttributes(docElem) && this.hasSameChildren(docElem);
+            break;
         case Node.TEXT_NODE:
-            String thisVal = this.getValue();
-            String thatVal = ((Text) docNode).getData();
-            return thisVal.equals(thatVal);
+            b = this.getValue().equals(((Text) docNode).getData());
+            break;
         case Node.PROCESSING_INSTRUCTION_NODE:
-            return ((ProcessingInstruction) docNode).getData().equals(this.getValue());
+            b = ((ProcessingInstruction) docNode).getData().equals(this.getValue());
+            break;
         case Node.COMMENT_NODE:
-            return ((Comment) docNode).getData().equals(this.getValue());
+            b = ((Comment) docNode).getData().equals(this.getValue());
+            break;
         default:
             throw new UnsupportedOperationException();
         }
+        if (!b) {
+            return false; // for setting breakpoint on
+        }
+        return true;
     }
 
     private boolean hasSameAttributes(Element docElem) {
@@ -372,17 +380,30 @@ public class TaggedNode {
 
     @Override
     public String toString() {
-        String val = this.getName();
-        Iterator<TaggedNode> iter = this.getAttributes().iterator();
-        if (iter.hasNext()) {
-            TaggedNode attr = iter.next();
-            val += ": " + attr.getName() + "=" + attr.getValue();
+        switch (this.getNodetype()) {
+        case Node.ELEMENT_NODE:
+            String val = this.getName();
+            Iterator<TaggedNode> iter = this.getAttributes().iterator();
+            if (iter.hasNext()) {
+                TaggedNode attr = iter.next();
+                val += ": " + attr.getName() + "=" + attr.getValue();
+            }
+            while (iter.hasNext()) {
+                TaggedNode attr = iter.next();
+                val += ", " + attr.getName() + "=" + attr.getValue();
+            }
+            return val;
+        case Node.ATTRIBUTE_NODE:
+            return this.getName() + "=" + "\"" + this.getValue() + "\"";
+        case Node.TEXT_NODE:
+            return "#text: " + this.getValue();
+        case Node.COMMENT_NODE:
+            return "#comment: " + this.getValue();
+            // TODO Implement toString for PIs.
+        case Node.PROCESSING_INSTRUCTION_NODE:
+        default:
+            return this.element.toString();
         }
-        while (iter.hasNext()) {
-            TaggedNode attr = iter.next();
-            val += ", " + attr.getName() + "=" + attr.getValue();
-        }
-        return val;
     }
 
     /**
