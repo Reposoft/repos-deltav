@@ -1,7 +1,6 @@
 package se.repos.vfile.gen;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.w3c.dom.Attr;
@@ -50,14 +49,17 @@ public class TaggedNode {
     }
 
     private short getNodetype() {
-        if (this.element.getTagName().equals(StringConstants.ATTR)) {
+        String tagName = this.element.getTagName();
+        if (tagName.equals(StringConstants.ATTR)) {
             return Node.ATTRIBUTE_NODE;
-        } else if (this.element.getTagName().equals(StringConstants.TEXT)) {
+        } else if (tagName.equals(StringConstants.TEXT)) {
             return Node.TEXT_NODE;
-        } else if (this.element.getTagName().equals(StringConstants.COMMENT)) {
+        } else if (tagName.equals(StringConstants.COMMENT)) {
             return Node.COMMENT_NODE;
-        } else if (this.element.getTagName().equals(StringConstants.PI)) {
+        } else if (tagName.equals(StringConstants.PI)) {
             return Node.PROCESSING_INSTRUCTION_NODE;
+        } else if (tagName.equals(StringConstants.FILE)) {
+            return Node.DOCUMENT_NODE;
         } else {
             return Node.ELEMENT_NODE;
         }
@@ -75,10 +77,13 @@ public class TaggedNode {
     }
 
     private String getValue() {
-        if (this.getNodetype() == Node.ELEMENT_NODE) {
-            return "";
+        switch (this.getNodetype()) {
+        case Node.ELEMENT_NODE:
+        case Node.DOCUMENT_NODE:
+            return null;
+        default:
+            return this.element.getTextContent();
         }
-        return this.element.getTextContent();
     }
 
     private void setValue(String value) {
@@ -188,10 +193,10 @@ public class TaggedNode {
         return null;
     }
 
-    public TaggedNode getTextNode(int textIndex) {
+    public TaggedNode getNthNodeOfType(int textIndex, short nodeType) {
         int i = 0;
         for (TaggedNode n : this.getChildren()) {
-            if (n.getNodetype() == Node.TEXT_NODE) {
+            if (n.getNodetype() == nodeType) {
                 if (i == textIndex) {
                     return n;
                 }
@@ -325,6 +330,9 @@ public class TaggedNode {
         case Node.COMMENT_NODE:
             b = ((Comment) docNode).getData().equals(this.getValue());
             break;
+        case Node.DOCUMENT_NODE:
+            b = this.hasSameChildren(docNode);
+            break;
         default:
             throw new UnsupportedOperationException();
         }
@@ -346,9 +354,9 @@ public class TaggedNode {
         return true;
     }
 
-    private boolean hasSameChildren(Element docElem) {
+    private boolean hasSameChildren(Node docNode) {
         ArrayList<TaggedNode> theseChildren = this.getChildren();
-        ArrayList<Node> thoseChildren = ElementUtils.getChildren(docElem);
+        ArrayList<Node> thoseChildren = ElementUtils.getChildren(docNode);
         if (theseChildren.size() != thoseChildren.size()) {
             return false;
         }
@@ -381,28 +389,13 @@ public class TaggedNode {
     @Override
     public String toString() {
         switch (this.getNodetype()) {
-        case Node.ELEMENT_NODE:
-            String val = this.getName();
-            Iterator<TaggedNode> iter = this.getAttributes().iterator();
-            if (iter.hasNext()) {
-                TaggedNode attr = iter.next();
-                val += ": " + attr.getName() + "=" + attr.getValue();
-            }
-            while (iter.hasNext()) {
-                TaggedNode attr = iter.next();
-                val += ", " + attr.getName() + "=" + attr.getValue();
-            }
-            return val;
         case Node.ATTRIBUTE_NODE:
             return this.getName() + "=" + "\"" + this.getValue() + "\"";
-        case Node.TEXT_NODE:
-            return "#text: " + this.getValue();
-        case Node.COMMENT_NODE:
-            return "#comment: " + this.getValue();
-            // TODO Implement toString for PIs.
         case Node.PROCESSING_INSTRUCTION_NODE:
+            return "[#processing-instruction: " + this.getName() + "=" + "\""
+                    + this.getValue() + "\"]";
         default:
-            return this.element.toString();
+            return "[" + this.element.getTagName() + ": " + this.getValue() + "]";
         }
     }
 

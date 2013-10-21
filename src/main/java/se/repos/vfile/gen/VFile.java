@@ -30,6 +30,7 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
 public final class VFile {
 
     private Document index;
+    private XPath xPathEvaluator;
 
     /**
      * Constructor for Index.
@@ -58,6 +59,7 @@ public final class VFile {
             throw new IllegalArgumentException();
         }
         this.index = indexDocument;
+        this.xPathEvaluator = XPathFactory.newInstance().newXPath();
     }
 
     private void setDocumentVersion(String version) {
@@ -132,23 +134,19 @@ public final class VFile {
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
 
-        // TODO Normalize any other root nodes.
-        Element root = firstVersion.getDocumentElement();
-        Element newRoot = indexXML.createElement(root.getTagName());
+        Element newRoot = indexXML.createElement(StringConstants.FILE);
+        newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
+        newRoot.setAttribute(StringConstants.DOCVERSION, version);
+        newRoot.setAttribute(StringConstants.DOCTIME, time);
         newRoot.setAttribute(StringConstants.START, version);
         newRoot.setAttribute(StringConstants.END, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.TSTART, time);
         newRoot.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        newRoot.setAttribute(StringConstants.DOCVERSION, version);
-        newRoot.setAttribute(StringConstants.DOCTIME, time);
-        newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
-        for (Attr a : ElementUtils.getAttributes(root)) {
-            idx.getRootElement().setAttribute(a.getName(), a.getValue());
-        }
-        for (Node c : ElementUtils.getChildren(root)) {
-            idx.getRootElement().normalizeNode(c);
+
+        for (Node n : ElementUtils.getChildren(firstVersion)) {
+            idx.getRootElement().normalizeNode(n);
         }
         return idx;
     }
@@ -180,7 +178,6 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        // TODO Update any other root nodes.
         this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
         VFile.addOrphanNodes(nodeMap, newNodeMap);
         VFile.reorderNodes(reorderMap);
@@ -305,6 +302,7 @@ public final class VFile {
     private TaggedNode findIndexNode(Node controlNode, String uniqueXPath) {
         TaggedNode indexParent;
         TaggedNode returnNode;
+        int nodeIndex;
         switch (controlNode.getNodeType()) {
         case Node.ATTRIBUTE_NODE:
             Attr attr = (Attr) controlNode;
@@ -315,9 +313,12 @@ public final class VFile {
             returnNode = this.findTaggedNode(uniqueXPath);
             break;
         case Node.TEXT_NODE:
+        case Node.COMMENT_NODE:
+        case Node.PROCESSING_INSTRUCTION_NODE:
             indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            int textIndex = ElementUtils.getChildIndex(controlNode, true);
-            returnNode = indexParent.getTextNode(textIndex);
+            nodeIndex = ElementUtils.getChildIndex(controlNode, true);
+            returnNode = indexParent.getNthNodeOfType(nodeIndex,
+                    controlNode.getNodeType());
             break;
         default:
             throw new UnsupportedOperationException();
@@ -336,17 +337,18 @@ public final class VFile {
     }
 
     private TaggedNode findTaggedNode(String uniqueXPath) {
-        Element result = (Element) VFile.xPathQuery(uniqueXPath, this.index);
+        // TODO Fix lookup in v name space.
+        String vFileXPath = "/" + "file" + "[1]" + uniqueXPath;
+        Element result = (Element) this.xPathQuery(vFileXPath, this.index);
         if (result == null) {
-            throw new RuntimeException("Could not find changed node.");
+            return null;
         }
         return new TaggedNode(this, result);
     }
 
-    private static Node xPathQuery(String xPath, Document doc) {
-        XPath xPathEvaluator = XPathFactory.newInstance().newXPath();
+    private Node xPathQuery(String xPath, Document doc) {
         try {
-            return (Node) xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
+            return (Node) this.xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
         } catch (XPathExpressionException ex) {
             throw new RuntimeException(ex.getMessage());
         }
@@ -426,6 +428,6 @@ public final class VFile {
      * @return Whether currentVersion is saved in this index.
      */
     public boolean documentEquals(Document currentVersion) {
-        return this.getRootElement().isEqualElement(currentVersion.getDocumentElement());
+        return this.getRootElement().isEqualElement(currentVersion);
     }
 }

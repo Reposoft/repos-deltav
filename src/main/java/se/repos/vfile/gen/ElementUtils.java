@@ -25,9 +25,6 @@ public class ElementUtils {
 
     public static int getChildIndex(Node child, boolean specificType, boolean mustFind) {
         Node parent = child.getParentNode();
-        if (parent.getNodeType() == Node.DOCUMENT_NODE) {
-            return 0; // Node is root node.
-        }
         int i = 0;
         for (Node n : ElementUtils.getChildren(parent)) {
             if (n.equals(child)) {
@@ -53,9 +50,19 @@ public class ElementUtils {
         }
         for (int i = 0; i < children.getLength(); i++) {
             Node c = children.item(i);
-            if (c.getNodeType() != Node.TEXT_NODE
-                    || !((Text) c).getData().trim().isEmpty()) {
+            short nodeType = c.getNodeType();
+            switch (nodeType) {
+            case Node.DOCUMENT_TYPE_NODE:
+                break; // not supported yet
+            case Node.TEXT_NODE:
+                if (!((Text) c).getData().trim().isEmpty()) { // no empty text
+                                                              // nodes
+                    results.add(c);
+                }
+                break;
+            default:
                 results.add(c);
+                break;
             }
         }
         return results;

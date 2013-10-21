@@ -1,6 +1,5 @@
 package se.repos.vfile.test;
 
-import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -229,10 +228,6 @@ public class VFileSvnTest {
                 "900108_B.xml", "900108_C.xml");
         Document document = store.get(testID);
         assertNotNull("Result should be available through VFileStore", document);
-
-        // Assert that comments and PIs where saved.
-        assertXpathExists("//v:pi", document);
-        assertXpathExists("//v:comment", document);
     }
 
     @Test
