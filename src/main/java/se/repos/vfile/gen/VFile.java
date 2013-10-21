@@ -218,6 +218,10 @@ public final class VFile {
     }
 
     public Map<String, TaggedNode> getNodeMap(Document controlDocument) {
+        if (!this.documentEquals(controlDocument)) {
+            throw new IllegalArgumentException(
+                    "Given control document doesn't match the one saved.");
+        }
         Map<String, TaggedNode> nodeMap = new HashMap<String, TaggedNode>();
         Map<Node, String> memoTable = new HashMap<Node, String>();
         this.getNodeMap(nodeMap, memoTable, controlDocument.getDocumentElement());
@@ -239,6 +243,10 @@ public final class VFile {
             }
         }
         return nodeMap;
+    }
+
+    public static String uniqueXPathOf(Node n) {
+        return VFile.uniqueXPathOf(new HashMap<Node, String>(), n);
     }
 
     /*

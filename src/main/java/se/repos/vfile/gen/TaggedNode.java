@@ -48,6 +48,10 @@ public class TaggedNode {
         this.element = element;
     }
 
+    public Element toElement() {
+        return this.element;
+    }
+
     private short getNodetype() {
         String tagName = this.element.getTagName();
         if (tagName.equals(StringConstants.ATTR)) {
