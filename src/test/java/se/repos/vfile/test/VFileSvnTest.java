@@ -167,6 +167,10 @@ public class VFileSvnTest {
         File testFile = new File(this.wc, testID.getRelPath().getPath());
         boolean addedToSVN = false;
 
+        /*
+         * Commits all the files to SVN, saving the RepoRevisions of each
+         * commit.
+         */
         Transformer trans = TransformerFactory.newInstance().newTransformer();
         for (int i = 0; i < documents.size(); i++) {
             Document d = documents.get(i);
@@ -188,6 +192,10 @@ public class VFileSvnTest {
         VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
                 .setCmsChangesetReader(changesetReader);
 
+        /*
+         * For each revision, call V-Filing on the new file version, and assert
+         * that the V-File is equal to the saved document.
+         */
         for (int i = 0; i < documents.size(); i++) {
             commitHandler.onCommit(revisions.get(i));
             VFile v = new VFile(store.get(testID));
@@ -274,8 +282,10 @@ public class VFileSvnTest {
 
     @Test
     @Ignore
-    // this is an edge case with embedded DTD and entities that can't be parsed
-    // for now
+    /*
+     * This is an edge case with embedded DTD and entities that can't be parsed
+     * for now.
+     */
     public void test200kManyRevs() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
