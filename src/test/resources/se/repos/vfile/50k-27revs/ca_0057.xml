@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Arbortext, Inc., 1988-2010, v.4002-->
+<!DOCTYPE document PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
+ "pds.dtd">
+<?Pub Inc?>
+<document createdby="takesson" modifiedby="takesson"
+modifieddate="2010-02-10 13:22" revision="53" status="In_Work"
+type="manual" xml:lang="en-US">
+<title> CMS Administration</title>
+<frontm>
+<toc/></frontm>
+<body>
+<section>
+<title>System Administration</title>
+<slide fontsize="16pt">
+<title>System Administration</title>
+<p>Content</p>
+<itemlist>
+<li><p>...</p></li>
+</itemlist>
+</slide>
+<slide fontsize="18pt">
+<title>Tools</title>
+<p>The following software tool are required in order to perform administrative
+tasks.</p>
+<itemlist>
+<title>SSH</title>
+<p>Required in order to login remotely to the server.</p>
+<li><p>Windows: Recommend Tunnelier (<link
+uri="http://www.bitvise.com/tunnelier"></link>) or Putty.</p></li>
+<li><p>Included on most other operating systems.</p></li>
+</itemlist>
+<itemlist>
+<title>Subversion Client</title>
+<p>Required to manage files versioned by the CMS and contents of the
+Admin repository.</p>
+<li><p>Windows: TortoiseSvn 1.6.x (<link uri="http://tortoisesvn.net/"
+></link>) or the official command-line client.</p></li>
+<li><p>Command-line client included on most other operating systems.</p>
+</li>
+</itemlist>
+<itemlist>
+<title>LDAP Browser</title>
+<p>Required to manage the OpenLDAP directory (might not be used when
+integrating with a corporate directory service, e.g. Active Directory).</p>
+<li><p>Recommend <label type="product">Apache Directory Studio</label
+> (<link uri="http://directory.apache.org/studio/"></link>)</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt">
+<title>Admin Repository</title>
+<p>The server has a special repository called <label type="guiitem"
+>Admin</label>.</p>
+<itemlist>
+<title>Contains</title>
+<li><p>Server configuration, supporting scripts and branding.</p></li>
+<li><p>Access Permission configuration.</p></li>
+<li><p>Deployment configuration.</p></li>
+<li><p>Optional: Development of document types and style sheets.</p>
+</li>
+</itemlist>
+<p>The <label type="guiitem">Admin</label> is located on the URL: <label
+type="sign">http://server.company.se/svn/admin</label>.</p>
+<note>
+<p>The path <label type="sign">http://server.company.se/svn/admin/cms/</label
+> is checked out to the server file system at location <label type="sign"
+>/home/svnuser/cms/</label>. Beware that the automatic updates to
+the file system is very sensitive to password changes, file system
+permissions, local modifications etc (subject to customization on
+each installation).</p>
+</note>
+</slide>
+<slide fontsize="16pt">
+<title>Access Permissions</title>
+<p>Access permissions are defined in a Subversion Access File.</p>
+<itemlist>
+<li><p>The syntax is described in <label type="product">Version Control
+with Subversion</label>: <link
+uri="http://svnbook.red-bean.com/en/1.5/svn.serverconfig.pathbasedauthz.html"
+>Path-Based Authorization</link></p></li>
+<li><p>The file can be edited via a Web browser on this URL: <label
+type="sign">http://server.company.se/svn/admin/auth/access.accs</label
+>.</p></li>
+<li><p>The file is located on the file system here: <label type="sign"
+>/home/svnuser/cms/auth/access.accs</label>. It can be edited with
+a text editor, e.g. nano.</p></li>
+</itemlist>
+<note>
+<p>It is highly recommended to use the group definitions in the Access
+file rather than assigning permissions to usernames.</p>
+</note>
+<admon type="2-warning">
+<p>A syntax error in the Access File will revoke all permissions from
+the server, i.e. a server lockdown. Never edit the Access File without
+first ensuring SSH access to the server.</p>
+</admon></slide>
+<slide>
+<title>Repository Administration</title>
+<p>Subversion repositories can be added and removed individually on
+the server.</p>
+<itemlist>
+<title>Creating a repository</title>
+<li><p>Login via SSH.</p></li>
+<li><p>Execute the script createrepo.sh.</p><p>~/cms/createrepo.sh
+newreponame</p>
+</li>
+<li><p>Ensure that access permissions are correctly set up for the
+repository.</p></li>
+</itemlist>
+</slide>
+<slide>
+<title>Indexing</title>
+<note>
+<p>All authoring data is stored in the Subversion repositories, however,
+the indexing server is required for usability and search functionality. </p>
+<p>Re-indexing can be performed when required without loss of data.
+A large repository can take significant amounts of time to re-index.</p>
+</note>
+<itemlist>
+<title>Re-indexing a repository</title>
+<li><p>Login via SSH.</p></li>
+<li><p>Change directory: </p><p>cd ~/cms/hookscripts/indexing</p>
+</li>
+<li><p>Execute re-indexing script:</p><p>./rebuild_index.py -p /home/svnuser/svn/thereponame</p>
+</li>
+</itemlist>
+<admon type="4-important">
+<p>This information is preliminary and future development might simplify
+this process.</p>
+</admon></slide>
+</section>
+<section>
+<title>Authoring Administration</title>
+<slide>
+<title>Authoring Administration</title>
+<p>Content</p>
+<itemlist>
+<li><p>...</p></li>
+</itemlist>
+</slide>
+<slide>
+<title>Deployment</title>
+</slide>
+<slide>
+<title>Bursting Rules</title>
+</slide><?Pub Caret -1?>
+</section>
+</body>
+</document>
+<?Pub *0000005180 0?>

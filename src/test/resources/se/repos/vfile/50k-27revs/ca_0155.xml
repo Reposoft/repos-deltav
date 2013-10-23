@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Arbortext, Inc., 1988-2010, v.4002-->
+<!DOCTYPE document PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
+ "pds.dtd">
+<?Pub Inc?>
+<document createdby="takesson" modifiedby="takesson"
+modifieddate="2010-05-06 14:26" revision="154" status="In_Work"
+type="manual" xml:lang="en-US">
+<title> CMS Administration</title>
+<frontm>
+<toc/></frontm>
+<body>
+<section>
+<title>System Administration</title>
+<slide>
+<title>CMS Administration</title>
+</slide>
+<slide fontsize="20pt">
+<title>System Administration</title>
+<itemlist>
+<title>Contents</title>
+<li><p>Tools</p></li>
+<li><p>Admin Repository</p></li>
+<li><p>Authentication and Authorization</p></li>
+<li><p>Authorization — Access Permissions</p></li>
+<li><p>Repository Administration</p></li>
+<li><p>Indexing</p></li>
+<li><p>Backup Approaches</p></li>
+</itemlist>
+</slide>
+<slide fontsize="18pt">
+<title>Tools</title>
+<p>The following software tool are required in order to perform administrative
+tasks.</p>
+<itemlist>
+<title>SSH</title>
+<p>Required in order to login remotely to the server.</p>
+<li><p>Windows: Recommend Tunnelier (<link
+uri="http://www.bitvise.com/tunnelier">http://www.bitvise.com/tunnelier</link
+>) or Putty.</p></li>
+<li><p>Included on most other operating systems.</p></li>
+</itemlist>
+<itemlist>
+<title>Subversion Client</title>
+<p>Required to manage files versioned by the CMS and contents of the
+Admin repository.</p>
+<li><p>Windows: TortoiseSvn 1.6.x (<link uri="http://tortoisesvn.net/"
+>http://tortoisesvn.net/</link>) or the official command-line client.</p>
+</li>
+<li><p>Command-line client included on most other operating systems.</p>
+</li>
+</itemlist>
+<itemlist>
+<title>LDAP Browser</title>
+<p>Required to manage the OpenLDAP directory (might not be used when
+integrating with a corporate directory service, e.g. Active Directory).</p>
+<li><p>Recommend <label type="product">Apache Directory Studio</label
+> (<link uri="http://directory.apache.org/studio/">http://directory.apache.org/studio/</link
+>)</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt">
+<title>Admin Repository</title>
+<itemlist>
+<title>The server has a special repository called <label type="mmi"
+>Admin</label> containing:</title>
+<li><p>Server configuration, supporting scripts and branding.</p></li>
+<li><p>Access Permission configuration.</p></li>
+<li><p>Deployment configuration.</p></li>
+<li><p>Optional: Development of document types and style sheets.</p>
+</li>
+</itemlist>
+<p>The <label type="mmi">Admin</label> repository is located at the
+URL: <label type="guiitem">http://server.company.se/svn/admin</label
+>.</p>
+<note>
+<p>The path <label type="guiitem">http://server.company.se/svn/admin/cms/</label
+> is checked out to the server file system at location <label
+type="guiitem">/home/svnuser/cms/</label>. Beware that the automatic
+updates to the file system is very sensitive to password changes,
+file system permissions, local modifications etc (subject to customization
+on each installation).</p>
+</note>
+</slide>
+<slide fontsize="16pt">
+<title>Authentication and Authorization</title>
+<p>There are 2 steps involved when a user attempts to access the CMS,
+or any other web server with restricted access.</p>
+<numlist>
+<title>Authentication</title>
+<p>This step validates the user id and password by querying the LDAP(s).</p>
+<li><p>Apache queries the first LDAP, normally the one containing
+internal users (e.g. Active Directory).</p></li>
+<li><p>If the user id is found, the password is validated.</p>
+<itemlist>
+<li><p> If the password does not match, the authentication fails. </p>
+</li>
+<li><p>Otherwise, Apache moves on with Authorization.</p></li>
+</itemlist>
+</li>
+<li><p>If the user id was <emph>not</emph> found in the first LDAP,
+Apache queries the second LDAP. If the user id is not found, or the
+ password does not match, the authentication fails.</p></li>
+</numlist>
+<note>
+<p>The same user id should <emph>not</emph> exist in both LDAPs.</p>
+</note>
+<itemlist>
+<title>Authorization</title>
+<p>This step validates that the user is allowed to access, and in
+some cases modify, a certain area or file on the server.</p>
+<li><p>In Subversion, the Access file is consulted before the user
+gains access to files.</p></li>
+<li><p>Some other areas, such as WebDAV and Search, does not perform
+authorization. It is sufficient that the user is authenticated.</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt">
+<title>Authorization — Access Permissions</title>
+<itemlist>
+<title>Access permissions are defined in a Subversion Access File.</title>
+<li><p>The syntax is described in <label type="product">Version Control
+with Subversion</label>: <link
+uri="http://svnbook.red-bean.com/en/1.5/svn.serverconfig.pathbasedauthz.html"
+>Path-Based Authorization</link></p></li>
+<li><p>The file can be edited via a Web browser on this URL: <label
+type="sign">http://server.company.se/svn/admin/auth/access.accs</label
+>.</p></li>
+<li><p>The file is located on the file system here: <label type="sign"
+>/home/svnuser/cms/auth/access.accs</label>. It can be edited with
+a text editor, e.g. nano, see <xref linkend="slide-editingnano"/></p>
+</li>
+</itemlist>
+<note>
+<p>It is recommended to grant read access to <quote>Collection of
+Repositories</quote>, denoted by <label type="guiitem">[/]</label
+> to all users. Otherwise, the navigation via a Web Browser is disrupted
+and such users need to start navigation from an URL pointing to a
+location where the user has read access.</p>
+</note>
+<note>
+<p>It is highly recommended to use the group definitions in the Access
+file rather than assigning permissions to usernames.</p>
+</note>
+<admon type="2-warning">
+<p>A syntax error in the Access File will revoke all permissions from
+the server, i.e. a server lockdown. Never edit the Access File without
+first ensuring SSH access to the server.</p>
+</admon></slide>
+<slide fontsize="18pt" xml:id="slide-editingnano">
+<title>Access Permissions — Editing</title>
+<itemlist>
+<title>Editing Access Permissions via SSH</title>
+<li><p>Login via SSH.</p></li>
+<li><p>Execute: <label type="guiitem">nano -w ~/cms/auth/access.accs</label
+></p></li>
+<li><p>When done, exit nano using <label type="guiitem">Ctrl-X</label
+>, respond <label type="guiitem">Y</label> , then <label type="guiitem"
+>ENTER</label> to save changes.</p></li>
+<li><p>The changes are now active on the server.</p></li>
+</itemlist>
+<note>
+<p>Validate that Access Permissions behave as intended before committing
+the changes.</p>
+</note>
+<itemlist>
+<title>Commit changes</title>
+<li><p>Commit changes to Admin repository: <label type="guiitem">svn
+commit ~/cms/auth/</label></p><p>Subversion will prompt for a commit
+comment using nano.</p>
+</li>
+</itemlist>
+<itemlist>
+<title>Revert changes</title>
+<li><p>Revert to last committed access file: <label type="guiitem"
+>svn revert ~/cms/auth/access.accs</label></p></li>
+</itemlist>
+</slide>
+<slide fontsize="18pt">
+<title>Repository Administration</title>
+<p>Subversion repositories can be added and removed individually on
+the server.</p>
+<itemlist>
+<title>Creating a repository</title>
+<li><p>Login via SSH.</p></li>
+<li><p>Execute the script createrepo.sh.</p><p>~/cms/createrepo.sh
+newreponame</p>
+</li>
+<li><p>Ensure that access permissions are correctly set up for the
+repository.</p></li>
+<li><p>Add a parameter to the HostUrlList in the deployment configuration
+(siteprefs.xml).</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt">
+<title>Indexing</title>
+<p>All authoring data is stored in the Subversion repositories, however,
+the indexing server is required for usability and search functionality. </p>
+<note>
+<p>Re-indexing can be performed as required without loss of data.
+A large repository can take significant amounts of time to re-index.</p>
+</note>
+<itemlist>
+<title>Re-indexing a repository</title>
+<li><p>Login via SSH.</p></li>
+<li><p>Change directory: </p><p>cd ~/cms/hookscripts/indexing</p>
+</li>
+<li><p>Execute re-indexing script:</p><p>./rebuild_index.py -p /home/svnuser/svn/thereponame</p>
+</li>
+</itemlist>
+<admon type="4-important">
+<p>This information is preliminary and future development might simplify
+this process.</p>
+</admon></slide>
+<slide fontsize="14pt">
+<title>Backup Approaches</title>
+<itemlist>
+<title>System Backup</title>
+<li><p>Back up whole installation which provides ability to restore
+the system quickly.</p></li>
+<li><p>Refer to <link uri="http://www.vmware.com">VMware</link> recommendations
+and software options (additional licenses might be required).</p></li>
+</itemlist>
+<itemlist>
+<title>Subversion Database Backup</title>
+<li><p>Back up the Subversion repositories, i.e. the actual databases.</p>
+</li>
+<li><p>Restore procedure involves redeploying the Virtual Appliance
+and loading the database dumps/hotcopies.</p></li>
+<li><p>There are two options, each with certain advantages, see <link
+uri="http://svnbook.red-bean.com/en/1.5/svn.reposadmin.maint.html#svn.reposadmin.maint.backup"
+>http://svnbook.red-bean.com/en/1.5/svn.reposadmin.maint.html#svn.reposadmin.maint.backup</link
+></p>
+<numlist>
+<li><p>Dump — Can be full or incremental, slow restore.</p></li>
+<li><p>Hotcopy — Always full backup, very fast to restore.</p></li>
+</numlist>
+</li>
+<li><p>Creating Subversion database dumps/hotcopies is performed from
+a shell script which can be scheduled using cron.</p></li>
+<li><p>Dumps/hotcopies are copied to a mounted disk which in turn
+is backed up by whatever backup services are available.</p></li>
+</itemlist>
+<itemlist>
+<title>Replication</title>
+<li><p>Back up the Subversion repositories by periodic replication.</p>
+</li>
+<li><p>Restore procedure is the same as restoring a hotcopy.</p></li>
+<li><p>Requires an additional Subversion server, preferably on a physically
+separate location.</p></li>
+<li><p>Can be triggered either from master server or replica and communicates
+only via http/https.</p></li>
+<li><p>See documentation on <label type="guiitem">svnsync</label>: <link
+uri="http://svnbook.red-bean.com/en/1.5/svn.reposadmin.maint.html#svn.reposadmin.maint.replication"
+>http://svnbook.red-bean.com/en/1.5/svn.reposadmin.maint.html#svn.reposadmin.maint.replication</link
+></p></li>
+</itemlist>
+</slide>
+</section>
+<section>
+<title>Authoring Administration</title>
+<slide fontsize="20pt">
+<title>Authoring Administration</title>
+<itemlist>
+<title>Contents</title>
+<li><p>Deployment Overview</p></li>
+<li><p>Deployment Process</p></li>
+<li><p>Creating Application Packages (Zip)</p></li>
+<li><p>Adapter Configuration</p></li>
+<li><p>Bursting Rules</p></li>
+<li><p>Subversion Metadata</p></li>
+</itemlist>
+</slide>
+<slide fontsize="18pt">
+<title>Deployment Overview</title>
+<itemlist>
+<title>The Arbortext Editor Deployment feature is typically used for:</title>
+<li><p>CMS Adapter (SvnAdapter)</p></li>
+<li><p>CMS Adapter configuration</p></li>
+<li><p>Document Types and Style Sheets</p></li>
+<li><p>Editor preferences, e.g. PE configuration.</p></li>
+</itemlist>
+<note>
+<p>Refer to the section <label type="mmi">Deploying a centralized
+configuration</label> in the <label type="product">Arbortext Help
+Center</label> for details.</p>
+</note>
+</slide>
+<slide fontsize="16pt">
+<title>Deployment Setup</title>
+<itemlist>
+<title>Typical Setup</title>
+<li><p>All deployment data is stored in: <label type="guiitem">http://server.company.se/svn/admin/deploy/</label
+>.</p></li>
+<li><p>This location MUST be configured with anonymous read permission.
+This can be verified by pointing a web browser to the URL which should
+display without prompting for login.</p></li>
+<li><p>The CMS is normally delivered with a standard deployment setup
+in: <?Pub _newline?><label type="guiitem">http://server.company.se/svn/admin/deploy/default/</label
+></p></li>
+<li><p>After setting the environment variable APTDEPLOYPATH to <label
+type="guiitem">http://server.company.se/svn/admin/deploy/default/</label
+>, the Editor should, on restart, download the deployment packages
+and configurations.</p></li>
+<li><p>On the client machines, the configuration will typically be
+unzipped in: <?Pub _newline?><label type="guiitem">C:\Documents and
+Settings\USERNAME\Local Settings\Application Data\PTC\Arbortext\Editor\.aptcache\zc</label
+></p></li>
+</itemlist>
+<note>
+<p>It is NOT recommended to manipulate files in the <label type="guiitem"
+>...\.aptcache\zc</label> directory. The only exception being cleaning
+the directory in case of issues, e.g. when switching between deployment
+locations.</p>
+</note>
+</slide>
+<slide>
+<title>Deployment Process</title>
+<graphic align="center"
+fileref="x-svn:///svn/documentation^/graphics/cms/subversion/Cms_Deployment.eps"
+scale="75%"/></slide>
+<slide fontsize="14pt">
+<title>Creating Application Packages (Zip)</title>
+<note>
+<p>Managing Application Packages requires a deep understanding of
+the Arbortext Application structure. Refer to the section <label
+type="mmi">Custom Application</label> in <label type="mmi">Customizer’s
+Guide</label> in the <label type="product">Arbortext Help Center</label
+> for details.</p>
+</note>
+<itemlist>
+<title>Document Type / Stylesheet Development</title>
+<li><p>It is highly useful to perform versioning in Subversion during
+Stylesheet development.</p></li>
+<li><p> Example scenario:</p>
+<itemlist>
+<li><p>Version the application package under: <?Pub _newline?><label
+type="guiitem">http://server.company.se/svn/admin/dev/doctypes/...</label
+></p></li>
+<li><p>During development, checkout/create a working copy in the local
+Editor installation (using TortoiseSvn).</p></li>
+<li><p>Commit changes from this working copy.</p></li>
+</itemlist>
+</li>
+</itemlist>
+<itemlist>
+<title>Deploying Application Package</title>
+<li><p>Using a Web Browser, navigate to the Details page of the application
+versioned in <?Pub _newline?><label type="guiitem">http://server.company.se/svn/admin/dev/doctypes/...</label
+></p><p>This directory MUST be named according to Application naming
+guidelines.<?Pub _newline?>E.g. <label type="guiitem">se.simonsoft.techdoc</label
+>.</p>
+</li>
+<li><p>Use the <quote>Download</quote> feature in the Web UI to download
+a zip file of the Application package.</p></li>
+<li><p>Navigate to <label type="guiitem">http://server.company.se/svn/admin/deploy/application</label
+> and perform <quote>Upload Changes</quote>. Select the just downloaded
+zip file and write a commit comment describing the update.</p></li>
+<li><p>Arbortext Editor will download the Application Package on the
+next restart.</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt">
+<title>Deploying to Publishing Engine (if applicable)</title>
+<itemlist>
+<title>Deployment to PE Server is performed manually:</title>
+<li><p>Log in to PE Server using Remote Desktop.</p></li>
+<li><p>Navigate to the PE installation directory. </p><p>E.g. <label
+type="guiitem">C:\Program Files (x86)\PTC\Arbortext PE\application</label
+></p>
+</li>
+<li><p>Execute the script <label type="guiitem">pedeploy.bat</label
+>. On modern Windows servers, it is often required to use <label
+type="mmi">Run as administrator</label>.</p></li>
+<li><p>The script will deploy the application and pause before performing
+the clean up. Ensure that the expansion of the package was successful
+before continuing. Use <label type="guiitem">Ctrl-C</label> to abort
+the script.</p></li>
+<li><p>Perform a <label type="mmi">Reload Subprocesses</label> from
+the Publishing Engine web interface to finalize the deployment.</p></li>
+<li><p>Certain updates might require restarting the <label type="mmi"
+>Apache Tomcat</label> service.</p></li>
+</itemlist>
+<note>
+<p>The procedure described above only applies if Simonsoft installed
+the PE and prepared the server for deployment.</p>
+</note>
+</slide>
+<slide fontsize="20pt">
+<title>Adapter Configuration</title>
+<itemlist>
+<title>Configuration locations in order of precedence:</title>
+<li><p>In-repository properties</p></li>
+<li><p>Editor <label type="product">set_user_property</label> (stored
+in wcf)</p></li>
+<li><p>Deployment config (siteprefs.xml)</p></li>
+<li><p>Adapter config file in zip package (not recommended)</p></li>
+</itemlist>
+<itemlist>
+<title>In-repository configuration</title>
+<li><p>Stored as subversion properties on the <label type="guiitem"
+>arbortext</label> folder.</p></li>
+<li><p>Properties are named with namespace <label type="guiitem">abxconfig:</label
+> prepended to the <quote>short</quote> parameter name as specified
+in the next slide, <xref linkend="adapter-param"/>.</p></li>
+<li><p>TortoiseSvn (or the command-line client) is recommended for
+adding/editing these properties.</p></li>
+</itemlist>
+</slide>
+<slide fontsize="16pt" xml:id="adapter-param">
+<title>Adapter Configuration Parameters</title><?Pub Caret 23?>
+<table>
+<tgroup cols="5">
+<?PubTbl tgroup dispwid="727.00px"?>
+<colspec colname="col1" colwidth="1.46*"/>
+<colspec colname="COLSPEC0" colwidth="1.15*"/>
+<colspec colname="col2" colwidth="1.04*"/>
+<colspec colname="col3" colwidth="0.75*"/>
+<colspec colname="COLSPEC1" colwidth="0.52*"/>
+<thead>
+<row>
+<entry valign="top">
+<p>Parameter</p>
+</entry>
+<entry valign="top">
+<p>Decription</p>
+</entry>
+<entry valign="top">
+<p>Values</p>
+</entry>
+<entry valign="top">
+<p>Recommended location</p>
+</entry>
+<entry valign="top">
+<p>In-repo support</p>
+</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>
+<p>HostUrlList</p>
+</entry>
+<entry>
+<p>List of repositories displayed in connect dialog.</p>
+</entry>
+<entry>
+<p>Multi-value, e.g.:</p>
+<p>demo1|http:// cms.pdsvision.net/ svn/demo1</p>
+</entry>
+<entry>
+<p>Deploy</p>
+</entry>
+<entry>
+<p>N</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>LogLevel</p>
+</entry>
+<entry>
+<p>The amount of logging produced by the SvnAdapter.</p>
+</entry>
+<entry>
+<p>WARN, INFO, DEBUG, ALL</p>
+</entry>
+<entry>
+<p>Deploy / WCF</p>
+</entry>
+<entry>
+<p>N</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>EnableUsedIn</p>
+</entry>
+<entry>
+<p>Where Used/Used In view in CMS Browser. Also required for Translation
+view.</p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>Deploy</p>
+</entry>
+<entry></entry>
+</row>
+<row>
+<entry>
+<p>EnableSearch</p>
+</entry>
+<entry>
+<p>Search feature in CMS Browser.</p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>EnableTranslation</p>
+</entry>
+<entry>
+<p>Translation features in CMS Browser.</p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>Deploy / In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>TranslationPath</p>
+</entry>
+<entry>
+<p>Location of Translation files in repository.</p>
+</entry>
+<entry>
+<p>“/lang” or “/*/lang”</p>
+</entry>
+<entry>
+<p>In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>TranslationLocales</p>
+</entry>
+<entry>
+<p>Locales available in Translation dialogs.</p>
+</entry>
+<entry>
+<p>E.g.: “sv | en | en_GB”</p>
+</entry>
+<entry>
+<p>In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>ExportDirectory</p>
+</entry>
+<entry>
+<p>Location/path on client workstations for exporting documents.</p>
+<p>Must exist on ALL workstations.</p>
+</entry>
+<entry>
+<p>Use forward slash instead of backslash.</p>
+</entry>
+<entry>
+<p>Deploy</p>
+</entry>
+<entry></entry>
+</row>
+<row>
+<entry>
+<p>EnableCommitComplCheck</p>
+</entry>
+<entry>
+<p>Best effort attempt to perform a completeness check before allowing
+a check in. </p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>Deploy / In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>EnableLockParentsWarn</p>
+</entry>
+<entry>
+<p>Best effort attempt to inform the user if a child object being
+checked out is used in &gt;1 parent.</p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>Deploy / In-repo</p>
+</entry>
+<entry>
+<p>Y</p>
+</entry>
+</row>
+<row>
+<entry>
+<p>EnableTSVN</p>
+</entry>
+<entry>
+<p>TortoiseSvn menu items on object menu. Assumes that TortoiseSvn
+is installed and in PATH.</p>
+</entry>
+<entry>
+<p>“True”/”False”</p>
+</entry>
+<entry>
+<p>WCF</p>
+</entry>
+<entry></entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</slide>
+<slide fontsize="16pt">
+<title>Bursting Rules</title>
+<itemlist>
+<title>Overview</title>
+<li><p>Bursting rules are configured for each document type.</p></li>
+<li><p>There is one collection of bursting rules for each repository,
+located in <label type="guiitem">/arbortext/bursting/</label>.</p></li>
+<li><p>There MUST always be a bursting rule file called <label
+type="guiitem">atidefaults.xml</label>. This bursting rule should
+not be edited except on recommendation from Simonsoft.</p></li>
+<li><p>Each bursting rule file should be named after the document
+type it applies to, and given the extension <label type="guiitem"
+>.xml</label>.</p></li>
+</itemlist>
+<deflist>
+<title>Top-level sections</title>
+<defitem>
+<defterm>
+<p>script</p>
+</defterm>
+<defdesc>
+<p>Can define an ACL script. This feature is not supported. Since
+Arbortext Editor 5.4 there is a more modern concept called CMSEvents
+that can trigger JavaScripts.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>boundaryspec</p>
+</defterm>
+<defdesc>
+<p>Automatically bursting a document into multiple objects is currently
+not supported. Do not add rules in this section.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>customrefspec</p>
+</defterm>
+<defdesc>
+<p>This section is used when creating references not based on XInclude
+or a graphics tag, e.g. DITA. Support is considered experimental.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>createarg</p>
+</defterm>
+<defdesc>
+<p>See <xref linkend="dl_createarg"/>.</p>
+</defdesc>
+</defitem>
+</deflist>
+<note>
+<p>The SvnAdapter supports XInclude but it does NOT support the legacy
+reference mechanism <label markfortrans="yes" type="mmi">file entities</label
+>.</p>
+</note>
+</slide>
+<slide fontsize="16pt">
+<title>Bursting Rules (cont.)</title>
+<p><label type="mmi">Help Center</label> sections referred to below
+might exist for multiple built in Adapters. Generally, the information
+regarding <label type="mmi">IBM Document Manager</label> applies also
+to the SvnAdapter.</p>
+<deflist xml:id="dl_createarg">
+<title>Object Creation</title>
+<defitem>
+<defterm>
+<p>namecriteria</p>
+</defterm>
+<defdesc>
+<p>Configures suggested/enforced naming of new objects. </p>
+<p>See the <label type="mmi">Help Center</label> section <label
+type="mmi">Configuring naming rules</label>.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>dmsobjtype</p>
+</defterm>
+<defdesc>
+<p>Defining object types is not required/supported.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>dmslocation</p>
+</defterm>
+<defdesc>
+<p>Location hooks is a legacy feature replaced by CMSEvents. Not supported.</p>
+<p>Location rules (<label type="guiitem">locnrule</label>) can be
+used to define default locations of object based on the root tag.</p>
+<p>See the <label type="mmi">Help Center</label> section <label
+type="mmi">Configuring object location mappings</label>.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>dmsversion</p>
+</defterm>
+<defdesc>
+<p>Defining object version is not required/supported.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>dmsmetadata</p>
+</defterm>
+<defdesc>
+<p>Metadata can be propagated from XML to CMS using <label type="guiitem"
+>metadatarule</label>.</p>
+<p>Metadata can be propagated from CMS to XML or bi-directionally
+using <label type="guiitem">twowaymetadatarule</label>.</p>
+<p>See the <label type="mmi">Help Center</label> section <label
+type="mmi">Assigning repository metadata</label>.</p>
+<p>Subversion metadata naming conventions and modelled information
+is described in <xref linkend="slide_svnmetadata"/>.</p>
+</defdesc>
+</defitem>
+</deflist>
+</slide>
+<slide fontsize="16pt" xml:id="slide_svnmetadata">
+<title>Subversion Metadata</title>
+<itemlist>
+<title>Overview</title>
+<li><p>Metadata is stored using the mechanism Subversion calls <quote
+>Properties</quote>.</p></li>
+<li><p>Property naming is very liberal, as long as the <quote>namespace</quote
+> convention is followed.</p></li>
+<li><p>The convention is to prefix the property name with a (usually)
+3–letter prefix. The prefix is separated from the name with a colon,
+e.g. <label type="guiitem">cms:status</label>.</p></li>
+</itemlist>
+<deflist>
+<title>Property Namespaces</title>
+<defitem>
+<defterm>
+<p>svn</p>
+</defterm>
+<defdesc>
+<p><emph bold="yes">Reserved</emph> for Subversion internal use.</p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>cms</p>
+</defterm>
+<defdesc>
+<p>Used for CMS-related metadata that can be modified both in XML
+and CMS. </p>
+<p>Defined by Simonsoft. </p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>xml</p>
+</defterm>
+<defdesc>
+<p>Used for information driven from the XML. </p>
+<p>Defined by Simonsoft. </p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>abx</p>
+</defterm>
+<defdesc>
+<p>Used by SvnAdapter for storing technical details about the objects. </p>
+<p><emph bold="yes">Reserved</emph> by Simonsoft. </p>
+</defdesc>
+</defitem>
+<defitem>
+<defterm>
+<p>svninfo</p>
+</defterm>
+<defdesc>
+<p>Special namespace exposed by SvnAdaper for bursting of Subversion
+information (svn info) using <label type="guiitem">twowaymetadatarule</label
+> with <label type="guiitem">mode = toxml</label>.</p>
+<p>See <xref linkend="tbl_svninfo"/> for specific information available.</p>
+</defdesc>
+</defitem>
+</deflist>
+</slide>
+<slide fontsize="16pt">
+<title>Subversion Metadata (cont.)</title>
+<table xml:id="tbl_svninfo">
+<title>Subversion Info</title>
+<tgroup cols="2">
+<colspec colname="COLSPEC0" colwidth="1.42*"/>
+<colspec colname="COLSPEC1" colwidth="3.58*"/>
+<tbody>
+<row>
+<entry char=".">
+<p>svninfo:@revision</p>
+</entry>
+<entry char=".">
+<p>Revision number of path/URL, should be repository HEAD revision.
+See note below. </p>
+</entry>
+</row>
+<row>
+<entry char=".">
+<p>svninfo:@url</p>
+</entry>
+<entry char=".">
+<p>URL of this item in the repository. </p>
+</entry>
+</row>
+<row>
+<entry char=".">
+<p>svninfo:commit/@revision</p>
+</entry>
+<entry char=".">
+<p>Revision number of this object (last commit). </p>
+</entry>
+</row>
+<row>
+<entry char=".">
+<p>svninfo:commit/author</p>
+</entry>
+<entry char=".">
+<p>User name who last committed the object. </p>
+</entry>
+</row>
+<row>
+<entry char=".">
+<p>svninfo:commit/date-iso</p>
+</entry>
+<entry char=".">
+<p>Datestamp of last commit in <quote>ISO</quote>format (<label
+type="guiitem">yyyy-MM-dd HH:mm</label>).</p>
+<p>Adjusted to client timezone.</p>
+</entry>
+</row>
+<row>
+<entry char=".">
+<p>svninfo:commit/date-iso-utc</p>
+</entry>
+<entry char=".">
+<p>Datestamp of last commit in <quote>ISO</quote>format (<label
+type="guiitem">yyyy-MM-dd HH:mm</label>).</p>
+<p>UTC timezone.</p>
+</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<note>
+<p>The revision provided by svninfo:@revision might not represent
+HEAD revision if editing and composing in the same Editor session.
+Discrepancies in composed output can easily be avoided by performing
+either of the following before composing.</p>
+<itemlist>
+<li><p>Close all documents and press refresh in CMS Browser.</p></li>
+<li><p>Disconnect and reconnect to the repository.</p></li>
+</itemlist>
+</note>
+</slide>
+</section>
+</body>
+</document>
+<?Pub *0000027063 0?>
