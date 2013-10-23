@@ -74,17 +74,20 @@ public class TaggedNode {
     }
 
     private String getName() {
-        if (this.getNodetype() == Node.ATTRIBUTE_NODE) {
+        switch (this.getNodetype()) {
+        case Node.ATTRIBUTE_NODE:
+        case Node.PROCESSING_INSTRUCTION_NODE:
             return this.element.getAttribute(StringConstants.NAME);
+        default:
+            return this.element.getTagName();
         }
-        return this.element.getTagName();
     }
 
     private String getValue() {
         switch (this.getNodetype()) {
         case Node.ELEMENT_NODE:
         case Node.DOCUMENT_NODE:
-            return null;
+            return this.element.getAttribute(StringConstants.NAME);
         default:
             return this.element.getTextContent();
         }
@@ -94,6 +97,7 @@ public class TaggedNode {
         TaggedNode newElem;
         switch (this.getNodetype()) {
         case Node.ELEMENT_NODE:
+        case Node.DOCUMENT_NODE:
             throw new RuntimeException();
         case Node.ATTRIBUTE_NODE:
             newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
@@ -102,6 +106,14 @@ public class TaggedNode {
         case Node.TEXT_NODE:
             newElem = this.parentVFile
                     .createTaggedNode(StringConstants.TEXT, null, value);
+            break;
+        case Node.PROCESSING_INSTRUCTION_NODE:
+            newElem = this.parentVFile.createTaggedNode(StringConstants.PI,
+                    this.getName(), this.getValue());
+            break;
+        case Node.COMMENT_NODE:
+            newElem = this.parentVFile.createTaggedNode(StringConstants.COMMENT, null,
+                    this.getValue());
             break;
         default:
             throw new UnsupportedOperationException();
@@ -112,34 +124,7 @@ public class TaggedNode {
     }
 
     private void cloneElement() {
-        TaggedNode parent = this.getParent();
-        TaggedNode newElem = null;
-        switch (this.getNodetype()) {
-        case Node.TEXT_NODE:
-            newElem = this.parentVFile.createTaggedNode(StringConstants.TEXT, null,
-                    this.getValue());
-            break;
-        case Node.ELEMENT_NODE:
-            newElem = this.parentVFile.createTaggedNode(StringConstants.TEXT, null,
-                    this.getValue());
-            break;
-        case Node.ATTRIBUTE_NODE:
-            newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
-                    this.getName(), this.getValue());
-            break;
-        default:
-            throw new UnsupportedOperationException();
-        }
-
-        for (TaggedNode attr : this.getAttributes()) {
-            newElem.setAttribute(attr.getName(), attr.getValue());
-        }
-        for (TaggedNode child : this.getChildren()) {
-            newElem.appendChild(child);
-        }
-        parent.insertBefore(newElem, this);
-        this.delete();
-        this.element = newElem.element;
+        this.setValue(this.getValue());
     }
 
     /**
@@ -395,11 +380,8 @@ public class TaggedNode {
         switch (this.getNodetype()) {
         case Node.ATTRIBUTE_NODE:
             return this.getName() + "=" + "\"" + this.getValue() + "\"";
-        case Node.PROCESSING_INSTRUCTION_NODE:
-            return "[#processing-instruction: " + this.getName() + "=" + "\""
-                    + this.getValue() + "\"]";
         default:
-            return "[" + this.element.getTagName() + ": " + this.getValue() + "]";
+            return "[" + this.getName() + ": " + this.getValue() + "]";
         }
     }
 

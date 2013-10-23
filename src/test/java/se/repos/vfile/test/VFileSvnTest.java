@@ -244,18 +244,34 @@ public class VFileSvnTest {
     @Test
     public void test5k11revs() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
-                "/5k-11revs.xml"));
-        this.testVFiling(testID, new File(
-                "src/test/resources/se/repos/vfile/5k-11revs"), "mo_915.xml",
-                "mo_967.xml", "mo_1008.xml", "mo_1032.xml", "mo_1072.xml",
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/5k-11revs.xml"));
+        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/5k-11revs"),
+                "mo_915.xml", "mo_967.xml", "mo_1008.xml", "mo_1032.xml", "mo_1072.xml",
                 "mo_1110.xml", "mo_1170.xml", "mo_1214.xml", "mo_1228.xml",
                 "mo_1235.xml", "mo_1330.xml");
     }
-    
+
     @Test
-    @Ignore // this is an edge case with embedded DTD and entites that can't be parsed for now
-    public void testManyRevs() throws Exception {
+    public void test50k27revs() throws Exception {
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository,
+                new CmsItemPath("/50k-27revs.xml"));
+        this.testVFiling(testID,
+                new File("src/test/resources/se/repos/vfile/50k-27revs"), "ca_0053.xml",
+                "ca_0057.xml", "ca_0066.xml", "ca_0068.xml", "ca_0069.xml",
+                "ca_0097.xml", "ca_0153.xml", "ca_0154.xml", "ca_0155.xml",
+                "ca_0156.xml", "ca_0582.xml", "ca_0708.xml", "ca_0798.xml",
+                "ca_0803.xml", "ca_0818.xml", "ca_1068.xml", "ca_1069.xml",
+                "ca_1128.xml", "ca_1293.xml", "ca_1294.xml", "ca_1300.xml",
+                "ca_1301.xml", "ca_1303.xml", "ca_1344.xml", "ca_1355.xml",
+                "ca_1388.xml", "ca_1399.xml");
+    }
+
+    @Test
+    @Ignore
+    // this is an edge case with embedded DTD and entities that can't be parsed
+    // for now
+    public void test200kManyRevs() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
         CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
                 "/200k-manyrevs.xml"));
@@ -265,5 +281,5 @@ public class VFileSvnTest {
                 "ed_0602.xml", "ed_0610.xml", "ed_0615.xml", "ed_0621.xml",
                 "ed_1184.xml", "ed_1185.xml", "ed_1186.xml", "ed_1188.xml",
                 "ed_1189.xml", "ed_1400.xml");
-    }    
+    }
 }
