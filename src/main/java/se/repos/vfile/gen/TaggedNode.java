@@ -6,7 +6,6 @@ import java.util.Map;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.ProcessingInstruction;
@@ -62,8 +61,6 @@ public class TaggedNode {
             return Node.COMMENT_NODE;
         } else if (tagName.equals(StringConstants.PI)) {
             return Node.PROCESSING_INSTRUCTION_NODE;
-        } else if (tagName.equals(StringConstants.FILE)) {
-            return Node.DOCUMENT_NODE;
         } else {
             return Node.ELEMENT_NODE;
         }
@@ -86,7 +83,6 @@ public class TaggedNode {
     private String getValue() {
         switch (this.getNodetype()) {
         case Node.ELEMENT_NODE:
-        case Node.DOCUMENT_NODE:
             return this.element.getAttribute(StringConstants.NAME);
         default:
             return this.element.getTextContent();
@@ -97,7 +93,6 @@ public class TaggedNode {
         TaggedNode newElem;
         switch (this.getNodetype()) {
         case Node.ELEMENT_NODE:
-        case Node.DOCUMENT_NODE:
             throw new RuntimeException();
         case Node.ATTRIBUTE_NODE:
             newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
@@ -319,9 +314,6 @@ public class TaggedNode {
         case Node.COMMENT_NODE:
             b = ((Comment) docNode).getData().equals(this.getValue());
             break;
-        case Node.DOCUMENT_NODE:
-            b = this.hasSameChildren(docNode);
-            break;
         default:
             throw new UnsupportedOperationException();
         }
@@ -457,12 +449,12 @@ public class TaggedNode {
     }
 
     private void updateElementAttrs(Element oldElement, Element newElement) {
-        for (Attr oldNS : TaggedNode.getNamespaces(oldElement)) {
+        for (Attr oldNS : ElementUtils.getNamespaces(oldElement)) {
             if (!TaggedNode.hasEqualAttribute(newElement, oldNS)) {
                 this.deleteNamespace(oldNS);
             }
         }
-        for (Attr newNS : TaggedNode.getNamespaces(newElement)) {
+        for (Attr newNS : ElementUtils.getNamespaces(newElement)) {
             if (!TaggedNode.hasEqualAttribute(oldElement, newNS)) {
                 this.setNamespace(newNS);
             }
@@ -491,28 +483,6 @@ public class TaggedNode {
     private static boolean hasEqualAttribute(Element elem, Attr attr) {
         return elem.hasAttribute(attr.getName())
                 && elem.getAttribute(attr.getName()).equals(attr.getValue());
-    }
-
-    /**
-     * Retrieves the name space declarations of a node.
-     * 
-     * @param element
-     *            The parent node.
-     * @return The list of name space declarations of the element.
-     */
-    private static ArrayList<Attr> getNamespaces(Element element) {
-        ArrayList<Attr> results = new ArrayList<Attr>();
-        NamedNodeMap attrs = element.getAttributes();
-        if (attrs == null) {
-            return results;
-        }
-        for (int i = 0; i < attrs.getLength(); i++) {
-            Attr a = (Attr) attrs.item(i);
-            if (ElementUtils.isNameSpace(a)) {
-                results.add(a);
-            }
-        }
-        return results;
     }
 
     private void setNamespace(Attr namespace) {

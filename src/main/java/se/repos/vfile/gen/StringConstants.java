@@ -19,5 +19,4 @@ public final class StringConstants {
     public static final String REORDER = "v:reorder";
     public static final String COMMENT = "v:comment";
     public static final String PI = "v:pi";
-    public static final String FILE = "v:file";
 }

@@ -90,6 +90,28 @@ public class ElementUtils {
         return results;
     }
 
+    /**
+     * Retrieves the name space declarations of a node.
+     * 
+     * @param element
+     *            The parent node.
+     * @return The list of name space declarations of the element.
+     */
+    public static ArrayList<Attr> getNamespaces(Element element) {
+        ArrayList<Attr> results = new ArrayList<Attr>();
+        NamedNodeMap attrs = element.getAttributes();
+        if (attrs == null) {
+            return results;
+        }
+        for (int i = 0; i < attrs.getLength(); i++) {
+            Attr a = (Attr) attrs.item(i);
+            if (ElementUtils.isNameSpace(a)) {
+                results.add(a);
+            }
+        }
+        return results;
+    }
+
     public static boolean isNameSpace(Attr a) {
         return a.getName().startsWith("xmlns:");
     }

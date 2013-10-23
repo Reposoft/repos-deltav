@@ -133,8 +133,9 @@ public final class VFile {
 
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
+        Element root = firstVersion.getDocumentElement();
 
-        Element newRoot = indexXML.createElement(StringConstants.FILE);
+        Element newRoot = indexXML.createElement(root.getNodeName());
         newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
         newRoot.setAttribute(StringConstants.DOCVERSION, version);
         newRoot.setAttribute(StringConstants.DOCTIME, time);
@@ -142,10 +143,16 @@ public final class VFile {
         newRoot.setAttribute(StringConstants.END, StringConstants.NOW);
         newRoot.setAttribute(StringConstants.TSTART, time);
         newRoot.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        for (Attr a : ElementUtils.getNamespaces(root)) {
+            newRoot.setAttribute(a.getName(), a.getValue());
+        }
         indexXML.appendChild(newRoot);
         VFile idx = new VFile(indexXML);
 
-        for (Node n : ElementUtils.getChildren(firstVersion)) {
+        for (Attr a : ElementUtils.getAttributes(root)) {
+            idx.getRootElement().setAttribute(a.getName(), a.getValue());
+        }
+        for (Node n : ElementUtils.getChildren(root)) {
             idx.getRootElement().normalizeNode(n);
         }
         return idx;
@@ -345,9 +352,7 @@ public final class VFile {
     }
 
     private TaggedNode findTaggedNode(String uniqueXPath) {
-        // TODO Fix lookup in v name space.
-        String vFileXPath = "/" + "file" + "[1]" + uniqueXPath;
-        Element result = (Element) this.xPathQuery(vFileXPath, this.index);
+        Element result = (Element) this.xPathQuery(uniqueXPath, this.index);
         if (result == null) {
             return null;
         }
@@ -436,6 +441,6 @@ public final class VFile {
      * @return Whether currentVersion is saved in this index.
      */
     public boolean documentEquals(Document currentVersion) {
-        return this.getRootElement().isEqualElement(currentVersion);
+        return this.getRootElement().isEqualElement(currentVersion.getDocumentElement());
     }
 }
