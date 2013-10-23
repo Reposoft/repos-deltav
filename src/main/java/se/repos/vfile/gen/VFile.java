@@ -78,8 +78,12 @@ public final class VFile {
         this.index.getDocumentElement().setAttribute(StringConstants.DOCTIME, time);
     }
 
-    private TaggedNode getRootElement() {
+    private TaggedNode getVFileElement() {
         return new TaggedNode(this, this.index.getDocumentElement());
+    }
+
+    private TaggedNode getDocumentElement() {
+        return this.getVFileElement().getNthNodeOfType(0, Node.ELEMENT_NODE);
     }
 
     /**
@@ -133,28 +137,20 @@ public final class VFile {
 
         Document indexXML = db.newDocument();
         indexXML.setXmlVersion(firstVersion.getXmlVersion());
-        Element root = firstVersion.getDocumentElement();
 
-        Element newRoot = indexXML.createElement(root.getNodeName());
-        newRoot.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
-        newRoot.setAttribute(StringConstants.DOCVERSION, version);
-        newRoot.setAttribute(StringConstants.DOCTIME, time);
-        newRoot.setAttribute(StringConstants.START, version);
-        newRoot.setAttribute(StringConstants.END, StringConstants.NOW);
-        newRoot.setAttribute(StringConstants.TSTART, time);
-        newRoot.setAttribute(StringConstants.TEND, StringConstants.NOW);
-        for (Attr a : ElementUtils.getNamespaces(root)) {
-            newRoot.setAttribute(a.getName(), a.getValue());
-        }
-        indexXML.appendChild(newRoot);
+        Element vFileElement = indexXML.createElement(StringConstants.FILE);
+        vFileElement.setAttribute("xmlns:v", "http://www.repos.se/namespace/v");
+        vFileElement.setAttribute(StringConstants.DOCVERSION, version);
+        vFileElement.setAttribute(StringConstants.DOCTIME, time);
+        vFileElement.setAttribute(StringConstants.START, version);
+        vFileElement.setAttribute(StringConstants.END, StringConstants.NOW);
+        vFileElement.setAttribute(StringConstants.TSTART, time);
+        vFileElement.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        indexXML.appendChild(vFileElement);
+
         VFile idx = new VFile(indexXML);
+        idx.getVFileElement().normalizeNode(firstVersion.getDocumentElement());
 
-        for (Attr a : ElementUtils.getAttributes(root)) {
-            idx.getRootElement().setAttribute(a.getName(), a.getValue());
-        }
-        for (Node n : ElementUtils.getChildren(root)) {
-            idx.getRootElement().normalizeNode(n);
-        }
         return idx;
     }
 
@@ -185,7 +181,7 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        this.getRootElement().updateTaggedNode(changeMap, newNodeMap);
+        this.getDocumentElement().updateTaggedNode(changeMap, newNodeMap);
         VFile.addOrphanNodes(nodeMap, newNodeMap);
         VFile.reorderNodes(reorderMap);
     }
@@ -352,7 +348,9 @@ public final class VFile {
     }
 
     private TaggedNode findTaggedNode(String uniqueXPath) {
-        Element result = (Element) this.xPathQuery(uniqueXPath, this.index);
+        // TODO Fix lookup in v name space.
+        String vFileXPath = "/" + "file" + "[1]" + uniqueXPath;
+        Element result = (Element) this.xPathQuery(vFileXPath, this.index);
         if (result == null) {
             return null;
         }
@@ -441,6 +439,7 @@ public final class VFile {
      * @return Whether currentVersion is saved in this index.
      */
     public boolean documentEquals(Document currentVersion) {
-        return this.getRootElement().isEqualElement(currentVersion.getDocumentElement());
+        return this.getDocumentElement().isEqualElement(
+                currentVersion.getDocumentElement());
     }
 }

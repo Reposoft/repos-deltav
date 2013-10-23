@@ -61,6 +61,8 @@ public class TaggedNode {
             return Node.COMMENT_NODE;
         } else if (tagName.equals(StringConstants.PI)) {
             return Node.PROCESSING_INSTRUCTION_NODE;
+        } else if (tagName.equals(StringConstants.FILE)) {
+            return Node.DOCUMENT_NODE;
         } else {
             return Node.ELEMENT_NODE;
         }
@@ -83,7 +85,8 @@ public class TaggedNode {
     private String getValue() {
         switch (this.getNodetype()) {
         case Node.ELEMENT_NODE:
-            return this.element.getAttribute(StringConstants.NAME);
+        case Node.DOCUMENT_NODE:
+            return null;
         default:
             return this.element.getTextContent();
         }
@@ -92,8 +95,6 @@ public class TaggedNode {
     private void setValue(String value) {
         TaggedNode newElem;
         switch (this.getNodetype()) {
-        case Node.ELEMENT_NODE:
-            throw new RuntimeException();
         case Node.ATTRIBUTE_NODE:
             newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
                     this.getName(), value);
@@ -259,7 +260,7 @@ public class TaggedNode {
         }
 
         int index = ElementUtils.getChildIndex(child);
-        if (index == this.childCount()) {
+        if (index == this.childCount() || this.getNodetype() == Node.DOCUMENT_NODE) {
             this.appendChild(norm);
         } else {
             this.insertElementAt(norm, index);
