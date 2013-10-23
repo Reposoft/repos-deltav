@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -119,14 +120,21 @@ public class VFileSvnTest {
                 SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
     }
 
+    @SuppressWarnings("deprecation")
     private RepoRevision svncommit(String comment) throws SVNException {
-        long rev = this.clientManager
-                .getCommitClient()
-                .doCommit(new File[] { this.wc }, false, comment, null, null, false,
-                        false, SVNDepth.INFINITY).getNewRevision();
+        SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
+                new File[] { this.wc }, false, comment, null, null, false, false,
+                SVNDepth.INFINITY);
+        long rev = info.getNewRevision();
         if (rev == -1) {
             // TODO This is thrown by test5k11revs.
-            throw new RuntimeException("Failed to commit file!");
+            if (info.getErrorMessage() != null) {
+                throw new SVNException(info.getErrorMessage());
+            } else if (info.getError() != null) {
+                throw info.getError();
+            } else {
+                throw new RuntimeException("Could not commit file.");
+            }
         }
         Date d = this.svnlookProvider.get().doGetDate(this.repoDir,
                 SVNRevision.create(rev));
