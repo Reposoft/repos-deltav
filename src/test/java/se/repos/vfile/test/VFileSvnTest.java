@@ -124,6 +124,10 @@ public class VFileSvnTest {
                 .getCommitClient()
                 .doCommit(new File[] { this.wc }, false, comment, null, null, false,
                         false, SVNDepth.INFINITY).getNewRevision();
+        if (rev == -1) {
+            // TODO This is thrown by test5k11revs.
+            throw new RuntimeException("Failed to commit file!");
+        }
         Date d = this.svnlookProvider.get().doGetDate(this.repoDir,
                 SVNRevision.create(rev));
         return new RepoRevision(rev, d);
@@ -164,7 +168,8 @@ public class VFileSvnTest {
         boolean addedToSVN = false;
 
         Transformer trans = TransformerFactory.newInstance().newTransformer();
-        for (Document d : documents) {
+        for (int i = 0; i < documents.size(); i++) {
+            Document d = documents.get(i);
             Source source = new DOMSource(d);
             Result result = new StreamResult(testFile);
             trans.transform(source, result);

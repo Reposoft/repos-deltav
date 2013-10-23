@@ -348,7 +348,6 @@ public final class VFile {
     }
 
     private TaggedNode findTaggedNode(String uniqueXPath) {
-        // TODO Fix lookup in v name space.
         String vFileXPath = "/" + "file" + "[1]" + uniqueXPath;
         Element result = (Element) this.xPathQuery(vFileXPath, this.index);
         if (result == null) {
