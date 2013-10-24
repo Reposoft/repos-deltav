@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 
 import javax.inject.Provider;
 import javax.xml.parsers.DocumentBuilder;
@@ -59,6 +58,7 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
  * algorithm might be better placed in a more isolated test using test files
  * directly.
  */
+@SuppressWarnings("deprecation")
 public class VFileSvnTest {
 
     // set to false to examine repository after test
@@ -120,25 +120,11 @@ public class VFileSvnTest {
                 SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
     }
 
-    @SuppressWarnings("deprecation")
     private RepoRevision svncommit(String comment) throws SVNException {
         SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
                 new File[] { this.wc }, false, comment, null, null, false, false,
                 SVNDepth.INFINITY);
-        long rev = info.getNewRevision();
-        if (rev == -1) {
-            // TODO This is thrown by test5k11revs.
-            if (info.getErrorMessage() != null) {
-                throw new SVNException(info.getErrorMessage());
-            } else if (info.getError() != null) {
-                throw info.getError();
-            } else {
-                throw new RuntimeException("Could not commit file.");
-            }
-        }
-        Date d = this.svnlookProvider.get().doGetDate(this.repoDir,
-                SVNRevision.create(rev));
-        return new RepoRevision(rev, d);
+        return new RepoRevision(info.getNewRevision(), info.getDate());
     }
 
     private void svnadd(File... paths) throws SVNException {
