@@ -27,7 +27,7 @@ public class ElementUtils {
         Node parent = child.getParentNode();
         int i = 0;
         for (Node n : ElementUtils.getChildren(parent)) {
-            if (n.equals(child)) {
+            if (n.isSameNode(child)) {
                 return i;
             }
             if (!specificType
