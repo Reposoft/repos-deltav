@@ -15,10 +15,10 @@ class DeferredChanges {
 
     public final Node controlNode;
     public final Node testNode;
-    public final String testLocation;
+    public final SimpleXPath testLocation;
     public final Set<CHANGE> changes;
 
-    public DeferredChanges(Node controlNode, Node testNode, String testLocation) {
+    public DeferredChanges(Node controlNode, Node testNode, SimpleXPath testLocation) {
         this.controlNode = controlNode;
         this.testNode = testNode;
         this.testLocation = testLocation;

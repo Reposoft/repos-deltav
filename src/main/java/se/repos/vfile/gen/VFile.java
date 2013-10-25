@@ -8,10 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.custommonkey.xmlunit.DetailedDiff;
 import org.custommonkey.xmlunit.Diff;
@@ -30,7 +26,7 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
 public final class VFile {
 
     private Document index;
-    private XPath xPathEvaluator;
+    private Map<SimpleXPath, TaggedNode> nodeMap;
 
     /**
      * Constructor for Index.
@@ -59,7 +55,7 @@ public final class VFile {
             throw new IllegalArgumentException();
         }
         this.index = indexDocument;
-        this.xPathEvaluator = XPathFactory.newInstance().newXPath();
+        this.nodeMap = new HashMap<SimpleXPath, TaggedNode>();
     }
 
     private void setDocumentVersion(String version) {
@@ -83,7 +79,7 @@ public final class VFile {
     }
 
     private TaggedNode getDocumentElement() {
-        return this.getVFileElement().getNthNodeOfType(0, Node.ELEMENT_NODE);
+        return this.getVFileElement().getNthNodeOfType(0, Nodetype.ELEMENT);
     }
 
     /**
@@ -149,9 +145,26 @@ public final class VFile {
         indexXML.appendChild(vFileElement);
 
         VFile idx = new VFile(indexXML);
-        idx.getVFileElement().normalizeNode(firstVersion.getDocumentElement());
+        Node root = firstVersion.getDocumentElement();
+        idx.getVFileElement().normalizeNode(root);
+        idx.normalizeNodeMap(root);
 
         return idx;
+    }
+
+    private void normalizeNodeMap(Node controlNode) {
+        SimpleXPath uniqueXPath = new SimpleXPath(controlNode);
+        this.nodeMap.put(uniqueXPath, uniqueXPath.eval(this.getDocumentElement()));
+        for (Node n : ElementUtils.getChildren(controlNode)) {
+            this.normalizeNodeMap(n);
+        }
+        if (controlNode.getNodeType() == Node.ELEMENT_NODE) {
+            Element e = (Element) controlNode;
+            for (Attr a : ElementUtils.getAttributes(e)) {
+                SimpleXPath attrXPath = new SimpleXPath(a);
+                this.nodeMap.put(attrXPath, attrXPath.eval(this.getDocumentElement()));
+            }
+        }
     }
 
     /**
@@ -170,41 +183,40 @@ public final class VFile {
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
-        Map<String, TaggedNode> nodeMap = this.getNodeMap(oldDocument);
-        MultiMap<String, Node> newNodeMap = new MultiMap<String, Node>();
+        MultiMap<SimpleXPath, Node> newNodeMap = new MultiMap<SimpleXPath, Node>();
+        this.nodeMap = new HashMap<SimpleXPath, TaggedNode>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            VFile.scheduleChange(nodeMap, changeMap, reorderMap, newNodeMap, d);
+            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
         this.getDocumentElement().updateTaggedNode(changeMap, newNodeMap);
-        VFile.addOrphanNodes(nodeMap, newNodeMap);
+        this.addOrphanNodes(newNodeMap);
         VFile.reorderNodes(reorderMap);
     }
 
-    private static void scheduleChange(Map<String, TaggedNode> nodeMap,
-            Map<TaggedNode, DeferredChanges> changeMap,
+    private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
             Map<TaggedNode, DeferredChanges> reorderMap,
-            MultiMap<String, Node> newNodeMap, Difference d) {
+            MultiMap<SimpleXPath, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
-        String controlLocation = d.getControlNodeDetail().getXpathLocation();
-        String testLocation = d.getTestNodeDetail().getXpathLocation();
+        SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
+                .getXpathLocation());
+        SimpleXPath testLocation = new SimpleXPath(d.getTestNodeDetail()
+                .getXpathLocation());
 
         if (controlNode == null) {
-            String testParentLocation = VFile.getXPathParent(testLocation);
-            newNodeMap.put(testParentLocation, testNode);
+            testLocation.removeLastAxis();
+            newNodeMap.put(testLocation, testNode);
         } else {
-            TaggedNode element = nodeMap.get(controlLocation);
-            if (element == null) {
-                throw new NullPointerException("Nodemap did not contain control node.");
-            }
+            TaggedNode element = controlLocation.eval(this.getDocumentElement());
+            this.nodeMap.put(controlLocation, element);
             Map<TaggedNode, DeferredChanges> map;
             if (change == CHANGE.ELEM_CHILDREN_ORDER) {
                 map = reorderMap;
@@ -220,157 +232,16 @@ public final class VFile {
         }
     }
 
-    public Map<String, TaggedNode> getNodeMap(Document controlDocument) {
-        if (!this.documentEquals(controlDocument)) {
-            throw new IllegalArgumentException(
-                    "Given control document doesn't match the one saved.");
-        }
-        Map<String, TaggedNode> nodeMap = new HashMap<String, TaggedNode>();
-        Map<Node, String> memoTable = new HashMap<Node, String>();
-        this.getNodeMap(nodeMap, memoTable, controlDocument.getDocumentElement());
-        return nodeMap;
-    }
-
-    private Map<String, TaggedNode> getNodeMap(Map<String, TaggedNode> nodeMap,
-            Map<Node, String> memoTable, Node controlNode) {
-        String uniqueXPath = uniqueXPathOf(memoTable, controlNode);
-        nodeMap.put(uniqueXPath, this.findIndexNode(controlNode, uniqueXPath));
-        for (Node n : ElementUtils.getChildren(controlNode)) {
-            this.getNodeMap(nodeMap, memoTable, n);
-        }
-        if (controlNode.getNodeType() == Node.ELEMENT_NODE) {
-            Element e = (Element) controlNode;
-            for (Attr a : ElementUtils.getAttributes(e)) {
-                String attrXPath = uniqueXPathOf(memoTable, a);
-                nodeMap.put(attrXPath, this.findIndexNode(a, attrXPath));
-            }
-        }
-        return nodeMap;
-    }
-
-    public static String uniqueXPathOf(Node n) {
-        return VFile.uniqueXPathOf(new HashMap<Node, String>(), n);
-    }
-
-    /*
-     * Calculates an unique XPath to the given node. If this XPath is then run
-     * on the same document, the given node should be the only result.
-     */
-    private static String uniqueXPathOf(Map<Node, String> memoTable, Node n) {
-        if (memoTable.containsKey(n)) {
-            return memoTable.get(n);
-        }
-        short nodeType = n.getNodeType();
-        if (nodeType == Node.DOCUMENT_NODE) {
-            return "";
-        }
-        String localAxis;
-        int localIndex = -1;
-        Node parent;
-        switch (nodeType) {
-        case Node.ELEMENT_NODE:
-            localAxis = n.getNodeName();
-            localIndex = ElementUtils.getChildIndex(n, true);
-            parent = n.getParentNode();
-            break;
-        case Node.TEXT_NODE:
-            localAxis = "text()";
-            localIndex = ElementUtils.getChildIndex(n, true);
-            parent = n.getParentNode();
-            break;
-        case Node.COMMENT_NODE:
-            localAxis = "comment()";
-            localIndex = ElementUtils.getChildIndex(n, true);
-            parent = n.getParentNode();
-            break;
-        case Node.PROCESSING_INSTRUCTION_NODE:
-            localAxis = "processing-instruction()";
-            localIndex = ElementUtils.getChildIndex(n, true);
-            parent = n.getParentNode();
-            break;
-        case Node.ATTRIBUTE_NODE:
-            localAxis = "@" + n.getNodeName();
-            parent = ((Attr) n).getOwnerElement();
-            break;
-        default:
-            throw new UnsupportedOperationException();
-        }
-        String xPath = uniqueXPathOf(memoTable, parent) + "/" + localAxis
-                + (localIndex == -1 ? "" : "[" + (localIndex + 1) + "]");
-        memoTable.put(n, xPath);
-        return xPath;
-    }
-
-    /**
-     * Finds the TaggedNode that corresponds to controlNode.
-     * 
-     * @param controlNode
-     *            The node we are looking for in the index.
-     * @param uniqueXPath
-     *            The unique XPath selector of controlNode.
-     * @return The TaggedNode to update.
-     */
-    private TaggedNode findIndexNode(Node controlNode, String uniqueXPath) {
-        TaggedNode indexParent;
-        TaggedNode returnNode;
-        int nodeIndex;
-        switch (controlNode.getNodeType()) {
-        case Node.ATTRIBUTE_NODE:
-            Attr attr = (Attr) controlNode;
-            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            returnNode = indexParent.getAttribute(attr.getName());
-            break;
-        case Node.ELEMENT_NODE:
-            returnNode = this.findTaggedNode(uniqueXPath);
-            break;
-        case Node.TEXT_NODE:
-        case Node.COMMENT_NODE:
-        case Node.PROCESSING_INSTRUCTION_NODE:
-            indexParent = this.findTaggedNode(VFile.getXPathParent(uniqueXPath));
-            nodeIndex = ElementUtils.getChildIndex(controlNode, true);
-            returnNode = indexParent.getNthNodeOfType(nodeIndex,
-                    controlNode.getNodeType());
-            break;
-        default:
-            throw new UnsupportedOperationException();
-        }
-        if (returnNode == null) {
-            throw new RuntimeException("Could not find changed node.");
-        }
-        if (!returnNode.isLive()) {
-            throw new RuntimeException("Found node is not live.");
-        }
-        return returnNode;
-    }
-
-    private static String getXPathParent(String xPath) {
-        return xPath.substring(0, xPath.lastIndexOf("/"));
-    }
-
-    private TaggedNode findTaggedNode(String uniqueXPath) {
-        String vFileXPath = "/" + "file" + "[1]" + uniqueXPath;
-        Element result = (Element) this.xPathQuery(vFileXPath, this.index);
-        if (result == null) {
-            return null;
-        }
-        return new TaggedNode(this, result);
-    }
-
-    private Node xPathQuery(String xPath, Document doc) {
-        try {
-            return (Node) this.xPathEvaluator.evaluate(xPath, doc, XPathConstants.NODE);
-        } catch (XPathExpressionException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+    public Map<SimpleXPath, TaggedNode> getNodeMap() {
+        return this.nodeMap;
     }
 
     // Add any node that couldn't be added in updateTaggedNode.
-    private static void addOrphanNodes(Map<String, TaggedNode> nodeMap,
-            MultiMap<String, Node> newNodeMap) {
-        Iterator<String> xPaths = newNodeMap.keySet().iterator();
+    private void addOrphanNodes(MultiMap<SimpleXPath, Node> newNodeMap) {
+        Iterator<SimpleXPath> xPaths = newNodeMap.keySet().iterator();
         while (xPaths.hasNext()) {
-            String xPath = xPaths.next();
-            TaggedNode parent = nodeMap.get(xPath);
+            SimpleXPath xPath = xPaths.next();
+            TaggedNode parent = this.nodeMap.get(xPath);
             if (parent == null) {
                 throw new RuntimeException("Unable to find node " + xPath
                         + " to add child nodes to.");

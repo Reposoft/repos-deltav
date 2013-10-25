@@ -51,20 +51,20 @@ public class TaggedNode {
         return this.element;
     }
 
-    private short getNodetype() {
+    public Nodetype getNodetype() {
         String tagName = this.element.getTagName();
         if (tagName.equals(StringConstants.ATTR)) {
-            return Node.ATTRIBUTE_NODE;
+            return Nodetype.ATTRIBUTE;
         } else if (tagName.equals(StringConstants.TEXT)) {
-            return Node.TEXT_NODE;
+            return Nodetype.TEXT;
         } else if (tagName.equals(StringConstants.COMMENT)) {
-            return Node.COMMENT_NODE;
+            return Nodetype.COMMENT;
         } else if (tagName.equals(StringConstants.PI)) {
-            return Node.PROCESSING_INSTRUCTION_NODE;
+            return Nodetype.PROCESSING_INSTRUCTION;
         } else if (tagName.equals(StringConstants.FILE)) {
-            return Node.DOCUMENT_NODE;
+            return Nodetype.DOCUMENT;
         } else {
-            return Node.ELEMENT_NODE;
+            return Nodetype.ELEMENT;
         }
     }
 
@@ -74,8 +74,8 @@ public class TaggedNode {
 
     private String getName() {
         switch (this.getNodetype()) {
-        case Node.ATTRIBUTE_NODE:
-        case Node.PROCESSING_INSTRUCTION_NODE:
+        case ATTRIBUTE:
+        case PROCESSING_INSTRUCTION:
             return this.element.getAttribute(StringConstants.NAME);
         default:
             return this.element.getTagName();
@@ -84,8 +84,8 @@ public class TaggedNode {
 
     private String getValue() {
         switch (this.getNodetype()) {
-        case Node.ELEMENT_NODE:
-        case Node.DOCUMENT_NODE:
+        case ELEMENT:
+        case DOCUMENT:
             return null;
         default:
             return this.element.getTextContent();
@@ -95,19 +95,19 @@ public class TaggedNode {
     private void setValue(String value) {
         TaggedNode newElem;
         switch (this.getNodetype()) {
-        case Node.ATTRIBUTE_NODE:
+        case ATTRIBUTE:
             newElem = this.parentVFile.createTaggedNode(StringConstants.ATTR,
                     this.getName(), value);
             break;
-        case Node.TEXT_NODE:
+        case TEXT:
             newElem = this.parentVFile
                     .createTaggedNode(StringConstants.TEXT, null, value);
             break;
-        case Node.PROCESSING_INSTRUCTION_NODE:
+        case PROCESSING_INSTRUCTION:
             newElem = this.parentVFile.createTaggedNode(StringConstants.PI,
                     this.getName(), this.getValue());
             break;
-        case Node.COMMENT_NODE:
+        case COMMENT:
             newElem = this.parentVFile.createTaggedNode(StringConstants.COMMENT, null,
                     this.getValue());
             break;
@@ -178,7 +178,7 @@ public class TaggedNode {
         return null;
     }
 
-    public TaggedNode getNthNodeOfType(int textIndex, short nodeType) {
+    public TaggedNode getNthNodeOfType(int textIndex, Nodetype nodeType) {
         int i = 0;
         for (TaggedNode n : this.getChildren()) {
             if (n.getNodetype() == nodeType) {
@@ -191,11 +191,22 @@ public class TaggedNode {
         return null;
     }
 
+    public ArrayList<TaggedNode> getElementsByTagName(String tagName) {
+        ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
+        for (TaggedNode child : this.getChildren()) {
+            if (child.getNodetype() == Nodetype.ELEMENT
+                    && child.getName().equals(tagName)) {
+                results.add(child);
+            }
+        }
+        return results;
+    }
+
     private ArrayList<TaggedNode> getAttributes() {
         ArrayList<TaggedNode> results = new ArrayList<TaggedNode>();
         for (Element c : TaggedNode.getChildElements(this.element)) {
             TaggedNode child = new TaggedNode(this.parentVFile, c);
-            if (child.isLive() && child.getNodetype() == Node.ATTRIBUTE_NODE) {
+            if (child.isLive() && child.getNodetype() == Nodetype.ATTRIBUTE) {
                 results.add(child);
             }
         }
@@ -260,7 +271,7 @@ public class TaggedNode {
         }
 
         int index = ElementUtils.getChildIndex(child);
-        if (index == this.childCount() || this.getNodetype() == Node.DOCUMENT_NODE) {
+        if (index == this.childCount() || this.getNodetype() == Nodetype.DOCUMENT) {
             this.appendChild(norm);
         } else {
             this.insertElementAt(norm, index);
@@ -276,7 +287,7 @@ public class TaggedNode {
         for (Element c : TaggedNode.getChildElements(this.element)) {
             TaggedNode child = new TaggedNode(this.parentVFile, c);
             if (child.isLive()) {
-                if (child.getNodetype() != Node.ATTRIBUTE_NODE) {
+                if (child.getNodetype() != Nodetype.ATTRIBUTE) {
                     results.add(child);
                 }
             }
@@ -292,27 +303,27 @@ public class TaggedNode {
      * @return True if the elements are equal.
      */
     public boolean isEqualElement(Node docNode) {
-        if (!(this.getNodetype() == docNode.getNodeType() && this.isLive())) {
+        if (!(this.getNodetype() == ElementUtils.getNodeType(docNode) && this.isLive())) {
             return false;
         }
         boolean b;
         switch (this.getNodetype()) {
-        case Node.ATTRIBUTE_NODE:
+        case ATTRIBUTE:
             Attr docAttr = (Attr) docNode;
             b = this.getName().equals(docNode.getNodeName())
                     && this.getValue().equals(docAttr.getValue());
             break;
-        case Node.ELEMENT_NODE:
+        case ELEMENT:
             Element docElem = (Element) docNode;
             b = this.hasSameAttributes(docElem) && this.hasSameChildren(docElem);
             break;
-        case Node.TEXT_NODE:
+        case TEXT:
             b = this.getValue().equals(((Text) docNode).getData());
             break;
-        case Node.PROCESSING_INSTRUCTION_NODE:
+        case PROCESSING_INSTRUCTION:
             b = ((ProcessingInstruction) docNode).getData().equals(this.getValue());
             break;
-        case Node.COMMENT_NODE:
+        case COMMENT:
             b = ((Comment) docNode).getData().equals(this.getValue());
             break;
         default:
@@ -371,7 +382,7 @@ public class TaggedNode {
     @Override
     public String toString() {
         switch (this.getNodetype()) {
-        case Node.ATTRIBUTE_NODE:
+        case ATTRIBUTE:
             return this.getName() + "=" + "\"" + this.getValue() + "\"";
         default:
             return "[" + this.getName() + ": " + this.getValue() + "]";
@@ -395,7 +406,7 @@ public class TaggedNode {
      *            are to be added there.
      */
     public void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
-            MultiMap<String, Node> newNodeMap) {
+            MultiMap<SimpleXPath, Node> newNodeMap) {
         for (TaggedNode child : this.getAttributes()) {
             child.updateTaggedNode(changeMap, newNodeMap);
         }
@@ -510,9 +521,9 @@ public class TaggedNode {
         attr.delete();
     }
 
-    private void updateElementChildren(MultiMap<String, Node> newNodeMap,
-            String testNodeLocation) {
-        for (Node n : newNodeMap.remove(testNodeLocation)) {
+    private void updateElementChildren(MultiMap<SimpleXPath, Node> newNodeMap,
+            SimpleXPath testLocation) {
+        for (Node n : newNodeMap.remove(testLocation)) {
             this.normalizeNode(n);
         }
     }
