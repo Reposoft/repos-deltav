@@ -23,7 +23,7 @@ public class SimpleXPath {
             String localAxis;
             Nodetype nodeType;
             if (axisString.startsWith("@")) {
-                localAxis = axisString.substring(1);
+                localAxis = axisString.substring(1); // drops the '@'.
                 nodeType = Nodetype.ATTRIBUTE;
             } else {
                 String[] axisParts = axisString.split("\\[|\\]");
