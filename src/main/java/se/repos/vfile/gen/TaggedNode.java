@@ -105,11 +105,11 @@ public class TaggedNode {
             break;
         case PROCESSING_INSTRUCTION:
             newElem = this.parentVFile.createTaggedNode(StringConstants.PI,
-                    this.getName(), this.getValue());
+                    this.getName(), value);
             break;
         case COMMENT:
             newElem = this.parentVFile.createTaggedNode(StringConstants.COMMENT, null,
-                    this.getValue());
+                    value);
             break;
         default:
             throw new UnsupportedOperationException();
@@ -428,12 +428,12 @@ public class TaggedNode {
             case HAS_CHILD:
                 this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
                 break;
+            case ELEM_ATTRS:
+                this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
+                break;
             case ATTR_VALUE:
                 Attr newAttr = (Attr) d.testNode;
                 this.setValue(newAttr.getValue());
-                break;
-            case ELEM_ATTRS:
-                this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
                 break;
             case TEXT_VALUE:
             case COMMENT_VALUE:
@@ -441,9 +441,7 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                int location = ElementUtils.getChildIndex(d.testNode);
-                this.reorder(location);
-                break;
+                throw new RuntimeException(); // should not occur here.
             }
         }
     }

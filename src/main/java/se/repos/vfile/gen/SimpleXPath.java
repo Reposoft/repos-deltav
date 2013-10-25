@@ -11,33 +11,47 @@ public class SimpleXPath {
     private LinkedList<Axis> axi;
 
     public SimpleXPath(String xPath) {
+        if (xPath == null) {
+            throw new NullPointerException();
+        }
         this.axi = new LinkedList<Axis>();
-        String[] axisStrings = xPath.split("/");
+        String[] axisStrings = xPath.substring(1).split("/"); // the substring
+                                                              // drop the
+                                                              // leading '/'
         for (String axisString : axisStrings) {
-            String[] axisParts = axisString.split("\\[|\\]");
-            if (axisParts.length != 2) {
-                throw new IllegalArgumentException("String is not a simple XPath.");
-            }
-            int localIndex = Integer.parseInt(axisParts[1]);
-            String localAxis = axisParts[0];
+            int localIndex = -1;
+            String localAxis;
             Nodetype nodeType;
-            if (localAxis.equals("comment()")) {
-                nodeType = Nodetype.COMMENT;
-            } else if (localAxis.equals("processing-instruction()")) {
-                nodeType = Nodetype.PROCESSING_INSTRUCTION;
-            } else if (localAxis.equals("text()")) {
-                nodeType = Nodetype.TEXT;
-            } else if (localAxis.startsWith("@")) {
-                localAxis = localAxis.substring(1); // drop the '@'
+            if (axisString.startsWith("@")) {
+                localAxis = axisString.substring(1);
                 nodeType = Nodetype.ATTRIBUTE;
             } else {
-                nodeType = Nodetype.ELEMENT;
+                String[] axisParts = axisString.split("\\[|\\]");
+                if (axisParts.length != 2) {
+                    throw new IllegalArgumentException("String is not a simple XPath.");
+                }
+                localIndex = Integer.parseInt(axisParts[1]) - 1; // uses 0-based
+                                                                 // index, hence
+                                                                 // the - 1.
+                localAxis = axisParts[0];
+                if (localAxis.equals("comment()")) {
+                    nodeType = Nodetype.COMMENT;
+                } else if (localAxis.equals("processing-instruction()")) {
+                    nodeType = Nodetype.PROCESSING_INSTRUCTION;
+                } else if (localAxis.equals("text()")) {
+                    nodeType = Nodetype.TEXT;
+                } else {
+                    nodeType = Nodetype.ELEMENT;
+                }
             }
             this.axi.addLast(new Axis(localAxis, nodeType, localIndex));
         }
     }
 
     public SimpleXPath(Node node) {
+        if (node == null) {
+            throw new NullPointerException();
+        }
         this.axi = new LinkedList<Axis>();
         Nodetype nodeType = ElementUtils.getNodeType(node);
         if (nodeType == Nodetype.DOCUMENT) {
@@ -47,7 +61,8 @@ public class SimpleXPath {
         int localIndex = -1;
         Node current = node;
         Node parent;
-        while (current != null) {
+
+        while (nodeType != Nodetype.DOCUMENT) {
             switch (nodeType) {
             case ELEMENT:
                 localAxis = current.getNodeName();
@@ -71,6 +86,7 @@ public class SimpleXPath {
                 break;
             case ATTRIBUTE:
                 localAxis = current.getNodeName();
+                localIndex = -1;
                 parent = ((Attr) current).getOwnerElement();
                 break;
             default:
@@ -78,6 +94,7 @@ public class SimpleXPath {
             }
             this.axi.addFirst(new Axis(localAxis, nodeType, localIndex));
             current = parent;
+            nodeType = ElementUtils.getNodeType(current);
         }
     }
 
@@ -93,9 +110,6 @@ public class SimpleXPath {
             }
             if (!currentContext.isLive()) {
                 throw new RuntimeException("Node is no longer live.");
-            }
-            if (axis.nodeType != currentContext.getNodetype()) {
-                throw new RuntimeException("Node of incorrect type.");
             }
             switch (axis.nodeType) {
             case ATTRIBUTE:
@@ -221,7 +235,7 @@ public class SimpleXPath {
             String localAxis = null;
             switch (this.nodeType) {
             case ATTRIBUTE:
-                localAxis = "@" + this.name;
+                localAxis = this.name;
                 break;
             case COMMENT:
                 localAxis = "comment()";
@@ -239,7 +253,10 @@ public class SimpleXPath {
                 localAxis = "text()";
                 break;
             }
-            return localAxis + "[" + this.localIndex + "]";
+            if (this.nodeType == Nodetype.ATTRIBUTE) {
+                return "@" + localAxis;
+            }
+            return localAxis + "[" + (this.localIndex + 1) + "]";
         }
     }
 }

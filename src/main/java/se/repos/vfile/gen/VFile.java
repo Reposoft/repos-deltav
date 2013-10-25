@@ -154,7 +154,7 @@ public final class VFile {
 
     private void normalizeNodeMap(Node controlNode) {
         SimpleXPath uniqueXPath = new SimpleXPath(controlNode);
-        this.nodeMap.put(uniqueXPath, uniqueXPath.eval(this.getDocumentElement()));
+        this.nodeMap.put(uniqueXPath, uniqueXPath.eval(this.getVFileElement()));
         for (Node n : ElementUtils.getChildren(controlNode)) {
             this.normalizeNodeMap(n);
         }
@@ -162,7 +162,7 @@ public final class VFile {
             Element e = (Element) controlNode;
             for (Attr a : ElementUtils.getAttributes(e)) {
                 SimpleXPath attrXPath = new SimpleXPath(a);
-                this.nodeMap.put(attrXPath, attrXPath.eval(this.getDocumentElement()));
+                this.nodeMap.put(attrXPath, attrXPath.eval(this.getVFileElement()));
             }
         }
     }
@@ -206,16 +206,21 @@ public final class VFile {
         CHANGE change = VFile.classifyChange(d.getId());
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
-        SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
-                .getXpathLocation());
-        SimpleXPath testLocation = new SimpleXPath(d.getTestNodeDetail()
-                .getXpathLocation());
+        SimpleXPath testLocation;
 
         if (controlNode == null) {
+            testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
             testLocation.removeLastAxis();
             newNodeMap.put(testLocation, testNode);
         } else {
-            TaggedNode element = controlLocation.eval(this.getDocumentElement());
+            SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
+                    .getXpathLocation());
+            if (testNode == null) {
+                testLocation = null;
+            } else {
+                testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
+            }
+            TaggedNode element = controlLocation.eval(this.getVFileElement());
             this.nodeMap.put(controlLocation, element);
             Map<TaggedNode, DeferredChanges> map;
             if (change == CHANGE.ELEM_CHILDREN_ORDER) {
