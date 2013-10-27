@@ -1,7 +1,6 @@
 package se.repos.vfile.gen;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
@@ -296,13 +295,13 @@ public class TaggedNode {
     }
 
     /**
-     * Test of equality between a normal element and the tagged node of this
+     * Test of equality between a normal node and the tagged node of this
      * TaggedNode. The comparison only takes into account live
      * children/attributes of the tagged node.
      * 
-     * @return True if the elements are equal.
+     * @return True if the nodes are equal.
      */
-    public boolean isEqualElement(Node docNode) {
+    public boolean isEqualNode(Node docNode) {
         if (!(this.getNodetype() == ElementUtils.getNodeType(docNode) && this.isLive())) {
             return false;
         }
@@ -340,7 +339,7 @@ public class TaggedNode {
         for (int i = 0; i < thoseAttrs.size(); i++) {
             Attr thatAttr = thoseAttrs.get(i);
             TaggedNode thisAttr = this.getAttribute(thatAttr.getName());
-            if (thisAttr == null || !thisAttr.isEqualElement(thatAttr)) {
+            if (thisAttr == null || !thisAttr.isEqualNode(thatAttr)) {
                 return false;
             }
         }
@@ -354,7 +353,7 @@ public class TaggedNode {
             return false;
         }
         for (int i = 0; i < theseChildren.size(); i++) {
-            if (!theseChildren.get(i).isEqualElement(thoseChildren.get(i))) {
+            if (!theseChildren.get(i).isEqualNode(thoseChildren.get(i))) {
                 return false;
             }
         }
@@ -401,33 +400,16 @@ public class TaggedNode {
      * 
      * @param changeMap
      *            A map of TaggedNodes to changes to be performed on that node.
-     * @param newNodeMap
-     *            A map from XPath location of an element to the new nodes that
-     *            are to be added there.
      */
-    public void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
-            MultiMap<SimpleXPath, Node> newNodeMap) {
-        for (TaggedNode child : this.getAttributes()) {
-            child.updateTaggedNode(changeMap, newNodeMap);
-        }
-        for (TaggedNode child : this.getChildren()) {
-            child.updateTaggedNode(changeMap, newNodeMap);
-        }
-        if (!changeMap.containsKey(this)) {
-            return;
-        }
-        DeferredChanges d = changeMap.get(this);
+    public void updateTaggedNode(DeferredChanges d) {
         for (CHANGE change : d.changes) {
             switch (change) {
             case NODE_NOT_FOUND:
                 this.delete();
                 return;
             case ELEM_CHILDREN_NUMBER:
-                this.updateElementChildren(newNodeMap, d.testLocation);
-                break;
             case HAS_CHILD:
-                this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
-                break;
+                break; // handled elsewhere
             case ELEM_ATTRS:
                 this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
                 break;
@@ -441,12 +423,14 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                throw new RuntimeException(); // should not occur here.
+                int location = ElementUtils.getChildIndex(d.testNode);
+                this.reorder(location);
+                break;
             }
         }
     }
 
-    public void reorder(int index) {
+    private void reorder(int index) {
         // TODO This is bugged.
         TaggedNode parent = this.getParent();
         parent.eraseChild(this);
@@ -520,32 +504,6 @@ public class TaggedNode {
         attr.delete();
     }
 
-    private void updateElementChildren(MultiMap<SimpleXPath, Node> newNodeMap,
-            SimpleXPath testLocation) {
-        for (Node n : newNodeMap.remove(testLocation)) {
-            this.normalizeNode(n);
-        }
-    }
-
-    private void updateElementChild(Element oldElement, Element newElement) {
-        ArrayList<Element> newElements = TaggedNode.getChildElements(newElement);
-        ArrayList<Element> oldElements = TaggedNode.getChildElements(oldElement);
-
-        if (newElements.isEmpty() && oldElements.isEmpty()) {
-            throw new RuntimeException("Missing child element.");
-        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
-            throw new RuntimeException("Found two child elements where expected one.");
-        } else if (newElements.isEmpty()) {
-            for (Element e : oldElements) {
-                this.deleteChildElement(e);
-            }
-        } else if (oldElements.isEmpty()) {
-            for (Element e : newElements) {
-                this.normalizeNode(e);
-            }
-        }
-    }
-
     /**
      * Retrieves the child elements of a node.
      * 
@@ -565,15 +523,5 @@ public class TaggedNode {
             }
         }
         return results;
-    }
-
-    private void deleteChildElement(Element target) {
-        for (TaggedNode e : this.getChildren()) {
-            if (e.isEqualElement(target)) {
-                e.delete();
-                return;
-            }
-        }
-        throw new RuntimeException("Tried to delete non-present element.");
     }
 }

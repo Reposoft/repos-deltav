@@ -26,7 +26,6 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
 public final class VFile {
 
     private Document index;
-    private Map<SimpleXPath, TaggedNode> nodeMap;
 
     /**
      * Constructor for Index.
@@ -55,7 +54,6 @@ public final class VFile {
             throw new IllegalArgumentException();
         }
         this.index = indexDocument;
-        this.nodeMap = new HashMap<SimpleXPath, TaggedNode>();
     }
 
     private void setDocumentVersion(String version) {
@@ -147,22 +145,34 @@ public final class VFile {
         VFile idx = new VFile(indexXML);
         Node root = firstVersion.getDocumentElement();
         idx.getVFileElement().normalizeNode(root);
-        idx.normalizeNodeMap(root);
 
         return idx;
     }
 
-    private void normalizeNodeMap(Node controlNode) {
+    public Map<SimpleXPath, TaggedNode> getNodeMap(Document controlDocument) {
+        Map<SimpleXPath, TaggedNode> nodeMap = new HashMap<SimpleXPath, TaggedNode>();
+        if (!this.documentEquals(controlDocument)) {
+            throw new IllegalArgumentException("Control document doesn't match v-file.");
+        }
+        this.normalizeNodeMap(nodeMap, controlDocument.getDocumentElement());
+        return nodeMap;
+    }
+
+    private void normalizeNodeMap(Map<SimpleXPath, TaggedNode> nodeMap, Node controlNode) {
         SimpleXPath uniqueXPath = new SimpleXPath(controlNode);
-        this.nodeMap.put(uniqueXPath, uniqueXPath.eval(this.getVFileElement()));
+        TaggedNode node = uniqueXPath.eval(this.getVFileElement());
+        if (!node.isEqualNode(controlNode)) {
+            throw new RuntimeException("Found incorrect node.");
+        }
+        nodeMap.put(uniqueXPath, node);
         for (Node n : ElementUtils.getChildren(controlNode)) {
-            this.normalizeNodeMap(n);
+            this.normalizeNodeMap(nodeMap, n);
         }
         if (controlNode.getNodeType() == Node.ELEMENT_NODE) {
             Element e = (Element) controlNode;
             for (Attr a : ElementUtils.getAttributes(e)) {
                 SimpleXPath attrXPath = new SimpleXPath(a);
-                this.nodeMap.put(attrXPath, attrXPath.eval(this.getVFileElement()));
+                nodeMap.put(attrXPath, attrXPath.eval(this.getVFileElement()));
             }
         }
     }
@@ -182,25 +192,24 @@ public final class VFile {
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
-        Map<TaggedNode, DeferredChanges> reorderMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
         MultiMap<SimpleXPath, Node> newNodeMap = new MultiMap<SimpleXPath, Node>();
-        this.nodeMap = new HashMap<SimpleXPath, TaggedNode>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
+            this.scheduleChange(changeMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        this.getDocumentElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
-        VFile.reorderNodes(reorderMap);
+
+        for (TaggedNode node : changeMap.keySet()) {
+            node.updateTaggedNode(changeMap.get(node));
+        }
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
-            Map<TaggedNode, DeferredChanges> reorderMap,
             MultiMap<SimpleXPath, Node> newNodeMap, Difference d) {
 
         CHANGE change = VFile.classifyChange(d.getId());
@@ -215,30 +224,17 @@ public final class VFile {
         } else {
             SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
                     .getXpathLocation());
-            if (testNode == null) {
-                testLocation = null;
-            } else {
-                testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
-            }
+            testLocation = testNode == null ? null : new SimpleXPath(d
+                    .getTestNodeDetail().getXpathLocation());
             TaggedNode element = controlLocation.eval(this.getVFileElement());
-            this.nodeMap.put(controlLocation, element);
-            Map<TaggedNode, DeferredChanges> map;
-            if (change == CHANGE.ELEM_CHILDREN_ORDER) {
-                map = reorderMap;
+            if (!changeMap.containsKey(element)) {
+                changeMap.put(element, new DeferredChanges(controlNode, testNode,
+                        testLocation));
+                changeMap.get(element).addChange(change);
             } else {
-                map = changeMap;
-            }
-            if (!map.containsKey(element)) {
-                map.put(element, new DeferredChanges(controlNode, testNode, testLocation));
-                map.get(element).addChange(change);
-            } else {
-                map.get(element).addChange(change);
+                changeMap.get(element).addChange(change);
             }
         }
-    }
-
-    public Map<SimpleXPath, TaggedNode> getNodeMap() {
-        return this.nodeMap;
     }
 
     // Add any node that couldn't be added in updateTaggedNode.
@@ -246,11 +242,7 @@ public final class VFile {
         Iterator<SimpleXPath> xPaths = newNodeMap.keySet().iterator();
         while (xPaths.hasNext()) {
             SimpleXPath xPath = xPaths.next();
-            TaggedNode parent = this.nodeMap.get(xPath);
-            if (parent == null) {
-                throw new RuntimeException("Unable to find node " + xPath
-                        + " to add child nodes to.");
-            }
+            TaggedNode parent = xPath.eval(this.getVFileElement());
             Set<Node> newNodes = newNodeMap.get(xPath);
             xPaths.remove();
             for (Node n : newNodes) {
@@ -259,13 +251,6 @@ public final class VFile {
         }
         if (!newNodeMap.isEmpty()) {
             throw new RuntimeException("Some new child nodes where not added.");
-        }
-    }
-
-    private static void reorderNodes(Map<TaggedNode, DeferredChanges> reorderMap) {
-        for (TaggedNode e : reorderMap.keySet()) {
-            int location = ElementUtils.getChildIndex(reorderMap.get(e).testNode);
-            e.reorder(location);
         }
     }
 
@@ -314,7 +299,6 @@ public final class VFile {
      * @return Whether currentVersion is saved in this index.
      */
     public boolean documentEquals(Document currentVersion) {
-        return this.getDocumentElement().isEqualElement(
-                currentVersion.getDocumentElement());
+        return this.getDocumentElement().isEqualNode(currentVersion.getDocumentElement());
     }
 }
