@@ -431,12 +431,13 @@ public class TaggedNode {
     }
 
     private void reorder(int index) {
-        // TODO This is bugged.
         TaggedNode parent = this.getParent();
-        parent.eraseChild(this);
-        if (parent.childCount() == index) {
+        int childCount = parent.childCount();
+        if (childCount == index || childCount - 1 == index) {
+            parent.eraseChild(this);
             parent.appendChild(this);
         } else {
+            parent.eraseChild(this);
             parent.insertElementAt(this, index);
         }
         this.element.setAttribute(StringConstants.REORDER,

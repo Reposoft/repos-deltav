@@ -202,11 +202,11 @@ public final class VFile {
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-        this.addOrphanNodes(newNodeMap);
 
         for (TaggedNode node : changeMap.keySet()) {
             node.updateTaggedNode(changeMap.get(node));
         }
+        this.addOrphanNodes(newNodeMap);
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
