@@ -1,12 +1,13 @@
 package se.repos.vfile.gen;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 
 // TODO Javadoc this class.
-public class SimpleXPath {
+public class SimpleXPath implements Iterable<Axis> {
 
     private LinkedList<Axis> axi;
 
@@ -44,7 +45,7 @@ public class SimpleXPath {
                     nodeType = Nodetype.ELEMENT;
                 }
             }
-            this.axi.addLast(new Axis(localAxis, nodeType, localIndex));
+            this.addLast(new Axis(localAxis, nodeType, localIndex));
         }
     }
 
@@ -92,19 +93,39 @@ public class SimpleXPath {
             default:
                 throw new UnsupportedOperationException();
             }
-            this.axi.addFirst(new Axis(localAxis, nodeType, localIndex));
+            this.addFirst(new Axis(localAxis, nodeType, localIndex));
             current = parent;
             nodeType = ElementUtils.getNodeType(current);
         }
     }
 
-    public void removeLastAxis() {
-        this.axi.removeLast();
+    public void addFirst(Axis a) {
+        this.axi.addFirst(a);
+    }
+
+    public void addLast(Axis a) {
+        this.axi.addLast(a);
+    }
+
+    public Axis getFirstAxis() {
+        return this.axi.getFirst();
+    }
+
+    public Axis getLastAxis() {
+        return this.axi.getLast();
+    }
+
+    public Axis removeFirstAxis() {
+        return this.axi.removeFirst();
+    }
+
+    public Axis removeLastAxis() {
+        return this.axi.removeLast();
     }
 
     public TaggedNode eval(TaggedNode context) {
         TaggedNode currentContext = context;
-        for (Axis axis : this.axi) {
+        for (Axis axis : this) {
             if (currentContext == null) {
                 throw new RuntimeException("Node not found");
             }
@@ -185,78 +206,8 @@ public class SimpleXPath {
         return sb.toString();
     }
 
-    private class Axis {
-        public int localIndex;
-        public Nodetype nodeType;
-        public String name;
-
-        public Axis(String name, Nodetype nodeType, int localIndex) {
-            if (name == null || nodeType == null) {
-                throw new NullPointerException();
-            }
-            this.name = name;
-            this.nodeType = nodeType;
-            this.localIndex = localIndex;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + this.localIndex;
-            result = prime * result
-                    + ((this.nodeType == null) ? 0 : this.nodeType.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (this.getClass() != obj.getClass()) {
-                return false;
-            }
-            Axis other = (Axis) obj;
-            if (this.localIndex != other.localIndex) {
-                return false;
-            }
-            if (this.nodeType != other.nodeType) {
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            String localAxis = null;
-            switch (this.nodeType) {
-            case ATTRIBUTE:
-                localAxis = this.name;
-                break;
-            case COMMENT:
-                localAxis = "comment()";
-                break;
-            case DOCUMENT:
-                localAxis = "";
-                break;
-            case ELEMENT:
-                localAxis = this.name;
-                break;
-            case PROCESSING_INSTRUCTION:
-                localAxis = "processing-instruction()";
-                break;
-            case TEXT:
-                localAxis = "text()";
-                break;
-            }
-            if (this.nodeType == Nodetype.ATTRIBUTE) {
-                return "@" + localAxis;
-            }
-            return localAxis + "[" + (this.localIndex + 1) + "]";
-        }
+    @Override
+    public Iterator<Axis> iterator() {
+        return this.axi.iterator();
     }
 }
