@@ -123,12 +123,7 @@ public class VFileSvnTest {
         SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
                 new File[] { this.wc }, false, comment, null, null, false, false,
                 SVNDepth.INFINITY);
-        long revisionNr = info.getNewRevision();
-        if (revisionNr < 0L) {
-            // TODO This is thrown by test5k11revs.
-            throw new RuntimeException("Negative revision number supplied by SVN.");
-        }
-        return new RepoRevision(revisionNr, info.getDate());
+        return new RepoRevision(info.getNewRevision(), info.getDate());
     }
 
     private void svnadd(File... paths) throws SVNException {

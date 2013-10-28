@@ -320,7 +320,7 @@ public class TaggedNode {
             break;
         case ELEMENT:
             Element docElem = (Element) docNode;
-            if(!this.getName().equals(docElem.getTagName())) {
+            if (!this.getName().equals(docElem.getTagName())) {
                 throw new NoMatchException(new SimpleXPath(docNode), this.getXPath());
             }
             this.matchAttributes(docElem);

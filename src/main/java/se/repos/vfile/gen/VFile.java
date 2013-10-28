@@ -207,8 +207,8 @@ public final class VFile {
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
-            Map<SimpleXPath, Node> reorderMap,
-            MultiMap<SimpleXPath, Node> newNodeMap, Difference d) {
+            Map<SimpleXPath, Node> reorderMap, MultiMap<SimpleXPath, Node> newNodeMap,
+            Difference d) {
         CHANGE change = VFile.classifyChange(d.getId());
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
@@ -231,13 +231,14 @@ public final class VFile {
                 reorderMap.put(controlLocation, testNode);
             } else {
                 if (!changeMap.containsKey(element)) {
-                    changeMap.put(element, new DeferredChanges(controlNode, testNode, testLocation));
+                    changeMap.put(element, new DeferredChanges(controlNode, testNode,
+                            testLocation));
                     changeMap.get(element).addChange(change);
                 } else {
                     changeMap.get(element).addChange(change);
                 }
             }
-            
+
         }
     }
 
