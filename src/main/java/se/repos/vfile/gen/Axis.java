@@ -15,37 +15,6 @@ public class Axis {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + this.localIndex;
-        result = prime * result
-                + ((this.nodeType == null) ? 0 : this.nodeType.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (this.getClass() != obj.getClass()) {
-            return false;
-        }
-        Axis other = (Axis) obj;
-        if (this.localIndex != other.localIndex) {
-            return false;
-        }
-        if (this.nodeType != other.nodeType) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
     public String toString() {
         String localAxis = null;
         switch (this.nodeType) {
@@ -72,5 +41,44 @@ public class Axis {
             return "@" + localAxis;
         }
         return localAxis + "[" + (this.localIndex + 1) + "]";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (this.getClass() != obj.getClass()) {
+            return false;
+        }
+        Axis other = (Axis) obj;
+        if (this.localIndex != other.localIndex) {
+            return false;
+        }
+        if (this.name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!this.name.equals(other.name)) {
+            return false;
+        }
+        if (this.nodeType != other.nodeType) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + this.localIndex;
+        result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+        result = prime * result
+                + ((this.nodeType == null) ? 0 : this.nodeType.hashCode());
+        return result;
     }
 }

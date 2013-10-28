@@ -11,6 +11,10 @@ public class SimpleXPath implements Iterable<Axis> {
 
     private LinkedList<Axis> axi;
 
+    public SimpleXPath() {
+        this.axi = new LinkedList<Axis>();
+    }
+
     public SimpleXPath(String xPath) {
         if (xPath == null) {
             throw new NullPointerException();
@@ -166,6 +170,21 @@ public class SimpleXPath implements Iterable<Axis> {
         return currentContext;
     }
 
+    /**
+     * Returns whether this XPath starts with the one given. Mostly used for
+     * debugging purposes.
+     */
+    public boolean startsWith(SimpleXPath that) {
+        Iterator<Axis> thisIterator = this.iterator();
+        Iterator<Axis> thatIterator = that.iterator();
+        while (thisIterator.hasNext() && thatIterator.hasNext()) {
+            if (!thisIterator.next().equals(thatIterator.next())) {
+                return false;
+            }
+        }
+        return !thatIterator.hasNext();
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -176,24 +195,18 @@ public class SimpleXPath implements Iterable<Axis> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
+        if (obj == null || !(obj instanceof SimpleXPath)) {
             return false;
         }
-        if (this.getClass() != obj.getClass()) {
-            return false;
-        }
-        SimpleXPath other = (SimpleXPath) obj;
-        if (this.axi == null) {
-            if (other.axi != null) {
+        SimpleXPath that = (SimpleXPath) obj;
+        Iterator<Axis> thisIterator = this.iterator();
+        Iterator<Axis> thatIterator = that.iterator();
+        while (thisIterator.hasNext() && thatIterator.hasNext()) {
+            if (!thisIterator.next().equals(thatIterator.next())) {
                 return false;
             }
-        } else if (!this.axi.equals(other.axi)) {
-            return false;
         }
-        return true;
+        return !thisIterator.hasNext() && !thatIterator.hasNext();
     }
 
     @Override

@@ -2,7 +2,6 @@ package se.repos.vfile.test;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -200,7 +199,7 @@ public class VFileSvnTest {
             VFile v = new VFile(store.get(testID));
             assertNotNull("V-file calculation should have stored something", v);
             Document d = documents.get(i);
-            assertTrue((v.documentEquals(d)));
+            v.matchDocument(d);
         }
 
         return store;

@@ -71,7 +71,7 @@ public class TaggedNode {
         return new TaggedNode(this.parentVFile, (Element) this.element.getParentNode());
     }
 
-    private String getName() {
+    public String getName() {
         switch (this.getNodetype()) {
         case ATTRIBUTE:
         case PROCESSING_INSTRUCTION:
@@ -81,7 +81,7 @@ public class TaggedNode {
         }
     }
 
-    private String getValue() {
+    public String getValue() {
         switch (this.getNodetype()) {
         case ELEMENT:
         case DOCUMENT:
@@ -233,6 +233,10 @@ public class TaggedNode {
 
     private void insertElementAt(TaggedNode e, int index) {
         ArrayList<TaggedNode> children = this.getChildren();
+        if (index >= children.size()) {
+            throw new IndexOutOfBoundsException("When inserting node " + e.getName()
+                    + " at local index " + index + "in node " + this.getXPath());
+        }
         TaggedNode ref = children.get(index);
         this.element.insertBefore(e.element, ref.element);
     }
@@ -300,10 +304,11 @@ public class TaggedNode {
      * children/attributes of the tagged node.
      * 
      * @return True if the nodes are equal.
+     * @throws NoMatchException
      */
-    public boolean isEqualNode(Node docNode) {
+    public void matchNode(Node docNode) throws NoMatchException {
         if (!(this.getNodetype() == ElementUtils.getNodeType(docNode) && this.isLive())) {
-            return false;
+            throw new NoMatchException(new SimpleXPath(docNode), this.getXPath());
         }
         boolean b;
         switch (this.getNodetype()) {
@@ -314,7 +319,9 @@ public class TaggedNode {
             break;
         case ELEMENT:
             Element docElem = (Element) docNode;
-            b = this.hasSameAttributes(docElem) && this.hasSameChildren(docElem);
+            this.matchAttributes(docElem);
+            this.matchChildren(docElem);
+            b = true;
             break;
         case TEXT:
             b = this.getValue().equals(((Text) docNode).getData());
@@ -329,35 +336,31 @@ public class TaggedNode {
             throw new UnsupportedOperationException();
         }
         if (!b) {
-            return false; // for setting breakpoint on
+            throw new NoMatchException(new SimpleXPath(docNode), this.getXPath());
         }
-        return true;
     }
 
-    private boolean hasSameAttributes(Element docElem) {
+    private void matchAttributes(Element docElem) throws NoMatchException {
         ArrayList<Attr> thoseAttrs = ElementUtils.getAttributes(docElem);
         for (int i = 0; i < thoseAttrs.size(); i++) {
             Attr thatAttr = thoseAttrs.get(i);
             TaggedNode thisAttr = this.getAttribute(thatAttr.getName());
-            if (thisAttr == null || !thisAttr.isEqualNode(thatAttr)) {
-                return false;
+            if (thisAttr == null) {
+                throw new NoMatchException(new SimpleXPath(docElem), this.getXPath());
             }
+            thisAttr.matchNode(thatAttr);
         }
-        return true;
     }
 
-    private boolean hasSameChildren(Node docNode) {
+    private void matchChildren(Node docNode) throws NoMatchException {
         ArrayList<TaggedNode> theseChildren = this.getChildren();
         ArrayList<Node> thoseChildren = ElementUtils.getChildren(docNode);
         if (theseChildren.size() != thoseChildren.size()) {
-            return false;
+            throw new NoMatchException(new SimpleXPath(docNode), this.getXPath());
         }
         for (int i = 0; i < theseChildren.size(); i++) {
-            if (!theseChildren.get(i).isEqualNode(thoseChildren.get(i))) {
-                return false;
-            }
+            theseChildren.get(i).matchNode(thoseChildren.get(i));
         }
-        return true;
     }
 
     @Override
@@ -386,6 +389,21 @@ public class TaggedNode {
         default:
             return "[" + this.getName() + ": " + this.getValue() + "]";
         }
+    }
+
+    public SimpleXPath getXPath() {
+        SimpleXPath xPath = new SimpleXPath();
+        TaggedNode current = this;
+        while (current.getNodetype() != Nodetype.DOCUMENT) {
+            xPath.addFirst(new Axis(current.getName(), current.getNodetype(), current
+                    .getLocalIndex()));
+            current = current.getParent();
+        }
+        return xPath;
+    }
+
+    public int getLocalIndex() {
+        return ElementUtils.getChildIndex(this.element, true);
     }
 
     /**

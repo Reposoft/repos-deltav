@@ -149,21 +149,19 @@ public final class VFile {
         return idx;
     }
 
-    public Map<SimpleXPath, TaggedNode> getNodeMap(Document controlDocument) {
+    public Map<SimpleXPath, TaggedNode> getNodeMap(Document controlDocument)
+            throws NoMatchException {
         Map<SimpleXPath, TaggedNode> nodeMap = new HashMap<SimpleXPath, TaggedNode>();
-        if (!this.documentEquals(controlDocument)) {
-            throw new IllegalArgumentException("Control document doesn't match v-file.");
-        }
+        this.matchDocument(controlDocument);
         this.normalizeNodeMap(nodeMap, controlDocument.getDocumentElement());
         return nodeMap;
     }
 
-    private void normalizeNodeMap(Map<SimpleXPath, TaggedNode> nodeMap, Node controlNode) {
+    private void normalizeNodeMap(Map<SimpleXPath, TaggedNode> nodeMap, Node controlNode)
+            throws NoMatchException {
         SimpleXPath uniqueXPath = new SimpleXPath(controlNode);
         TaggedNode node = uniqueXPath.eval(this.getVFileElement());
-        if (!node.isEqualNode(controlNode)) {
-            throw new RuntimeException("Found incorrect node.");
-        }
+        node.matchNode(controlNode);
         nodeMap.put(uniqueXPath, node);
         for (Node n : ElementUtils.getChildren(controlNode)) {
             this.normalizeNodeMap(nodeMap, n);
@@ -292,13 +290,14 @@ public final class VFile {
     }
 
     /**
-     * Returns whether the given document is the latest version of this index.
+     * Matches the document given and the one indexed in this V-File. Throws
+     * NoMatchException if they do not match.
      * 
      * @param currentVersion
      *            The document to compare to this index.
-     * @return Whether currentVersion is saved in this index.
+     * @throws NoMatchException
      */
-    public boolean documentEquals(Document currentVersion) {
-        return this.getDocumentElement().isEqualNode(currentVersion.getDocumentElement());
+    public void matchDocument(Document currentVersion) throws NoMatchException {
+        this.getDocumentElement().matchNode(currentVersion.getDocumentElement());
     }
 }
