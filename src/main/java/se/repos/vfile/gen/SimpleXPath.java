@@ -21,7 +21,7 @@ public class SimpleXPath implements Iterable<Axis> {
         }
         this.axi = new LinkedList<Axis>();
         String[] axisStrings = xPath.substring(1).split("/"); // the substring
-                                                              // drop the
+                                                              // drops the
                                                               // leading '/'
         for (String axisString : axisStrings) {
             int localIndex = -1;

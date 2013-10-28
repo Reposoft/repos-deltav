@@ -190,26 +190,25 @@ public final class VFile {
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
+        Map<SimpleXPath, Node> reorderMap = new LinkedHashMap<SimpleXPath, Node>();
         MultiMap<SimpleXPath, Node> newNodeMap = new MultiMap<SimpleXPath, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            this.scheduleChange(changeMap, newNodeMap, d);
+            this.scheduleChange(changeMap, reorderMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
-
-        for (TaggedNode node : changeMap.keySet()) {
-            node.updateTaggedNode(changeMap.get(node));
-        }
+        this.getDocumentElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
+        this.reorderNodes(reorderMap);
     }
 
     private void scheduleChange(Map<TaggedNode, DeferredChanges> changeMap,
+            Map<SimpleXPath, Node> reorderMap,
             MultiMap<SimpleXPath, Node> newNodeMap, Difference d) {
-
         CHANGE change = VFile.classifyChange(d.getId());
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
@@ -222,16 +221,23 @@ public final class VFile {
         } else {
             SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
                     .getXpathLocation());
-            testLocation = testNode == null ? null : new SimpleXPath(d
-                    .getTestNodeDetail().getXpathLocation());
-            TaggedNode element = controlLocation.eval(this.getVFileElement());
-            if (!changeMap.containsKey(element)) {
-                changeMap.put(element, new DeferredChanges(controlNode, testNode,
-                        testLocation));
-                changeMap.get(element).addChange(change);
+            if (testNode == null) {
+                testLocation = null;
             } else {
-                changeMap.get(element).addChange(change);
+                testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
             }
+            TaggedNode element = controlLocation.eval(this.getVFileElement());
+            if (change == CHANGE.ELEM_CHILDREN_ORDER) {
+                reorderMap.put(controlLocation, testNode);
+            } else {
+                if (!changeMap.containsKey(element)) {
+                    changeMap.put(element, new DeferredChanges(controlNode, testNode, testLocation));
+                    changeMap.get(element).addChange(change);
+                } else {
+                    changeMap.get(element).addChange(change);
+                }
+            }
+            
         }
     }
 
@@ -241,6 +247,10 @@ public final class VFile {
         while (xPaths.hasNext()) {
             SimpleXPath xPath = xPaths.next();
             TaggedNode parent = xPath.eval(this.getVFileElement());
+            if (parent == null) {
+                throw new RuntimeException("Unable to find node " + xPath
+                        + " to add child nodes to.");
+            }
             Set<Node> newNodes = newNodeMap.get(xPath);
             xPaths.remove();
             for (Node n : newNodes) {
@@ -249,6 +259,14 @@ public final class VFile {
         }
         if (!newNodeMap.isEmpty()) {
             throw new RuntimeException("Some new child nodes where not added.");
+        }
+    }
+
+    private void reorderNodes(Map<SimpleXPath, Node> reorderMap) {
+        for (SimpleXPath path : reorderMap.keySet()) {
+            TaggedNode element = path.eval(this.getVFileElement());
+            int location = ElementUtils.getChildIndex(reorderMap.get(path));
+            element.reorder(location);
         }
     }
 

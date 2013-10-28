@@ -1,6 +1,7 @@
 package se.repos.vfile.gen;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Comment;
@@ -234,8 +235,8 @@ public class TaggedNode {
     private void insertElementAt(TaggedNode e, int index) {
         ArrayList<TaggedNode> children = this.getChildren();
         if (index >= children.size()) {
-            throw new IndexOutOfBoundsException("When inserting node " + e.getName()
-                    + " at local index " + index + "in node " + this.getXPath());
+            throw new IndexOutOfBoundsException("When inserting node \"" + e.getName()
+                    + "\" at local index " + index + " in node " + this.getXPath());
         }
         TaggedNode ref = children.get(index);
         this.element.insertBefore(e.element, ref.element);
@@ -319,6 +320,9 @@ public class TaggedNode {
             break;
         case ELEMENT:
             Element docElem = (Element) docNode;
+            if(!this.getName().equals(docElem.getTagName())) {
+                throw new NoMatchException(new SimpleXPath(docNode), this.getXPath());
+            }
             this.matchAttributes(docElem);
             this.matchChildren(docElem);
             b = true;
@@ -391,7 +395,7 @@ public class TaggedNode {
         }
     }
 
-    public SimpleXPath getXPath() {
+    private SimpleXPath getXPath() {
         SimpleXPath xPath = new SimpleXPath();
         TaggedNode current = this;
         while (current.getNodetype() != Nodetype.DOCUMENT) {
@@ -402,7 +406,7 @@ public class TaggedNode {
         return xPath;
     }
 
-    public int getLocalIndex() {
+    private int getLocalIndex() {
         return ElementUtils.getChildIndex(this.element, true);
     }
 
@@ -418,16 +422,33 @@ public class TaggedNode {
      * 
      * @param changeMap
      *            A map of TaggedNodes to changes to be performed on that node.
+     * @param newNodeMap
+     *            A map from XPath location of an element to the new nodes that
+     *            are to be added there.
      */
-    public void updateTaggedNode(DeferredChanges d) {
+    public void updateTaggedNode(Map<TaggedNode, DeferredChanges> changeMap,
+            MultiMap<SimpleXPath, Node> newNodeMap) {
+        for (TaggedNode child : this.getAttributes()) {
+            child.updateTaggedNode(changeMap, newNodeMap);
+        }
+        for (TaggedNode child : this.getChildren()) {
+            child.updateTaggedNode(changeMap, newNodeMap);
+        }
+        if (!changeMap.containsKey(this)) {
+            return;
+        }
+        DeferredChanges d = changeMap.get(this);
         for (CHANGE change : d.changes) {
             switch (change) {
             case NODE_NOT_FOUND:
                 this.delete();
                 return;
             case ELEM_CHILDREN_NUMBER:
+                this.updateElementChildren(newNodeMap, d.testLocation);
+                break;
             case HAS_CHILD:
-                break; // handled elsewhere
+                this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
+                break;
             case ELEM_ATTRS:
                 this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
                 break;
@@ -441,14 +462,12 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                int location = ElementUtils.getChildIndex(d.testNode);
-                this.reorder(location);
-                break;
+                throw new RuntimeException(); // should not occur here.
             }
         }
     }
 
-    private void reorder(int index) {
+    public void reorder(int index) {
         TaggedNode parent = this.getParent();
         int childCount = parent.childCount();
         if (childCount == index || childCount - 1 == index) {
@@ -521,6 +540,35 @@ public class TaggedNode {
             throw new RuntimeException("Tried to delete non-present attribute.");
         }
         attr.delete();
+    }
+
+    private void updateElementChildren(MultiMap<SimpleXPath, Node> newNodeMap,
+            SimpleXPath testLocation) {
+        for (Node n : newNodeMap.remove(testLocation)) {
+            this.normalizeNode(n);
+        }
+    }
+
+    private void updateElementChild(Element oldElement, Element newElement) {
+        ArrayList<Element> newElements = TaggedNode.getChildElements(newElement);
+        ArrayList<Element> oldElements = TaggedNode.getChildElements(oldElement);
+
+        if (newElements.isEmpty() && oldElements.isEmpty()) {
+            throw new RuntimeException("Missing child element.");
+        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
+            throw new RuntimeException("Found two child elements where expected one.");
+        } else if (newElements.isEmpty()) {
+            for (Element e : oldElements) {
+                int oldIndex = ElementUtils.getChildIndex(e, true);
+                TaggedNode toRemove = this.getElementsByTagName(e.getTagName()).get(
+                        oldIndex);
+                toRemove.delete();
+            }
+        } else if (oldElements.isEmpty()) {
+            for (Element e : newElements) {
+                this.normalizeNode(e);
+            }
+        }
     }
 
     /**
