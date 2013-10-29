@@ -16,7 +16,7 @@ public class NoMatchException extends Exception {
 
     @Override
     public String getMessage() {
-        return "No match found between document node " + this.docPath
-                + " and v-file node " + this.vFilePath;
+        return "The given document and v-file nodes do not match:\n" + "document: "
+                + this.docPath + "\n" + "v-file: " + this.vFilePath;
     }
 }
