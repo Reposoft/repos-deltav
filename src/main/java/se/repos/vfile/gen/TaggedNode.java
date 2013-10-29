@@ -331,15 +331,14 @@ public class TaggedNode {
         case TEXT:
         case PROCESSING_INSTRUCTION:
         case COMMENT:
-            // TODO Some Texts get normalized with an extra leading space.
             String thisValue = this.getValue();
             String thatValue;
-            if(this.getNodetype() == Nodetype.PROCESSING_INSTRUCTION) {
+            if (this.getNodetype() == Nodetype.PROCESSING_INSTRUCTION) {
                 thatValue = ((ProcessingInstruction) docNode).getData();
             } else {
                 thatValue = ((CharacterData) docNode).getData();
             }
-            b = thisValue.equals(thatValue);
+            b = thisValue.trim().equals(thatValue.trim());
             break;
         default:
             throw new UnsupportedOperationException();

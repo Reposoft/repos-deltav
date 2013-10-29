@@ -1,6 +1,5 @@
 package se.repos.vfile.test;
 
-import static org.custommonkey.xmlunit.XMLAssert.assertXpathNotExists;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
@@ -189,10 +188,9 @@ public class VFileSvnTest {
             }
             RepoRevision svncommit = this.svncommit("");
             if (svncommit == null) {
-                System.out.println("No diff for file " + filePaths[i]);
-            } else {
-                revisions.add(svncommit);
+                throw new RuntimeException("No diff for file " + filePaths[i]);
             }
+            revisions.add(svncommit);
         }
 
         VFileStore store = new VFileStoreDisk("./vfilestore");
@@ -228,10 +226,6 @@ public class VFileSvnTest {
 
         Document document = store.get(testID);
         assertNotNull("Result should be available through VFileStore", document);
-
-        // this document has no inline nodes and should therefore not have such
-        // history info
-        assertXpathNotExists("//mixtext", document);
     }
 
     @Test

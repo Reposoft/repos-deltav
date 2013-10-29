@@ -13,7 +13,7 @@ public class VFileDocumentBuilderFactory extends DocumentBuilderFactory {
         this.dbf.setCoalescing(true);
         this.dbf.setExpandEntityReferences(true);
         this.dbf.setIgnoringComments(false);
-        this.dbf.setIgnoringElementContentWhitespace(false);
+        this.dbf.setIgnoringElementContentWhitespace(true);
         this.dbf.setNamespaceAware(false);
         this.dbf.setValidating(false);
         this.dbf.setXIncludeAware(false);

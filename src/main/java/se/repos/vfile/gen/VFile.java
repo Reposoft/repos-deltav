@@ -186,14 +186,12 @@ public final class VFile {
      */
     public void update(Document oldDocument, Document newDocument, String newTime,
             String newVersion) {
-        oldDocument.normalizeDocument();
-        newDocument.normalizeDocument();
         Map<SimpleXPath, TaggedNode> nodeMap;
         try {
             nodeMap = this.getNodeMap(oldDocument);
         } catch (NoMatchException e) {
             throw new IllegalArgumentException(
-                    "Provided document doesn't match the one indexed");
+                    "Provided document doesn't match the one indexed.", e);
         }
 
         DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
@@ -227,6 +225,7 @@ public final class VFile {
             testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
         }
 
+        // TODO XMLUnit might miss a leading space in text diff.
         if (controlNode == null) {
             testLocation.removeLastAxis();
             newNodeMap.put(testLocation, testNode);
