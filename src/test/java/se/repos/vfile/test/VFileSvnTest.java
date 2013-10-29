@@ -268,8 +268,8 @@ public class VFileSvnTest {
     @Test
     public void test5k10revs() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/5k-11revs.xml"));
-        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/5k-11revs"),
+        CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath("/5k-10revs.xml"));
+        this.testVFiling(testID, new File("src/test/resources/se/repos/vfile/5k-10revs"),
                 "mo_0915.xml", "mo_0967.xml", "mo_1008.xml", "mo_1032.xml",
                 "mo_1072.xml", "mo_1110.xml", "mo_1170.xml", "mo_1228.xml",
                 "mo_1235.xml", "mo_1330.xml");
