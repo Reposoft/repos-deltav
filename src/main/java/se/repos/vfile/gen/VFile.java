@@ -186,6 +186,8 @@ public final class VFile {
      */
     public void update(Document oldDocument, Document newDocument, String newTime,
             String newVersion) {
+        oldDocument.normalizeDocument();
+        newDocument.normalizeDocument();
         Map<SimpleXPath, TaggedNode> nodeMap;
         try {
             nodeMap = this.getNodeMap(oldDocument);

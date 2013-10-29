@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.w3c.dom.Attr;
+import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -328,13 +329,17 @@ public class TaggedNode {
             b = true;
             break;
         case TEXT:
-            b = this.getValue().equals(docNode.getTextContent());
-            break;
         case PROCESSING_INSTRUCTION:
-            b = ((ProcessingInstruction) docNode).getData().equals(this.getValue());
-            break;
         case COMMENT:
-            b = ((Comment) docNode).getData().equals(this.getValue());
+            // TODO Some Texts get normalized with an extra leading space.
+            String thisValue = this.getValue();
+            String thatValue;
+            if(this.getNodetype() == Nodetype.PROCESSING_INSTRUCTION) {
+                thatValue = ((ProcessingInstruction) docNode).getData();
+            } else {
+                thatValue = ((CharacterData) docNode).getData();
+            }
+            b = thisValue.equals(thatValue);
             break;
         default:
             throw new UnsupportedOperationException();
@@ -455,8 +460,10 @@ public class TaggedNode {
                 break;
             case TEXT_VALUE:
             case COMMENT_VALUE:
+                this.setValue(((CharacterData) d.testNode).getData());
+                break;
             case PI_DATA:
-                this.setValue(d.testNode.getTextContent());
+                this.setValue(((ProcessingInstruction) d.testNode).getData());
                 break;
             case ELEM_CHILDREN_ORDER:
                 break; // dealt with in VFile.reorderNodes.e
