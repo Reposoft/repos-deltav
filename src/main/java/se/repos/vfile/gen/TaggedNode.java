@@ -328,7 +328,7 @@ public class TaggedNode {
             b = true;
             break;
         case TEXT:
-            b = this.getValue().equals(((Text) docNode).getData());
+            b = this.getValue().equals(docNode.getTextContent());
             break;
         case PROCESSING_INSTRUCTION:
             b = ((ProcessingInstruction) docNode).getData().equals(this.getValue());
@@ -437,7 +437,7 @@ public class TaggedNode {
         if (!changeMap.containsKey(this)) {
             return;
         }
-        DeferredChanges d = changeMap.get(this);
+        DeferredChanges d = changeMap.remove(this);
         for (CHANGE change : d.changes) {
             switch (change) {
             case NODE_NOT_FOUND:
@@ -445,9 +445,6 @@ public class TaggedNode {
                 return;
             case ELEM_CHILDREN_NUMBER:
                 this.updateElementChildren(newNodeMap, d.testLocation);
-                break;
-            case HAS_CHILD:
-                this.updateElementChild((Element) d.controlNode, (Element) d.testNode);
                 break;
             case ELEM_ATTRS:
                 this.updateElementAttrs((Element) d.controlNode, (Element) d.testNode);
@@ -462,9 +459,11 @@ public class TaggedNode {
                 this.setValue(d.testNode.getTextContent());
                 break;
             case ELEM_CHILDREN_ORDER:
-                throw new RuntimeException(); // should not occur here.
+                break; // dealt with in VFile.reorderNodes.e
             }
         }
+        changeMap.put(this, d); // updates key in case node deleting change
+                                // occured.
     }
 
     public void reorder(int index) {
@@ -546,28 +545,6 @@ public class TaggedNode {
             SimpleXPath testLocation) {
         for (Node n : newNodeMap.remove(testLocation)) {
             this.normalizeNode(n);
-        }
-    }
-
-    private void updateElementChild(Element oldElement, Element newElement) {
-        ArrayList<Element> newElements = TaggedNode.getChildElements(newElement);
-        ArrayList<Element> oldElements = TaggedNode.getChildElements(oldElement);
-
-        if (newElements.isEmpty() && oldElements.isEmpty()) {
-            throw new RuntimeException("Missing child element.");
-        } else if (!newElements.isEmpty() && !oldElements.isEmpty()) {
-            throw new RuntimeException("Found two child elements where expected one.");
-        } else if (newElements.isEmpty()) {
-            for (Element e : oldElements) {
-                int oldIndex = ElementUtils.getChildIndex(e, true);
-                TaggedNode toRemove = this.getElementsByTagName(e.getTagName()).get(
-                        oldIndex);
-                toRemove.delete();
-            }
-        } else if (oldElements.isEmpty()) {
-            for (Element e : newElements) {
-                this.normalizeNode(e);
-            }
         }
     }
 

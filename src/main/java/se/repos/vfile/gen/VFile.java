@@ -186,9 +186,6 @@ public final class VFile {
      */
     public void update(Document oldDocument, Document newDocument, String newTime,
             String newVersion) {
-        DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
-        diff.overrideElementQualifier(new NameAndPositionElementQualifier());
-
         Map<SimpleXPath, TaggedNode> nodeMap;
         try {
             nodeMap = this.getNodeMap(oldDocument);
@@ -196,55 +193,50 @@ public final class VFile {
             throw new IllegalArgumentException(
                     "Provided document doesn't match the one indexed");
         }
+
+        DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
+        diff.overrideElementQualifier(new NameAndPositionElementQualifier());
+
         Map<TaggedNode, DeferredChanges> changeMap = new LinkedHashMap<TaggedNode, DeferredChanges>();
-        Map<SimpleXPath, Node> reorderMap = new LinkedHashMap<SimpleXPath, Node>();
         MultiMap<SimpleXPath, Node> newNodeMap = new MultiMap<SimpleXPath, Node>();
 
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
-            VFile.scheduleChange(nodeMap, changeMap, reorderMap, newNodeMap, d);
+            VFile.scheduleChange(nodeMap, changeMap, newNodeMap, d);
         }
 
         this.setDocumentVersion(newVersion);
         this.setDocumentTime(newTime);
         this.getDocumentElement().updateTaggedNode(changeMap, newNodeMap);
         this.addOrphanNodes(newNodeMap);
-        VFile.reorderNodes(reorderMap, nodeMap);
+        VFile.reorderNodes(changeMap);
     }
 
+    @SuppressWarnings("null")
     private static void scheduleChange(Map<SimpleXPath, TaggedNode> nodeMap,
             Map<TaggedNode, DeferredChanges> changeMap,
-            Map<SimpleXPath, Node> reorderMap, MultiMap<SimpleXPath, Node> newNodeMap,
-            Difference d) {
+            MultiMap<SimpleXPath, Node> newNodeMap, Difference d) {
         CHANGE change = VFile.classifyChange(d.getId());
         Node controlNode = d.getControlNodeDetail().getNode();
         Node testNode = d.getTestNodeDetail().getNode();
-        SimpleXPath testLocation;
+        SimpleXPath testLocation = null;
+        if (testNode != null) {
+            testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
+        }
 
         if (controlNode == null) {
-            testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
             testLocation.removeLastAxis();
             newNodeMap.put(testLocation, testNode);
         } else {
             SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
                     .getXpathLocation());
-            if (testNode == null) {
-                testLocation = null;
-            } else {
-                testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
-            }
             TaggedNode element = nodeMap.get(controlLocation);
-            if (change == CHANGE.ELEM_CHILDREN_ORDER) {
-                reorderMap.put(controlLocation, testNode);
-            } else {
-                if (!changeMap.containsKey(element)) {
-                    changeMap.put(element, new DeferredChanges(controlNode, testNode,
-                            testLocation));
-                }
-                changeMap.get(element).addChange(change);
+            if (!changeMap.containsKey(element)) {
+                changeMap.put(element, new DeferredChanges(controlNode, testNode,
+                        testLocation));
             }
-
+            changeMap.get(element).addChange(change);
         }
     }
 
@@ -269,12 +261,16 @@ public final class VFile {
         }
     }
 
-    private static void reorderNodes(Map<SimpleXPath, Node> reorderMap,
-            Map<SimpleXPath, TaggedNode> nodeMap) {
-        for (SimpleXPath path : reorderMap.keySet()) {
-            TaggedNode element = nodeMap.get(path);
-            int location = ElementUtils.getChildIndex(reorderMap.get(path));
-            element.reorder(location);
+    private static void reorderNodes(Map<TaggedNode, DeferredChanges> changeMap) {
+        for (TaggedNode element : changeMap.keySet()) {
+            DeferredChanges d = changeMap.get(element);
+            if (d.changes.contains(CHANGE.ELEM_CHILDREN_ORDER)) {
+                if (!element.isLive()) {
+                    throw new RuntimeException("Moving non-live node.");
+                }
+                int location = ElementUtils.getChildIndex(d.testNode);
+                element.reorder(location);
+            }
         }
     }
 
@@ -293,9 +289,8 @@ public final class VFile {
         case DifferenceConstants.CHILD_NODE_NOT_FOUND_ID:
             return CHANGE.NODE_NOT_FOUND;
         case DifferenceConstants.CHILD_NODELIST_LENGTH_ID:
-            return CHANGE.ELEM_CHILDREN_NUMBER;
         case DifferenceConstants.HAS_CHILD_NODES_ID:
-            return CHANGE.HAS_CHILD;
+            return CHANGE.ELEM_CHILDREN_NUMBER;
         case DifferenceConstants.TEXT_VALUE_ID:
             return CHANGE.TEXT_VALUE;
         case DifferenceConstants.COMMENT_VALUE_ID:
