@@ -119,14 +119,20 @@ public class VFileSvnTest {
                 SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
     }
 
+    /**
+     * @param comment
+     * @return revision if committed, null if nothing to commit
+     * @throws SVNException
+     */
     private RepoRevision svncommit(String comment) throws SVNException {
         SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
                 new File[] { this.wc }, false, comment, null, null, false, false,
                 SVNDepth.INFINITY);
         long revision = info.getNewRevision();
         if (revision < 0L) {
-            // TODO This is thrown by test5k11revs.
-            throw new RuntimeException("SVN returned negative version number!");
+        	return null;        	
+        	//this.doCleanup = false;
+            //throw new RuntimeException("SVN returned negative version number. Working copy: " + this.wc);
         }
         return new RepoRevision(revision, info.getDate());
     }
@@ -179,7 +185,12 @@ public class VFileSvnTest {
                 this.svnadd(testFile);
                 addedToSVN = true;
             }
-            revisions.add(this.svncommit(""));
+            RepoRevision svncommit = this.svncommit("");
+            if (svncommit == null) {
+            	System.out.println("No diff for file " + filePaths[i]);
+            } else {
+            	revisions.add(svncommit);
+            }
         }
 
         VFileStore store = new VFileStoreDisk("./vfilestore");
