@@ -1,10 +1,26 @@
 package se.repos.vfile.gen;
 
+/**
+ * Class that represents as single axis in a simplified XPath. Only represents the
+ * XPath axis child::Name with an accompanying index.
+ * 
+ * @see SimpleXPath
+ */
 public class Axis {
     public final int localIndex;
     public final Nodetype nodeType;
     public final String name;
 
+    /**
+     * Constructs a new Axis.
+     * 
+     * @param name
+     *            The node name.
+     * @param nodeType
+     *            The node type.
+     * @param localIndex
+     *            The 0-based index to this node in an unique XPath.
+     */
     public Axis(String name, Nodetype nodeType, int localIndex) {
         if (name == null || nodeType == null) {
             throw new NullPointerException();

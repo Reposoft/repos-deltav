@@ -4,7 +4,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-// Class used to get the same DOM configuration on all DocumentBuilders in the project.
+/**
+ * Class used to get the same DOM configuration on all DocumentBuilders in the
+ * project. For specific settings used, refer to the constructor.
+ */
 public class VFileDocumentBuilderFactory extends DocumentBuilderFactory {
     private DocumentBuilderFactory dbf;
 

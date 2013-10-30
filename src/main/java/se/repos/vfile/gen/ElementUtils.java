@@ -10,20 +10,40 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> A utility class for dealing with
- *         DOM Element nodes.
+ * A utility class for dealing with DOM Element nodes.
  */
 public class ElementUtils {
 
-    public static int getChildIndex(Node needle) {
-        return ElementUtils.getChildIndex(needle, false, false);
+    /**
+     * Equivalent to getLocalIndex(needle, false, false).
+     */
+    public static int getLocalIndex(Node needle) {
+        return ElementUtils.getLocalIndex(needle, false, false);
     }
 
-    public static int getChildIndex(Node needle, boolean specificType) {
-        return ElementUtils.getChildIndex(needle, specificType, false);
+    /**
+     * Equivalent to getLocalIndex(needle, specificType, false).
+     */
+    public static int getLocalIndex(Node needle, boolean specificType) {
+        return ElementUtils.getLocalIndex(needle, specificType, false);
     }
 
-    public static int getChildIndex(Node needle, boolean specificType, boolean mustFind) {
+    /**
+     * Given a node, finds the index of where among it's siblings it can be
+     * found.
+     * 
+     * @param needle
+     *            The node to find the index of.
+     * @param specificType
+     *            Whether to count only nodes of the same type as siblings.
+     * @param mustFind
+     *            If no result is acceptable.
+     * @return The index of needle among it's siblings, or -1 if not found and
+     *         mustFind is set to false.
+     * @throws RuntimeException
+     *             If the needle is not found and mustFind is true.
+     */
+    public static int getLocalIndex(Node needle, boolean specificType, boolean mustFind) {
         Node parent = needle.getParentNode();
         int i = 0;
         ArrayList<Node> children = ElementUtils.getChildren(parent);
@@ -73,7 +93,8 @@ public class ElementUtils {
     }
 
     /**
-     * Retrieves the attributes elements of a node.
+     * Retrieves the attributes elements of a node. Does not include name space
+     * declarations.
      * 
      * @param element
      *            The parent node.

@@ -4,9 +4,9 @@ import org.custommonkey.xmlunit.ElementQualifier;
 import org.w3c.dom.Element;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> The element qualifier for the XML
- *         indexer. Considers nodes with the same name and relative position
- *         comparable.
+ * The element qualifier for the XML indexer. Considers nodes with the same name
+ * and relative position comparable.
+ * 
  * @see ElementQualifier
  */
 class NameAndPositionElementQualifier implements ElementQualifier {
@@ -28,8 +28,8 @@ class NameAndPositionElementQualifier implements ElementQualifier {
         if (!elmnt1.getTagName().equals(elmnt2.getTagName())) {
             return false;
         }
-        int elmnt1Pos = ElementUtils.getChildIndex(elmnt1, true, false);
-        int elmnt2Pos = ElementUtils.getChildIndex(elmnt2, true, false);
+        int elmnt1Pos = ElementUtils.getLocalIndex(elmnt1, true, false);
+        int elmnt2Pos = ElementUtils.getLocalIndex(elmnt2, true, false);
         return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;
     }
 }

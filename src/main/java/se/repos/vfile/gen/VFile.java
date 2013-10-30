@@ -21,7 +21,7 @@ import org.w3c.dom.Node;
 import se.repos.vfile.VFileDocumentBuilderFactory;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> Class that represents a v-file.
+ * Class that represents a v-file.
  */
 public final class VFile {
 
@@ -81,10 +81,16 @@ public final class VFile {
     }
 
     /**
-     * Creates a new TaggedNode belonging to this index.
+     * Creates a new {@link TaggedNode} belonging to this index.
      * 
-     * @see TaggedNode
-     * @return The new TaggedNode.
+     * @param nodeName
+     *            The actual tag name of the element created.
+     * @param elementName
+     *            The value of v:name set on this element. If null, it is not
+     *            set.
+     * @param value
+     *            The text content on the {@link TaggedNode}. May be null.
+     * @return The new {@link TaggedNode}.
      */
     public TaggedNode createTaggedNode(String nodeName, String elementName, String value) {
         if (nodeName == null || nodeName.isEmpty()) {
@@ -120,8 +126,10 @@ public final class VFile {
      * 
      * @param firstVersion
      *            The first version of the document in question.
+     * @param time
+     *            The time stamp of firstVersion.
      * @param version
-     *            The SVN version of the firstVersion.
+     *            The version number of firstVersion.
      * @return The new Index.
      */
     public static VFile normalizeDocument(Document firstVersion, String time,
@@ -149,6 +157,13 @@ public final class VFile {
         return idx;
     }
 
+    /**
+     * Given a control document, returns a map between each node in the control
+     * document and the corresponding {@link TaggedNode}.
+     * 
+     * @throws NoMatchException
+     *             If the given document doesn't match this {@link VFile}.
+     */
     public Map<SimpleXPath, TaggedNode> getNodeMap(Document controlDocument)
             throws NoMatchException {
         Map<SimpleXPath, TaggedNode> nodeMap = new HashMap<SimpleXPath, TaggedNode>();
@@ -161,7 +176,6 @@ public final class VFile {
             throws NoMatchException {
         SimpleXPath uniqueXPath = new SimpleXPath(controlNode);
         TaggedNode node = uniqueXPath.eval(this.getVFileElement());
-        node.matchNode(controlNode);
         nodeMap.put(uniqueXPath, node);
         for (Node n : ElementUtils.getChildren(controlNode)) {
             this.normalizeNodeMap(nodeMap, n);
@@ -179,10 +193,14 @@ public final class VFile {
      * Diffs the given document with the last version of it, and applies the
      * changes to the index.
      * 
+     * @param oldDocument
+     *            The old version of the document.
      * @param newDocument
      *            The new version of the document.
      * @param newVersion
-     *            The version number of said document in SVN.
+     *            The version number of the new document.
+     * @param newTime
+     *            The time stamp of the new document.
      */
     public void update(Document oldDocument, Document newDocument, String newTime,
             String newVersion) {
@@ -225,7 +243,6 @@ public final class VFile {
             testLocation = new SimpleXPath(d.getTestNodeDetail().getXpathLocation());
         }
 
-        // TODO XMLUnit might miss a leading space in text diff.
         if (controlNode == null) {
             testLocation.removeLastAxis();
             newNodeMap.put(testLocation, testNode);
@@ -269,7 +286,7 @@ public final class VFile {
                 if (!element.isLive()) {
                     throw new RuntimeException("Moving non-live node.");
                 }
-                int location = ElementUtils.getChildIndex(d.testNode);
+                int location = ElementUtils.getLocalIndex(d.testNode);
                 element.reorder(location);
             }
         }
@@ -312,12 +329,13 @@ public final class VFile {
     }
 
     /**
-     * Matches the document given and the one indexed in this V-File. Throws
-     * NoMatchException if they do not match.
+     * Matches the document given and the one indexed in this V-File.
      * 
      * @param currentVersion
      *            The document to compare to this index.
      * @throws NoMatchException
+     *             If the document doesn't match.
+     * @see {@link TaggedNode#matchNode(Node)}
      */
     public void matchDocument(Document currentVersion) throws NoMatchException {
         this.getDocumentElement().matchNode(currentVersion.getDocumentElement());

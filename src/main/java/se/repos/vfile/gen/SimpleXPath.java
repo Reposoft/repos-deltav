@@ -6,15 +6,33 @@ import java.util.LinkedList;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 
-// TODO Javadoc this class.
+/**
+ * A class that represents an unique XPath, i.e. an XPath that when evaluated
+ * only selects a single node. Used to locate {@link TaggedNode} that have been
+ * changed.
+ * 
+ * @see VFile.update
+ * @see VFile.getNodeMap
+ * @see Axis
+ */
 public class SimpleXPath implements Iterable<Axis> {
 
     private LinkedList<Axis> axi;
 
+    /**
+     * Constructs an empty XPath.
+     */
     public SimpleXPath() {
         this.axi = new LinkedList<Axis>();
     }
 
+    /**
+     * Constructs a simple XPath from the given String. All axi in the XPath
+     * String must be simplified child::Name indexes with an index condition.
+     * 
+     * @throws IllegalArgumentException
+     *             If the XPath string doesn't satisfy that condition.
+     */
     public SimpleXPath(String xPath) {
         if (xPath == null) {
             throw new NullPointerException();
@@ -53,6 +71,9 @@ public class SimpleXPath implements Iterable<Axis> {
         }
     }
 
+    /**
+     * Constructs an XPath pointing to the given node.
+     */
     public SimpleXPath(Node node) {
         if (node == null) {
             throw new NullPointerException();
@@ -71,22 +92,22 @@ public class SimpleXPath implements Iterable<Axis> {
             switch (nodeType) {
             case ELEMENT:
                 localAxis = current.getNodeName();
-                localIndex = ElementUtils.getChildIndex(current, true);
+                localIndex = ElementUtils.getLocalIndex(current, true);
                 parent = current.getParentNode();
                 break;
             case TEXT:
                 localAxis = "text()";
-                localIndex = ElementUtils.getChildIndex(current, true);
+                localIndex = ElementUtils.getLocalIndex(current, true);
                 parent = current.getParentNode();
                 break;
             case COMMENT:
                 localAxis = "comment()";
-                localIndex = ElementUtils.getChildIndex(current, true);
+                localIndex = ElementUtils.getLocalIndex(current, true);
                 parent = current.getParentNode();
                 break;
             case PROCESSING_INSTRUCTION:
                 localAxis = "processing-instruction()";
-                localIndex = ElementUtils.getChildIndex(current, true);
+                localIndex = ElementUtils.getLocalIndex(current, true);
                 parent = current.getParentNode();
                 break;
             case ATTRIBUTE:
@@ -127,6 +148,14 @@ public class SimpleXPath implements Iterable<Axis> {
         return this.axi.removeLast();
     }
 
+    /**
+     * Evaluates this {@link SimpleXPath} in the context of the given
+     * {@link TaggedNode}.
+     * 
+     * @return The selected {@link TaggedNode}.
+     * @throws RuntimeException
+     *             If no matching node was found in the given context.
+     */
     public TaggedNode eval(TaggedNode context) {
         TaggedNode currentContext = context;
         for (Axis axis : this) {

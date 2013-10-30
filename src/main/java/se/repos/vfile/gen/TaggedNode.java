@@ -13,9 +13,7 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> A single element of a VFile.
- *         Corresponds to a single tagged node.
- * @see VFile
+ * A single element of a {@link VFile}. Corresponds to a single tagged node.
  */
 public class TaggedNode {
 
@@ -179,12 +177,21 @@ public class TaggedNode {
         return null;
     }
 
-    public TaggedNode getNthNodeOfType(int textIndex, Nodetype nodeType) {
+    /**
+     * Finds the nth child node of the given type.
+     * 
+     * @param n
+     *            The index of the needle.
+     * @param nodeType
+     *            The {@link Nodetype} of the needle.
+     * @return The needle, or null if not found.
+     */
+    public TaggedNode getNthNodeOfType(int n, Nodetype nodeType) {
         int i = 0;
-        for (TaggedNode n : this.getChildren()) {
-            if (n.getNodetype() == nodeType) {
-                if (i == textIndex) {
-                    return n;
+        for (TaggedNode child : this.getChildren()) {
+            if (child.getNodetype() == nodeType) {
+                if (i == n) {
+                    return child;
                 }
                 i++;
             }
@@ -214,7 +221,6 @@ public class TaggedNode {
         return results;
     }
 
-    // Sets/creates an attribute on a index element.
     public void setAttribute(String name, String value) {
         TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
@@ -243,6 +249,13 @@ public class TaggedNode {
         this.element.insertBefore(e.element, ref.element);
     }
 
+    /**
+     * Given a DOM {@link Node}, adds a corresponding {@link TaggedNode} to this
+     * node's child list. The new {@link TaggedNode} will be inserted at the
+     * same local index as it's corresponding node.
+     * 
+     * @see ElementUtils.getLocalIndex
+     */
     public void normalizeNode(Node child) {
         TaggedNode norm;
         switch (child.getNodeType()) {
@@ -275,7 +288,7 @@ public class TaggedNode {
             throw new UnsupportedOperationException();
         }
 
-        int index = ElementUtils.getChildIndex(child);
+        int index = ElementUtils.getLocalIndex(child);
         if (index == this.childCount() || this.getNodetype() == Nodetype.DOCUMENT) {
             this.appendChild(norm);
         } else {
@@ -305,8 +318,8 @@ public class TaggedNode {
      * TaggedNode. The comparison only takes into account live
      * children/attributes of the tagged node.
      * 
-     * @return True if the nodes are equal.
      * @throws NoMatchException
+     *             If the nodes are unequal.
      */
     public void matchNode(Node docNode) throws NoMatchException {
         if (!(this.getNodetype() == ElementUtils.getNodeType(docNode) && this.isLive())) {
@@ -411,7 +424,7 @@ public class TaggedNode {
     }
 
     private int getLocalIndex() {
-        return ElementUtils.getChildIndex(this.element, true);
+        return ElementUtils.getLocalIndex(this.element, true);
     }
 
     /**

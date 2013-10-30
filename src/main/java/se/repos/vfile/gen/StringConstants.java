@@ -1,9 +1,8 @@
 package se.repos.vfile.gen;
 
 /**
- * @author Hugo Svallfors <keiter@lavabit.com> A series of string constants that
- *         are used throughout the project. Mostly the names of tagged node
- *         attributes and some special values thereof.
+ * A series of string constants that are used throughout the project. Mostly the
+ * names of tagged node attributes and some special values thereof.
  */
 public final class StringConstants {
     public static final String START = "v:start";

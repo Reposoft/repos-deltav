@@ -1,10 +1,10 @@
 package se.repos.vfile.gen;
 
+/**
+ * Exception thrown when comparison between a VFile and document shows that
+ * they're unequal. Includes XPaths to the differing element found.
+ */
 public class NoMatchException extends Exception {
-
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
     private SimpleXPath docPath;
     private SimpleXPath vFilePath;
