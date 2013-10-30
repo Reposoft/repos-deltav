@@ -15,25 +15,29 @@ import org.w3c.dom.Text;
  */
 public class ElementUtils {
 
-    public static int getChildIndex(Node child) {
-        return ElementUtils.getChildIndex(child, false, false);
+    public static int getChildIndex(Node needle) {
+        return ElementUtils.getChildIndex(needle, false, false);
     }
 
-    public static int getChildIndex(Node child, boolean specificType) {
-        return ElementUtils.getChildIndex(child, specificType, false);
+    public static int getChildIndex(Node needle, boolean specificType) {
+        return ElementUtils.getChildIndex(needle, specificType, false);
     }
 
-    public static int getChildIndex(Node child, boolean specificType, boolean mustFind) {
-        Node parent = child.getParentNode();
+    public static int getChildIndex(Node needle, boolean specificType, boolean mustFind) {
+        Node parent = needle.getParentNode();
         int i = 0;
-        for (Node n : ElementUtils.getChildren(parent)) {
-            if (n.isSameNode(child)) {
+        ArrayList<Node> children = ElementUtils.getChildren(parent);
+        for (Node child : children) {
+            if (child.isSameNode(needle)) {
                 return i;
             }
-            if (!specificType
-                    || (n.getNodeType() == child.getNodeType() && n.getNodeName().equals(
-                            child.getNodeName()))) {
+            if (!specificType) {
                 i++;
+            } else if (child.getNodeType() == needle.getNodeType()) {
+                if (child.getNodeType() != Node.ELEMENT_NODE
+                        || child.getNodeName().equals(needle.getNodeName())) {
+                    i++;
+                }
             }
         }
         if (mustFind) {
