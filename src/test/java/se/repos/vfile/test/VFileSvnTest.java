@@ -172,10 +172,7 @@ public class VFileSvnTest {
         File testFile = new File(this.wc, testID.getRelPath().getPath());
         boolean addedToSVN = false;
 
-        /*
-         * Commits all the files to SVN, saving the RepoRevisions of each
-         * commit.
-         */
+        // Commits all the files to SVN, saving the RepoRevisions of each commit.
         Transformer trans = TransformerFactory.newInstance().newTransformer();
         for (int i = 0; i < documents.size(); i++) {
             Document d = documents.get(i);
