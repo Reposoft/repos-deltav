@@ -3,6 +3,7 @@ package se.repos.vfile.test;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -60,7 +61,7 @@ import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 public class VFileSvnTest {
 
     // set to false to examine repository after test
-    private boolean doCleanup = true;
+    private boolean doCleanup = false;
 
     private File testDir = null;
     private File repoDir = null;
@@ -210,6 +211,17 @@ public class VFileSvnTest {
             v.matchDocument(d);
         }
 
+        // write resulting vfile to test folder, for manual inspection
+        if (!this.doCleanup) {
+        	DOMSource resultVfile = new DOMSource(store.get(testID));
+        	File foutfile = new File(this.testDir, "resulting-vfile.xml");
+        	FileOutputStream fout = new FileOutputStream(foutfile);
+        	StreamResult resultVfileOut = new StreamResult(fout);
+        	trans.transform(resultVfile, resultVfileOut);
+        	System.out.println("Wrote result to " + new File(this.testDir, "resulting-vfile.xml"));
+        }
+        
+        // return for asserts
         return store;
     }
 
