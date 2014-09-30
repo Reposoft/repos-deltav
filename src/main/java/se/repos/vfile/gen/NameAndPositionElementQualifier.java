@@ -33,6 +33,11 @@ class NameAndPositionElementQualifier implements ElementQualifier {
         if (!elmnt1.getTagName().equals(elmnt2.getTagName())) {
             return false;
         }
+        // I am not sure the requirement "equal index is good".
+        // It forces an inserted section to be compared with a section that has a match further down.
+        // Problem is likely that XMUnit will only compare the first pair where this method returns true.
+        // Do we get notified of the different order if we relax this requirement?
+        // Alternative could be to listen to MatchTracker and make note of the reorders.
         int elmnt1Pos = ElementUtils.getLocalIndex(elmnt1, true, false);
         int elmnt2Pos = ElementUtils.getLocalIndex(elmnt2, true, false);
         return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;

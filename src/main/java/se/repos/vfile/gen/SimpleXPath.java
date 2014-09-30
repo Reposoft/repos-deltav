@@ -7,6 +7,7 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 
 /**
+ * WARNING: This class is mutable!
  * A class that represents an unique XPath, i.e. an XPath that when evaluated
  * only selects a single node. Used to locate {@link TaggedNode} that have been
  * changed.

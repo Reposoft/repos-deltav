@@ -278,6 +278,18 @@ public class VFileSvnTest {
                 "mo_1235.xml", "mo_1330.xml");
     }
 
+    
+    @Test
+    public void test50k5revs() throws Exception {
+        CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+        CmsItemId testID = new CmsItemIdUrl(repository,
+                new CmsItemPath("/50k-27revs.xml"));
+        this.testVFiling(testID,
+                new File("src/test/resources/se/repos/vfile/50k-27revs"), "ca_0053.xml",
+                "ca_0057.xml", "ca_0066.xml", "ca_0068.xml", "ca_0069.xml");
+    }
+
+    
     @Test
     public void test50k27revs() throws Exception {
         CmsRepository repository = new CmsRepository("/anyparent", "anyname");

@@ -3,6 +3,8 @@ package se.repos.vfile.gen;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -17,6 +19,8 @@ import org.w3c.dom.Text;
  */
 public class TaggedNode {
 
+	private static final Logger logger = LoggerFactory.getLogger(TaggedNode.class);
+	
     private VFile parentVFile;
     private Element element;
 
@@ -38,8 +42,9 @@ public class TaggedNode {
         }
         if (!element.hasAttribute(StringConstants.START)
                 || !element.hasAttribute(StringConstants.END)
+                /*
                 || !element.hasAttribute(StringConstants.TSTART)
-                || !element.hasAttribute(StringConstants.TEND)) {
+                || !element.hasAttribute(StringConstants.TEND)*/) {
             throw new IllegalArgumentException("Missing lifetime information on element.");
         }
         this.parentVFile = parentIndex;
@@ -91,6 +96,7 @@ public class TaggedNode {
         }
     }
 
+    // Looks a lot like clone to me.
     private void setValue(String value) {
         TaggedNode newElem;
         switch (this.getNodetype()) {
@@ -110,8 +116,19 @@ public class TaggedNode {
             newElem = this.parentVFile.createTaggedNode(StringConstants.COMMENT, null,
                     value);
             break;
+        case ELEMENT:
+        	// Adding this code to make cloneElement() work for ELEMENT. 
+        	// More or less copied from normalizeNode.
+            newElem = this.parentVFile.createTaggedNode(this.element.getTagName(), null, null);
+            for (TaggedNode a : this.getAttributes()) {
+            	newElem.setAttribute(a.getName(), a.getValue());
+            }
+            for (TaggedNode n : this.getChildren()) {
+            	newElem.appendChild(n);
+            }
+            break;
         default:
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException(this.getNodetype().name());
         }
         this.getParent().insertBefore(newElem, this);
         this.delete();
@@ -139,8 +156,10 @@ public class TaggedNode {
         }
         this.element.setAttribute(StringConstants.END,
                 this.parentVFile.getDocumentVersion());
+        /*
         this.element.setAttribute(StringConstants.TEND,
                 this.parentVFile.getDocumentTime());
+                */
         if (this.getTStart().equals(this.getTEnd())
                 && this.getStart().equals(this.getEnd())) {
             this.getParent().eraseChild(this);
@@ -148,8 +167,7 @@ public class TaggedNode {
     }
 
     public boolean isLive() {
-        return this.getTEnd().equals(StringConstants.NOW)
-                && this.getEnd().equals(StringConstants.NOW);
+        return this.getEnd().equals(StringConstants.NOW); // No need to test on both end-attributes.
     }
 
     private String getStart() {
@@ -488,6 +506,10 @@ public class TaggedNode {
     public void reorder(int index) {
         TaggedNode parent = this.getParent();
         int childCount = parent.childCount();
+        String reorderId = this.parentVFile.getReorderId();
+        this.element.setAttribute(StringConstants.REORDERID, reorderId);
+        logger.warn("Reordering {} {} from {} to position {}", reorderId, this.getName(), getLocalIndex(), index);
+        this.cloneElement();
         if (childCount == index || childCount - 1 == index) {
             parent.eraseChild(this);
             parent.appendChild(this);

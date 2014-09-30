@@ -26,6 +26,7 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
 public final class VFile {
 
     private Document index;
+    private Long reorderCounter = 0L;
 
     /**
      * Constructor for Index.
@@ -47,8 +48,10 @@ public final class VFile {
         Element root = indexDocument.getDocumentElement();
         if (root == null || !root.hasAttribute(StringConstants.START)
                 || !root.hasAttribute(StringConstants.END)
+                /*
                 || !root.hasAttribute(StringConstants.TSTART)
                 || !root.hasAttribute(StringConstants.TEND)
+                */
                 || !root.hasAttribute(StringConstants.DOCVERSION)
                 || !root.hasAttribute(StringConstants.DOCTIME)) {
             throw new IllegalArgumentException();
@@ -66,6 +69,11 @@ public final class VFile {
 
     public String getDocumentTime() {
         return this.index.getDocumentElement().getAttribute(StringConstants.DOCTIME);
+    }
+    
+    public String getReorderId() {
+    	this.reorderCounter++;
+    	return this.getDocumentVersion().concat("-").concat(this.reorderCounter.toString());
     }
 
     private void setDocumentTime(String time) {
@@ -103,8 +111,10 @@ public final class VFile {
         Element elem = this.index.createElement(nodeName);
         elem.setAttribute(StringConstants.START, this.getDocumentVersion());
         elem.setAttribute(StringConstants.END, StringConstants.NOW);
+        /* The timestamps are a massive pain for testing and compare.
         elem.setAttribute(StringConstants.TSTART, this.getDocumentTime());
         elem.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        */
 
         if (elementName != null) {
             elem.setAttribute(StringConstants.NAME, elementName);
@@ -146,8 +156,10 @@ public final class VFile {
         vFileElement.setAttribute(StringConstants.DOCTIME, time);
         vFileElement.setAttribute(StringConstants.START, version);
         vFileElement.setAttribute(StringConstants.END, StringConstants.NOW);
+        /*
         vFileElement.setAttribute(StringConstants.TSTART, time);
         vFileElement.setAttribute(StringConstants.TEND, StringConstants.NOW);
+        */
         indexXML.appendChild(vFileElement);
 
         VFile idx = new VFile(indexXML);
