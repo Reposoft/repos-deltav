@@ -18,19 +18,21 @@ public class ElementUtils {
      * Equivalent to getLocalIndex(needle, false, false).
      */
     public static int getLocalIndex(Node needle) {
-        return ElementUtils.getLocalIndex(needle, false, false);
+        return ElementUtils.getLocalIndex(needle, false, false, false);
     }
 
     /**
      * Equivalent to getLocalIndex(needle, specificType, false).
      */
     public static int getLocalIndex(Node needle, boolean specificType) {
-        return ElementUtils.getLocalIndex(needle, specificType, false);
+        return ElementUtils.getLocalIndex(needle, specificType, false, false);
     }
 
     /**
      * Given a node, finds the index of where among it's siblings it can be
      * found.
+     * 
+     * This method can now be used in a VFile.
      * 
      * @param needle
      *            The node to find the index of.
@@ -43,7 +45,7 @@ public class ElementUtils {
      * @throws RuntimeException
      *             If the needle is not found and mustFind is true.
      */
-    public static int getLocalIndex(Node needle, boolean specificType, boolean mustFind) {
+    public static int getLocalIndex(Node needle, boolean specificType, boolean mustFind, boolean isVfile) {
         Node parent = needle.getParentNode();
         int i = 0;
         ArrayList<Node> children = ElementUtils.getChildren(parent);
@@ -51,6 +53,22 @@ public class ElementUtils {
             if (child.isSameNode(needle)) {
                 return i;
             }
+            
+            if (isVfile && child.hasAttributes()) { 
+            	Element childElement = (Element) child;
+            	String tagName = childElement.getTagName();
+                if (tagName.equals(StringConstants.ATTR)) {
+                	// Don't take VFile attributes into account.
+                	continue;
+                }
+            	
+            	String end = childElement.getAttribute(StringConstants.END);
+            	if (end != null && !end.isEmpty() && !end.equals(StringConstants.NOW)) {
+            		// Element is a VFile and it is no longer Live.
+            		continue;
+            	}
+            }
+            
             if (!specificType) {
                 i++;
             } else if (child.getNodeType() == needle.getNodeType()) {
@@ -79,7 +97,9 @@ public class ElementUtils {
             case Node.DOCUMENT_TYPE_NODE:
                 break; // not supported yet
             case Node.TEXT_NODE:
-                if (!((Text) c).getData().trim().isEmpty()) { // no empty text
+                // TODO: Investigate how to manage non-vital whitespace. This is NOT acceptable for MIXED.
+            	// Is this really safe as basis for getLocalIndex ?
+            	if (!((Text) c).getData().trim().isEmpty()) { // no empty text
                                                               // nodes
                     results.add(c);
                 }
@@ -90,6 +110,16 @@ public class ElementUtils {
             }
         }
         return results;
+    }
+    
+    public static int getPreviousSiblingCount(Element element) {
+    	
+    	int i = 0;
+    	Node e = element;
+    	while ((e = e.getPreviousSibling()) != null) {
+    		i++;
+    	}
+    	return i;
     }
 
     /**

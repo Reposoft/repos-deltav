@@ -1,10 +1,15 @@
 package se.repos.vfile.gen;
 
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -13,6 +18,9 @@ import org.custommonkey.xmlunit.DetailedDiff;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.Difference;
 import org.custommonkey.xmlunit.DifferenceConstants;
+import org.custommonkey.xmlunit.XMLUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -25,6 +33,8 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
  */
 public final class VFile {
 
+	private static final Logger logger = LoggerFactory.getLogger(VFile.class);
+	
     private Document index;
     private Long reorderCounter = 0L;
 
@@ -223,7 +233,10 @@ public final class VFile {
             throw new IllegalArgumentException(
                     "Provided document doesn't match the one indexed.", e);
         }
-
+        /*
+        XMLUnit.setNormalizeWhitespace(true);
+        XMLUnit.setNormalize(true);
+        */
         DetailedDiff diff = new DetailedDiff(new Diff(oldDocument, newDocument));
         diff.overrideElementQualifier(new NameAndPositionElementQualifier());
 
@@ -233,6 +246,7 @@ public final class VFile {
         @SuppressWarnings("unchecked")
         List<Difference> differences = diff.getAllDifferences();
         for (Difference d : differences) {
+        	logger.debug("Diff: ({}) {} - {} {}", d.getId(), d.getDescription(), d.getControlNodeDetail().getValue(), d.getTestNodeDetail().getValue());
             VFile.scheduleChange(nodeMap, changeMap, newNodeMap, d);
         }
 
@@ -261,6 +275,7 @@ public final class VFile {
         } else {
             SimpleXPath controlLocation = new SimpleXPath(d.getControlNodeDetail()
                     .getXpathLocation());
+            // TODO: Investigate basing on matched Nodes rather than XPath.
             TaggedNode element = nodeMap.get(controlLocation);
             if (!changeMap.containsKey(element)) {
                 changeMap.put(element, new DeferredChanges(controlNode, testNode,
@@ -292,15 +307,30 @@ public final class VFile {
     }
 
     private static void reorderNodes(Map<TaggedNode, DeferredChanges> changeMap) {
-        for (TaggedNode element : changeMap.keySet()) {
+        List<Entry<TaggedNode, Integer>> reorderList = new LinkedList<Entry<TaggedNode, Integer>>();
+    	for (TaggedNode element : changeMap.keySet()) {
             DeferredChanges d = changeMap.get(element);
             if (d.changes.contains(CHANGE.ELEM_CHILDREN_ORDER)) {
                 if (!element.isLive()) {
                     throw new RuntimeException("Moving non-live node.");
                 }
+                // TODO: Why did Hugo calculate this location? Ah, because the DeferredChange-API can not communicate detail.
                 int location = ElementUtils.getLocalIndex(d.testNode);
-                element.reorder(location);
+                //int indexDetail = d.getTestNodeDetail().getValue()
+                reorderList.add(new AbstractMap.SimpleImmutableEntry<TaggedNode, Integer>(element, location));
             }
+        }
+    	Comparator<Entry<TaggedNode, Integer>> comp = new Comparator<Entry<TaggedNode, Integer>>() {
+
+			@Override
+			public int compare(Entry<TaggedNode, Integer> arg0, Entry<TaggedNode, Integer> arg1) {
+				
+				return arg0.getValue().compareTo(arg1.getValue());
+			}
+		};
+    	//Collections.sort(reorderList, comp);
+        for (Entry<TaggedNode, Integer> e: reorderList) {
+        	e.getKey().reorder(e.getValue());
         }
     }
 

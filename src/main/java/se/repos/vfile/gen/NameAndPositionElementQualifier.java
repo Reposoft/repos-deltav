@@ -38,8 +38,8 @@ class NameAndPositionElementQualifier implements ElementQualifier {
         // Problem is likely that XMUnit will only compare the first pair where this method returns true.
         // Do we get notified of the different order if we relax this requirement?
         // Alternative could be to listen to MatchTracker and make note of the reorders.
-        int elmnt1Pos = ElementUtils.getLocalIndex(elmnt1, true, false);
-        int elmnt2Pos = ElementUtils.getLocalIndex(elmnt2, true, false);
+        int elmnt1Pos = ElementUtils.getLocalIndex(elmnt1, true, false, false);
+        int elmnt2Pos = ElementUtils.getLocalIndex(elmnt2, true, false, false);
         return elmnt1Pos != -1 && elmnt2Pos != -1 && elmnt1Pos == elmnt2Pos;
     }
 }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -504,21 +505,42 @@ public class TaggedNode {
     }
 
     public void reorder(int index) {
+    	
+    	if (false) 
+    		return;
+    	
         TaggedNode parent = this.getParent();
         int childCount = parent.childCount();
         String reorderId = this.parentVFile.getReorderId();
+        int currentIndex = ElementUtils.getLocalIndex(this.element, false, true, true);
+        int relativeIndex = index - currentIndex;
+        if (relativeIndex == 0) {
+        	logger.debug("Reordering {} {} is not needed: {} = {}", reorderId, this.getName(), index, currentIndex);
+        	return;
+        }
+        int vfileIndex = ElementUtils.getLocalIndex(this.element, false, true, false) + relativeIndex;
+        if (relativeIndex < 0) {
+        	// The clone will add one element after calculation.
+        	vfileIndex--;
+        }
         this.element.setAttribute(StringConstants.REORDERID, reorderId);
-        logger.warn("Reordering {} {} from {} to position {}", reorderId, this.getName(), getLocalIndex(), index);
+        logger.warn("Reordering {} {} from {} to index {} (VFile index {})", reorderId, this.getName(), currentIndex, index, vfileIndex);
         this.cloneElement();
-        if (childCount == index || childCount - 1 == index) {
+        if (childCount == vfileIndex || childCount - 1 == vfileIndex) {
             parent.eraseChild(this);
             parent.appendChild(this);
         } else {
             parent.eraseChild(this);
-            parent.insertElementAt(this, index);
+            parent.insertElementAt(this, vfileIndex);
         }
         this.element.setAttribute(StringConstants.REORDER,
                 this.parentVFile.getDocumentVersion());
+        
+        int reorderedIndex = ElementUtils.getLocalIndex(this.element, false, true, true);
+        if (reorderedIndex != index) {
+        	String msg = MessageFormatter.format("Reordering did not produce expected result: {} {}", index, reorderedIndex).getMessage();
+        	logger.error(msg);
+        }
     }
 
     private void updateElementAttrs(Element oldElement, Element newElement) {
