@@ -244,7 +244,8 @@ public class TaggedNode {
         TaggedNode attr = this.getAttribute(name);
         if (attr == null) {
             attr = this.parentVFile.createTaggedNode(StringConstants.ATTR, name, value);
-            this.element.appendChild(attr.element);
+            // This was likely the primary attribute order issue, used to be appendChild(..).
+            insertElementAtAbsolute(attr, 0);
         } else {
             attr.setValue(value);
         }
@@ -258,14 +259,36 @@ public class TaggedNode {
         this.element.insertBefore(e.element, ref.element);
     }
 
+    /**
+     * This method is supposed to insert an element with regard to which elements are live.
+     * @param e
+     * @param index with respect to live nodes
+     */
     private void insertElementAt(TaggedNode e, int index) {
         ArrayList<TaggedNode> children = this.getChildren();
         if (index >= children.size()) {
+        	SimpleXPath xpath = this.getXPath();
             throw new IndexOutOfBoundsException("When inserting node \"" + e.getName()
-                    + "\" at local index " + index + " in node " + this.getXPath());
+                    + "\" at local index " + index + " in node " + xpath);
         }
         TaggedNode ref = children.get(index);
         this.element.insertBefore(e.element, ref.element);
+    }
+    
+    /**
+     * Inserts element on the absolute index, without regard of VFile elements are live.
+     * @param e
+     * @param index
+     */
+    private void insertElementAtAbsolute(TaggedNode e, int index) {
+    	
+    	NodeList cl = this.element.getChildNodes();
+    	if (index < cl.getLength()) {
+    		Node ref = cl.item(index);
+    		this.element.insertBefore(e.element, ref);
+    	} else {
+    		this.element.appendChild(e.element);
+    	}
     }
 
     /**
@@ -308,11 +331,16 @@ public class TaggedNode {
         }
 
         int index = ElementUtils.getLocalIndex(child);
+        int vfileIndex = ElementUtils.findVfileIndex(this.element, index);
+        this.insertElementAtAbsolute(norm, vfileIndex);
+        
+        /*
         if (index == this.childCount() || this.getNodetype() == Nodetype.DOCUMENT) {
         	this.appendChild(norm);
         } else {
             this.insertElementAt(norm, index);
         }
+        */
     }
 
     private int childCount() {
@@ -443,6 +471,9 @@ public class TaggedNode {
     }
 
     private int getLocalIndex() {
+    	if (this.element == null) {
+    		throw new IllegalArgumentException("This element is null");
+    	}
         return ElementUtils.getLocalIndex(this.element, true);
     }
 

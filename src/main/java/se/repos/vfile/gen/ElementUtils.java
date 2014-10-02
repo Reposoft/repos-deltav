@@ -2,6 +2,7 @@ package se.repos.vfile.gen;
 
 import java.util.ArrayList;
 
+import org.slf4j.helpers.MessageFormatter;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -47,6 +48,11 @@ public class ElementUtils {
      */
     public static int getLocalIndex(Node needle, boolean specificType, boolean mustFind, boolean isVfile) {
         Node parent = needle.getParentNode();
+        if (parent == null) {
+        	// Likely means that we are a Document node. Perhaps an element can also be without parent while moving.
+        	throw new IllegalArgumentException("Node does not have a parent: " + needle.getNodeType());
+        	//return 0;
+        }
         int i = 0;
         ArrayList<Node> children = ElementUtils.getChildren(parent);
         for (Node child : children) {
@@ -55,16 +61,14 @@ public class ElementUtils {
             }
             
             if (isVfile && child.hasAttributes()) { 
-            	Element childElement = (Element) child;
-            	String tagName = childElement.getTagName();
-                if (tagName.equals(StringConstants.ATTR)) {
+            	
+                if (isVFileAttribute(child)) {
                 	// Don't take VFile attributes into account.
                 	continue;
                 }
             	
-            	String end = childElement.getAttribute(StringConstants.END);
-            	if (end != null && !end.isEmpty() && !end.equals(StringConstants.NOW)) {
-            		// Element is a VFile and it is no longer Live.
+            	if (!isVFileElementLive(child)) {
+            		// Element is assumed to be VFile (ifVfile=true) and it is no longer Live.
             		continue;
             	}
             }
@@ -111,6 +115,70 @@ public class ElementUtils {
         }
         return results;
     }
+    
+    public static boolean isVFileAttribute(Node n) {
+    	
+    	if (n.hasAttributes()) { 
+        	Element e = (Element) n;
+        	String tagName = e.getTagName();
+            if (tagName.equals(StringConstants.ATTR)) {
+            	return true;
+            }
+    	}
+    	return false;
+    }
+    
+    
+    public static boolean isVFileElementLive(Node n) {
+    	
+    	if (n.hasAttributes()) { 
+        	Element e = (Element) n;
+        	String end = e.getAttribute(StringConstants.END);
+        	if (end != null && !end.isEmpty() && !end.equals(StringConstants.NOW)) {
+        		// Element is a VFile and it is no longer Live.
+        		return false;
+        	}
+        	return true;
+    	}
+    	
+    	throw new IllegalArgumentException("The node is not a VFile element: " + n);
+    }
+    
+    
+    public static int findVfileIndex(Element parent, Integer index) {
+    	
+    	Integer liveElems = 0;
+    	NodeList nl = parent.getChildNodes();
+    	if (nl == null || nl.getLength() == 0) {
+            return 0;
+        }
+    	
+    	for (Integer i = 0; i < nl.getLength(); i++) {
+    		Node n = nl.item(i);
+    		if (!isVFileAttribute(n) && liveElems == index) {
+    			return i;
+    		}
+    		
+    		if (!isVFileAttribute(n) && isVFileElementLive(n)) {
+    			liveElems++;
+    		}
+    		
+    		/*
+    		if (isVFileAttribute(n) && i == nl.getLength()-1) {
+    			// Special case when all-attributes.
+    			return i;
+    		}
+    		*/
+    	}
+    	if (liveElems == index) {
+    		return nl.getLength();
+    	}
+    	
+    	String msg = MessageFormatter.format("Index {} not found in {} children of " + parent.getNodeName(), index, new Integer(nl.getLength())).getMessage();
+    	throw new IllegalArgumentException(msg);
+    	
+    }
+    
     
     public static int getPreviousSiblingCount(Element element) {
     	
