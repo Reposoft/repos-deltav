@@ -578,20 +578,16 @@ public class TaggedNode {
         	// The VFile should not contain direct text/comment/PI nodes in this location.
         	throw new RuntimeException("Reordering encountered unexpected node type " + e.getNodeType());
         }
-        vfileIndex = ElementUtils.getLocalIndex((Element) e, false, true, true);
+        vfileIndex = ElementUtils.getLocalIndex((Element) e, false, true, false);
         
         this.element.setAttribute(StringConstants.REORDERID, reorderId);
         logger.warn("Reordering {} {} from {} to index {} (VFile index {})", reorderId, this.getName(), currentIndex, index, vfileIndex);
         this.cloneElement();
-        if (childCount == vfileIndex || childCount - 1 == vfileIndex) {
-            parent.eraseChild(this);
-            parent.appendChild(this);
-        } else {
-            parent.eraseChild(this);
-            parent.insertElementAt(this, vfileIndex);
-        }
-        this.element.setAttribute(StringConstants.REORDER,
-                this.parentVFile.getDocumentVersion());
+
+        parent.eraseChild(this);
+        parent.insertElementAtAbsolute(this, vfileIndex);
+
+        this.element.setAttribute(StringConstants.REORDER, this.parentVFile.getDocumentVersion());
         
         int reorderedIndex = ElementUtils.getLocalIndex(this.element, false, true, true);
         if (reorderedIndex != index) {

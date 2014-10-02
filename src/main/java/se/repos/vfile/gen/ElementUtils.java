@@ -41,6 +41,7 @@ public class ElementUtils {
      *            Whether to count only nodes of the same type as siblings.
      * @param mustFind
      *            If no result is acceptable.
+     * @param isVfile will calculate document index when given a VFile (disregard attr and historic elements)
      * @return The index of needle among it's siblings, or -1 if not found and
      *         mustFind is set to false.
      * @throws RuntimeException

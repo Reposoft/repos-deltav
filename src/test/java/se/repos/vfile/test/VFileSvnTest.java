@@ -208,7 +208,7 @@ public class VFileSvnTest {
             VFile v = new VFile(store.get(testID));
             assertNotNull("V-file calculation should have stored something", v);
             Document d = documents.get(i);
-            v.matchDocument(d);
+            v.matchDocument(d); // This validation is performed after "Increment..." logging.
         }
 
         // write resulting vfile to test folder, for manual inspection
