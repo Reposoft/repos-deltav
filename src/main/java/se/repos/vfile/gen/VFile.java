@@ -328,7 +328,10 @@ public final class VFile {
 				return arg0.getValue().compareTo(arg1.getValue());
 			}
 		};
-    	//Collections.sort(reorderList, comp);
+    	// Theory: By doing reordering with lowest target index first, we can avoid some reordering 
+		// because later nodes take their target location as consequence of earlier reordering.
+		// TODO: Investigate why the sorting makes matching fail / incorrect result for rev27 of test50k27revs.
+		Collections.sort(reorderList, comp);
         for (Entry<TaggedNode, Integer> e: reorderList) {
         	e.getKey().reorder(e.getValue());
         }

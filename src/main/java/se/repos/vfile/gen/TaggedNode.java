@@ -309,7 +309,7 @@ public class TaggedNode {
 
         int index = ElementUtils.getLocalIndex(child);
         if (index == this.childCount() || this.getNodetype() == Nodetype.DOCUMENT) {
-            this.appendChild(norm);
+        	this.appendChild(norm);
         } else {
             this.insertElementAt(norm, index);
         }
@@ -518,11 +518,37 @@ public class TaggedNode {
         	logger.debug("Reordering {} {} is not needed: {} = {}", reorderId, this.getName(), index, currentIndex);
         	return;
         }
-        int vfileIndex = ElementUtils.getLocalIndex(this.element, false, true, false) + relativeIndex;
+        Integer vfileIndex = null;
+        Integer searchIndex = null;
+        Node e = element;
         if (relativeIndex < 0) {
-        	// The clone will add one element after calculation.
-        	vfileIndex--;
+        	// Searching for the correct location.
+
+        	while ((e = e.getPreviousSibling()) != null) {
+        		
+        		searchIndex = ElementUtils.getLocalIndex(e, false, true, true);
+        		if (searchIndex == index) {
+        			break;
+        		}
+        	}
+        } else {
+        		while ((e = e.getNextSibling()) != null) {
+        		
+        		searchIndex = ElementUtils.getLocalIndex(e, false, true, true);
+        		if (searchIndex == index) {
+        			break;
+        		}
+        	}
         }
+        if (searchIndex == null || searchIndex != index) {
+			throw new RuntimeException("Reordering failed to find the expected index: " + index);
+		}
+        if (!(e instanceof Element)) {
+        	// The VFile should not contain direct text/comment/PI nodes in this location.
+        	throw new RuntimeException("Reordering encountered unexpected node type " + e.getNodeType());
+        }
+        vfileIndex = ElementUtils.getLocalIndex((Element) e, false, true, true);
+        
         this.element.setAttribute(StringConstants.REORDERID, reorderId);
         logger.warn("Reordering {} {} from {} to index {} (VFile index {})", reorderId, this.getName(), currentIndex, index, vfileIndex);
         this.cloneElement();
